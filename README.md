@@ -1,6 +1,6 @@
 # RecoilLab
 
-![Tests](https://github.com/DMRecoilLab/actions/workflows/tests.yml/badge.svg
+![Tests](https://github.com/stefanodavini/DMRecoilLab/actions/workflows/tests.yml/badge.svg)
 
 A modular Python toolkit for dark matter direct-detection calculations.
 
