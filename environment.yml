@@ -1,0 +1,22 @@
+name: dmrecoillab
+
+channels:
+  - conda-forge
+
+dependencies:
+  - python=3.13
+
+  # Core scientific stack
+  - numpy
+  - scipy
+  - matplotlib
+
+  # Testing
+  - pytest
+
+  # Notebook support
+  - jupyterlab
+  - ipykernel
+
+  # Development tools
+  - pre-commit
