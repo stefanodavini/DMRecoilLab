@@ -1,5 +1,7 @@
 # RecoilLab
 
+![Tests](https://github.com/DMRecoilLab/actions/workflows/tests.yml/badge.svg
+
 A modular Python toolkit for dark matter direct-detection calculations.
 
 RecoilLab provides a transparent and extensible framework for computing
@@ -99,13 +101,18 @@ micromamba env create -f environment.yml
 Activate it:
 
 ```bash
-micromamba activate recoillab
+micromamba activate dmrecoillab
+```
+
+For developers: install pre-commit:
+```bash
+pre-commit install
 ```
 
 Optional: install a Jupyter kernel
 
 ```bash
-python -m ipykernel install --user --name recoillab
+python -m ipykernel install --user --name dmrecoillab
 ```
 
 ---
