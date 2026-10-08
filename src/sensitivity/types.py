@@ -19,7 +19,7 @@ class CountingExperiment:
     ----------
     counts : int
         Number of observed events.
- 
+
     background : float
         Expected number of background events.
     """
@@ -33,3 +33,20 @@ class CountingExperiment:
         if self.background < 0:
             raise ValueError("background must be non-negative.")
 
+@dataclass(frozen=True)
+class MassSigmaSensitivityPoint:
+    """
+    Sensitivity result at a single WIMP mass.
+
+    Parameters
+    ----------
+    mass: float
+        WIMP mass in eV.
+    sigma_p_upper : float
+        Upper limit on the WIMP-proton cross section.
+    cl : float
+        Confidence Level
+    """
+    mass_wimp: float
+    sigma_p_upper: float
+    cl: float

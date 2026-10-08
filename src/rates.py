@@ -317,6 +317,13 @@ class RateCalculator:
         return self.rho_dm / self.wimp.mass
 
     @property
+    def mass_wimp(self) -> float:
+        """
+        WIMP mass in eV.
+        """
+        return self.wimp.mass
+
+    @property
     def ER_max(self) -> float:
         """
         Maximum recoil energy kinematically
