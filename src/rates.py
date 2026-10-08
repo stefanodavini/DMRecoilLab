@@ -101,6 +101,8 @@ class RateCalculator:
         self.rho_dm = rho_dm
         self.detector = detector
 
+        self._check_input()
+
     def dRdER(self, ER: NDArray, num=1000):
         """
         Differential recoil rate.
@@ -246,6 +248,9 @@ class RateCalculator:
         """
         Expected number of signal events in the detector operation.
 
+        This method is intended primarily 
+        for sensitivity and counting-experiment calculations.
+
         Parameters
         ----------
         num : int, optional
@@ -287,6 +292,17 @@ class RateCalculator:
 
         return integrated_counts[0]
 
+    def _check_input(self):
+        """
+        Check that the inputs are valid
+        """
+        if self.rho_dm < 0:
+            raise ValueError("Local DM density must be non negative")
+
+        if self.has_detector:
+            if self.detector.nucleus != self.interaction.nucleus:
+                raise ValueError("Detector and interaction nuclei are different")
+
     @property
     def wimp_number_density(self) -> float:
         """
@@ -323,5 +339,3 @@ class RateCalculator:
         calculator.
         """
         return self.detector is not None
-
-    
