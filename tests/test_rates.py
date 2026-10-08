@@ -8,6 +8,7 @@ from src.detectors.detectors import IdealDetector
 from src.rates import RateCalculator
 
 import numpy as np
+import pytest
 
 def _initialize_si_elastic(wimp: WIMP,
                            target: Nucleus,
@@ -24,11 +25,31 @@ def _initialize_halo_shm_boost():
     return shm.boost()
 
 def _initialize_default_si_elastic_rate(target: Nucleus,
-                                        sigma_p=1e-45) -> RateCalculator:
+                                        sigma_p=1e-45,
+                                        detector: IdealDetector = None
+                                        ) -> RateCalculator:
     wimp = WIMP(mass=1e11, spin=0)
     si = _initialize_si_elastic(wimp=wimp, target=target, sigma_p=sigma_p)
     halo = _initialize_halo_shm_boost()
-    return RateCalculator(wimp=wimp, halo=halo, interaction=si)
+    return RateCalculator(wimp=wimp, halo=halo, interaction=si, detector=detector)
+
+def test_rate_input_rhodm_negative():
+    wimp = WIMP(mass=1e11, spin=0)
+    si = _initialize_si_elastic(wimp=wimp, target=Ar40)
+    halo = _initialize_halo_shm_boost()
+    with pytest.raises(ValueError):
+        return RateCalculator(wimp=wimp, halo=halo, 
+                              interaction=si, rho_dm=-1e9)
+
+def test_rate_input_different_nuclei():
+    wimp = WIMP(mass=1e11, spin=0)
+    si = _initialize_si_elastic(wimp=wimp, target=Ar40)
+    halo = _initialize_halo_shm_boost()
+    detector = IdealDetector(nucleus=Xe131, mass_kg=50,
+                             exposure_days=365)
+    with pytest.raises(ValueError):
+        return RateCalculator(wimp=wimp, halo=halo, 
+                              interaction=si, detector=detector)
 
 def test_rate_ERmax_is_scalar():
     rate = _initialize_default_si_elastic_rate(Ar40)
@@ -147,5 +168,101 @@ def test_rate_detector_exposure_linearity():
 
     assert np.allclose(ratio, 365)
 
+def test_rate_expected_count_no_detector():
 
+    rc = _initialize_default_si_elastic_rate(target= Ar40,
+                                             detector=None)
 
+    with pytest.raises(ValueError):
+        rc.expected_counts()
+
+def test_rate_expected_count_nonnegative():
+
+    detector = IdealDetector(nucleus=Xe131,
+                             mass_kg=1e3,
+                             exposure_days=365,
+                             threshold_energy=2e3)
+
+    rc = _initialize_default_si_elastic_rate(target=Xe131,
+                                             detector=detector)
+    counts = rc.expected_counts()
+    assert np.isscalar(counts)
+    assert counts >= 0
+
+def test_rate_expected_count_linearity_sigma():
+
+    detector = IdealDetector(nucleus=Ar40,
+                             mass_kg=1e3,
+                             exposure_days=365,
+                             threshold_energy=20e3)
+
+    sigmas = [0, 1, 2]
+    counts = []
+
+    for s in sigmas:
+        xs = s * 1e-46
+        rc = _initialize_default_si_elastic_rate(target=Ar40,
+                                                 sigma_p=xs,
+                                                 detector=detector)
+        counts.append(rc.expected_counts())
+
+    assert counts[0] == 0
+    assert counts[1] > 0
+    assert np.isclose(counts[2], 2 * counts[1], rtol=1e-12)
+
+def test_rate_expected_count_linearity_mass():
+
+    masses = [0, 1, 2]
+    counts = []
+
+    for m in masses:
+        mkg = m * 1e3
+        detector = IdealDetector(nucleus=Ar40,
+                                 mass_kg=mkg,
+                                 exposure_days=365,
+                                 threshold_energy=20e3)
+
+        rc = _initialize_default_si_elastic_rate(target=Ar40,
+                                                 detector=detector)
+        counts.append(rc.expected_counts())
+
+    assert counts[0] == 0
+    assert counts[1] > 0
+    assert np.isclose(counts[2], 2 * counts[1], rtol=1e-12)
+
+def test_rate_expected_count_linearity_exposure():
+
+    expos = [0, 1, 2]
+    counts = []
+
+    for t in expos:
+        td = t * 365
+        detector = IdealDetector(nucleus=Xe131,
+                                 mass_kg=1e3,
+                                 exposure_days=td,
+                                 threshold_energy=3e3)
+
+        rc = _initialize_default_si_elastic_rate(target=Xe131,
+                                                 detector=detector)
+        counts.append(rc.expected_counts())
+
+    assert counts[0] == 0
+    assert counts[1] > 0
+    assert np.isclose(counts[2], 2 * counts[1], rtol=1e-12)
+
+def test_rate_expected_counts_thr_above_ERmax():
+    """
+    Check that the expected counts in Xe131
+    with energy threshold 500 keV
+    are zero
+    """
+    high_thr = 5e5 # eV
+    detector = IdealDetector(nucleus=Xe131,
+                             mass_kg=1e3,
+                             exposure_days=365,
+                             threshold_energy=high_thr)
+    
+    rc = _initialize_default_si_elastic_rate(target=Xe131,
+                                             detector=detector)
+
+    assert rc.expected_counts() == 0
