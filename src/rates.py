@@ -339,3 +339,23 @@ class RateCalculator:
         calculator.
         """
         return self.detector is not None
+
+    @property
+    def sigma_proton(self) -> float:
+        """
+        WIMP-proton cross-section parameter used to
+        normalize the interaction model.
+
+        Returns
+        -------
+        float
+            Reference WIMP-proton cross section in cm^2.
+
+        Notes
+        -----
+        Sensitivity calculations operate on this
+        quantity and therefore require interaction
+        models to expose a meaningful proton-level
+        cross-section normalization.
+        """
+        return self.interaction.sigma_proton

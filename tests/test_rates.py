@@ -266,3 +266,10 @@ def test_rate_expected_counts_thr_above_ERmax():
                                              detector=detector)
 
     assert rc.expected_counts() == 0
+
+def test_rate_sigma_proton():
+    sigma_p = 1e-47
+    rc = _initialize_default_si_elastic_rate(target=Ar40,
+                                             sigma_p=sigma_p)
+
+    assert rc.sigma_proton == sigma_p

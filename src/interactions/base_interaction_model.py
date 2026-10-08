@@ -274,3 +274,25 @@ class InteractionModel(ABC):
         Returns the ScatteringKinematics instance
         """
         return self.kin
+
+    @property
+    @abstractmethod
+    def sigma_proton(self) -> float:
+        """
+        WIMP-proton cross-section parameter used to
+        normalize the specific interaction model.
+
+        Returns
+        -------
+        float
+            Reference WIMP-proton cross section in cm^2.
+
+        Notes
+        -----
+        Sensitivity calculations operate on this
+        quantity and therefore require interaction
+        models to implement this method to
+        expose a meaningful proton-level
+        cross-section normalization.
+        """
+        pass
