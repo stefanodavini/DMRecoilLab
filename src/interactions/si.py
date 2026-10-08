@@ -246,3 +246,7 @@ class SIInteraction(InteractionModel):
         """
         mu_ratio2 = (self._reduced_mass_nucleus /self._reduced_mass_proton)**2
         return self.sigma_p *  mu_ratio2 * self.coherent_coupling**2
+
+    @property
+    def sigma_proton(self) -> float:
+        return self.sigma_p

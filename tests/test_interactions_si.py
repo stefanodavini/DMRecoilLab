@@ -23,6 +23,18 @@ def _initialize_si_inelastic() -> SIInteraction:
                        kinematics=kin, form_factor=PointLikeFormFactor())
     return si
 
+def test_si_sigma_proton():
+    sigma_p = 1e-48
+    wimp = WIMP(mass=1e11, spin=0)
+    target = Xe131
+
+    kin = ElasticKinematics(mX=wimp.mass, mT=target.mass)
+    si = SIInteraction(wimp=wimp, nucleus=target,
+                       kinematics=kin,
+                       sigma_p=sigma_p)
+
+    assert si.sigma_proton == sigma_p
+
 def test_si_elastic_shape():
     v = np.linspace(1e-5, 1e-3, 100)
     ER = np.linspace(1e3, 1e5, 50)
