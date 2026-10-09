@@ -1,10 +1,10 @@
-# RecoilLab
+# DM Recoil Lab
 
 ![Tests](https://github.com/stefanodavini/DMRecoilLab/actions/workflows/tests.yml/badge.svg)
 
 A modular Python toolkit for dark matter direct-detection calculations.
 
-RecoilLab provides a transparent and extensible framework for computing
+DMRecoilLab provides a transparent and extensible framework for computing
 nuclear recoil spectra from Weakly Interacting Massive Particles (WIMPs),
 with an emphasis on physical clarity, reproducibility, and education.
 
@@ -24,6 +24,7 @@ Current capabilities include:
 - Differential and integrated recoil rates
 - Detector exposure modelling
 - Benchmark nuclei (Xe, Ar, Ge, Si)
+- Upper limit esitmation
 - Plotting utilities
 - Extensive unit-test suite with physics-motivated validation tests
 
@@ -50,7 +51,7 @@ Compute the recoil spectrum for a xenon detector:
 import numpy as np
 from src.nuclei.isotopes import Xe131
 from src.halo import StandardHaloModel
-from src.kinematics import ElasticKinematics
+from src.utils.factory import create_kinematics
 from src.interactions.si import SIInteraction
 from src.interactions.particles import WIMP
 from src.nuclei.form_factors import HelmFormFactor
@@ -62,21 +63,24 @@ wimp = WIMP(mass=100e9, spin=0)
 target = Xe131
 
 helm = HelmFormFactor(nucleus=target)
-kinematics = ElasticKinematics(mx=wimp.mass, mT=target.mass)
+kinematics = create_kinematics(wimp=wimp, nucleus=target,
+                               delta=0)
+
 si = SIInteraction(wimp=wimp, nucleus=target,
                    kinematics=kinematics,
                    form_factor=helm,
-                   sigma_p=1e-48)
+                   sigma_p=1e-48,
+                   fn_over_fp=1)
 
-detector = IdealDetector(nucleus=target, mass_kg=1e3,
-                         exposure_days=365)
+detector = IdealDetector(nucleus=target, mass_kg=20e3,
+                         exposure_days=3650,
+                         threshold_energy=30e3)
 
 rate_calc = RateCalculator(wimp=wimp, halo=shm,
                            interaction=si, detector=detector)
 
-ER_eV = np.linspace(0, 1e5, 100)
-
-dRdE = rate_calc.dRdE(ER_eV)
+ER = np.linspace(0, 1e5, 100)
+dRdE = rate_calc.dRdER(ER)
 ```
 
 See the notebooks directory for complete examples.
@@ -125,7 +129,7 @@ Launch JupyterLab:
 jupyter lab
 ```
 
-and select the `recoillab` kernel.
+and select the `dmrecoillab` kernel.
 
 The notebooks reproduce benchmark calculations and provide examples of
 typical workflows.
@@ -158,12 +162,13 @@ pytest tests/test_halo.py -k test_shm_normalization
 
 ```text
 src/
-├── utils/
-├── nuclei/
+├── detectors/
 ├── form_factors/
 ├── interactions/
-├── detectors/
+├── nuclei/
 ├── plotting/
+├── sensitivity/
+├── utils/
 ├── halo.py
 ├── kinematics.py
 └── rates.py
