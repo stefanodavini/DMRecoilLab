@@ -1,3 +1,15 @@
+"""
+Tabulated halo velocity distributions.
+
+This module provides TabulatedVelocityDistribution, allowing
+isotropic velocity distributions to be constructed from
+tabulated values stored in external files or supplied as arrays.
+
+Values between tabulated points are obtained by linear
+interpolation, while values outside the tabulated range are
+taken to be zero.
+"""
+
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 from typing import Self
@@ -85,15 +97,24 @@ class TabulatedVelocityDistribution(IsotropicVelocityDistribution):
     @property
     def normalization(self) -> float:
         """
-        Numerical normalization of the tabulated distribution.
+        Numerical integral of the stored tabulated distribution.
+
+        Returns
+        -------
+        float
+            Value of ∫ f(v) dv computed using the trapezoidal rule.
         """
+
         return float(np.trapezoid(self._f, self._v))
 
     @classmethod
     def from_file(cls, filename: str) -> Self:
         """
-        Construct a velocity distribution from a file produced by
-        ``to_file``.
+        Construct a tabulated distribution from a text file produced
+        by to_file().
+
+        The file must contain exactly two columns corresponding to
+        speed and velocity-distribution values.
 
         Parameters
         ----------

@@ -1,3 +1,21 @@
+"""
+Abstract base classes and common utilities for isotropic dark-matter
+halo velocity distributions.
+
+This module defines the IsotropicVelocityDistribution interface,
+together with generic functionality shared by all halo models,
+including:
+- velocity modulus distribution f(v)
+- speed distributions g(v),
+- halo integrals η(vmin),
+- isotropic boosts,
+- tabulated export.
+
+Concrete halo models should derive from
+IsotropicVelocityDistribution and implement velocity_pdf()
+and maximum_speed.
+"""
+
 from abc import ABC, abstractmethod
 from functools import cached_property
 
@@ -84,7 +102,10 @@ class IsotropicVelocityDistribution(ABC):
                 filename: str,
                 n_points: int = 1000):
         """
-        Save the velocity distribution to a tabulated file.
+        Save the velocity distribution to a two-column text file.
+
+        The first column contains the speed v and the second column
+        contains the corresponding values of f(v).
 
         Parameters
         ----------
@@ -106,22 +127,23 @@ class IsotropicVelocityDistribution(ABC):
     @property
     def maximum_speed(self) -> float:
         """
-        Internal helper returning the maximum
-        physically allowed speed supported by
-        the distribution.
+        Maximum speed supported by the distribution.
+
+        Returns
+        -------
+        float
+            Largest speed for which the distribution can be nonzero.
         """
         raise NotImplementedError
 
-    _eta_grid_size = 10000
-
     @cached_property
-    def _eta_lookup_table(self):
+    def _eta_lookup_table(self, grid_size: int =10000):
         """
         Compute η(vmin) = ∫_vmin^∞ g(v)/v dv
         by integrating from vmax down to 0 on a reversed grid.
         """
 
-        v = np.linspace(0.0, self.maximum_speed, self._eta_grid_size)
+        v = np.linspace(0.0, self.maximum_speed, grid_size)
         mask = v > 0.0
 
         integrand = np.zeros_like(v)
@@ -159,7 +181,7 @@ class _BoostedDistribution(IsotropicVelocityDistribution):
         self._pdf_grid = self._compute_velocity_pdf()
 
 
-    def _compute_velocity_pdf(self):
+    def _compute_velocity_pdf(self) -> NDArray:
         """
         Angular average of
 
@@ -206,7 +228,20 @@ class _BoostedDistribution(IsotropicVelocityDistribution):
 
         return pdf
 
-    def velocity_pdf(self, v):
+    def velocity_pdf(self, v: ArrayLike) -> NDArray:
+        """
+        Interpolated velocity PDF of the boosted distribution.
+
+        Parameters
+        ----------
+        v : ArrayLike
+            Speed at which the distribution is evaluated.
+
+        Returns
+        -------
+        ndarray
+            Boosted velocity distribution evaluated at v.
+        """
         return np.interp(
             np.asarray(v),
             self._vgrid,

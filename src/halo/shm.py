@@ -1,3 +1,16 @@
+"""
+Standard Halo Model (SHM).
+
+This module provides the StandardHaloModel class, implementing
+the truncated Maxwell-Boltzmann halo commonly used in
+dark-matter direct-detection calculations.
+
+The distribution is defined in the Galactic frame and is
+normalized such that
+
+∫ 4π v² f(v) dv = 1.
+"""
+
 from dataclasses import dataclass
 from src.halo.base_halo_distribution import IsotropicVelocityDistribution
 from src.utils.constants import SHM_V0_kmps, SHM_VESC_kmps
