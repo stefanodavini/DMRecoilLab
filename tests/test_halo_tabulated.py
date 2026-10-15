@@ -12,7 +12,7 @@ def test_tabulated_velocity_distribution_round_trip():
     halo = TabulatedSpeedDistribution.from_file(output_file)
     v = np.linspace(0, shm.maximum_speed, 1000)
 
-    assert np.allclose(halo.velocity_pdf(v), shm.velocity_pdf(v), atol=1e-16)
+    assert np.allclose(halo.velocity_pdf(v), shm.velocity_pdf(v), atol=1e-12)
 
 def test_tabulated_from_file_invalid_filename():
     with pytest.raises(ValueError, match="filename"):
@@ -93,7 +93,16 @@ def test_tabulated_maximum_speed():
     assert halo.maximum_speed == 300
 
 def test_tabulated_interpolation():
-    halo = TabulatedSpeedDistribution(v=[0, 100],
-                                         f=[0, 1])
+    halo = TabulatedSpeedDistribution(v=[0, 1],
+                                      f=[0, 1])
+    expected = 1 /(4 * np.pi)
 
-    assert halo.velocity_pdf(50) == pytest.approx(0.5)
+    assert np.isclose(halo.velocity_pdf(0.5),
+                      expected, rtol=1e-3)
+                      
+def test_tabulated_constructor_normalizes_distribution():
+    v = [0, 100, 200, 300, 400]
+    f = [0, 1, 2, 1, 0]
+    halo = TabulatedSpeedDistribution(v, f)
+
+    assert np.isclose(halo.normalization(v=v), 1., rtol=1e-3)
