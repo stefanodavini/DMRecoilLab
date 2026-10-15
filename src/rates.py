@@ -61,7 +61,7 @@ from numpy.typing import NDArray
 from scipy.integrate import cumulative_trapezoid
 
 from src.detectors.detectors import IdealDetector
-from src.halo import IsotropicVelocityDistribution
+from src.halo.base_halo_distribution import IsotropicVelocityDistribution
 from src.interactions.base_interaction_model import InteractionModel
 from src.interactions.particles import WIMP
 from src.kinematics import ScatteringKinematics

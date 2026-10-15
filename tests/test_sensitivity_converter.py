@@ -2,7 +2,7 @@ from src.sensitivity.converter import sigma_upper_limit
 from src.sensitivity.poisson import PoissonUpperLimit
 from src.sensitivity.types import CountingExperiment
 
-from src.halo import StandardHaloModel
+from src.halo.shm import StandardHaloModel
 from src.kinematics import ElasticKinematics
 from src.interactions.si import SIInteraction
 from src.interactions.particles import WIMP

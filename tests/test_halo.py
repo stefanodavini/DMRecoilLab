@@ -1,8 +1,7 @@
 import numpy as np
 import pytest
 
-from src.halo import StandardHaloModel
-
+from src.halo.shm import StandardHaloModel
 
 def test_shm_input_v0():
     with pytest.raises(ValueError):
