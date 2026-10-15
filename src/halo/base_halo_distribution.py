@@ -6,10 +6,16 @@ This module defines the IsotropicSpeedDistribution interface,
 together with generic functionality shared by all halo models,
 including:
 - velocity modulus distribution f(v)
-- speed distributions g(v),
+- speed distributions g(v) = 4π v² f(v),
 - halo integrals η(vmin),
 - isotropic boosts,
-- tabulated export.
+- tabulated export,
+- normalization
+
+The normalization is such that
+∫ 4π v² f(v) dv = 1,
+equivalent to
+∫ g(v) dv = 1.
 
 Concrete halo models should derive from
 IsotropicSpeedyDistribution and implement velocity_pdf()

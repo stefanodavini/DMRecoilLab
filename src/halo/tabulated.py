@@ -47,12 +47,18 @@ class TabulatedSpeedDistribution(IsotropicSpeedDistribution):
         Monotonically increasing speed grid.
     f : ArrayLike
         Tabulated values of the speed distribution.
+    normalize : bool, optional
+            If True, renormalize the distribution so that
+            ∫ g(v) dv = 1,
+            where g(v) = 4 pi v^2 f(v).
+            If False, require the input distribution to already be
+            normalized within numerical precision.
     """
 
     def __init__(self,
                  v: ArrayLike,
                  f: ArrayLike,
-                 normalize: bool =True):
+                 normalize: bool = True):
         
         self._v = np.asarray(v, dtype=float)
         self._f = np.asarray(f, dtype=float)
@@ -115,7 +121,9 @@ class TabulatedSpeedDistribution(IsotropicSpeedDistribution):
         return float(self._v[mask][-1])
 
     @classmethod
-    def from_file(cls, filename: str) -> Self:
+    def from_file(cls,
+                  filename: str,
+                  normalize : bool = True) -> Self:
         """
         Construct a tabulated distribution from a text file produced
         by to_file().
@@ -127,6 +135,13 @@ class TabulatedSpeedDistribution(IsotropicSpeedDistribution):
         ----------
         filename: str
             Input filename.
+
+        normalize : bool, optional
+            If True, renormalize the distribution so that
+            ∫ g(v) dv = 1,
+            where g(v) = 4 pi v^2 f(v).
+            If False, require the input distribution to already be
+            normalized within numerical precision.
 
         Returns
         -------
@@ -140,7 +155,7 @@ class TabulatedSpeedDistribution(IsotropicSpeedDistribution):
         if data.ndim != 2 or data.shape[1] != 2:
             raise ValueError("Input file must contain two columns: v and f(v).")
 
-        return cls(v=data[:, 0], f=data[:, 1])
+        return cls(v=data[:, 0], f=data[:, 1], normalize=normalize)
 
     def _validate_and_normalize(self, normalize: bool = True) -> None:
         """
