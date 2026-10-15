@@ -51,7 +51,7 @@ Compute the recoil spectrum for a xenon detector:
 ```python
 import numpy as np
 from src.nuclei.isotopes import Xe131
-from src.halo import StandardHaloModel
+from src.halo.shm import StandardHaloModel
 from src.utils.factory import create_kinematics
 from src.interactions.si import SIInteraction
 from src.interactions.particles import WIMP
