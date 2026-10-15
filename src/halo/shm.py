@@ -12,7 +12,7 @@ normalized such that
 """
 
 from dataclasses import dataclass
-from src.halo.base_halo_distribution import IsotropicVelocityDistribution
+from src.halo.base_halo_distribution import IsotropicSpeedDistribution
 from src.utils.constants import SHM_V0_kmps, SHM_VESC_kmps
 
 import numpy as np
@@ -21,7 +21,7 @@ from scipy.stats import maxwell
 
 
 @dataclass
-class StandardHaloModel(IsotropicVelocityDistribution):
+class StandardHaloModel(IsotropicSpeedDistribution):
     v0: float = SHM_V0_kmps
     vesc: float = SHM_VESC_kmps
     """
@@ -84,7 +84,7 @@ class StandardHaloModel(IsotropicVelocityDistribution):
 
         Parameters
         ----------
-        vmin : array_like
+        vmin : ArrayLike
             Minimum speed.
 
         Returns

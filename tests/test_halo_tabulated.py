@@ -3,22 +3,22 @@ import pytest
 import warnings
 
 from src.halo.shm import StandardHaloModel
-from src.halo.tabulated import TabulatedVelocityDistribution
+from src.halo.tabulated import TabulatedSpeedDistribution
 
 def test_tabulated_velocity_distribution_round_trip():
     output_file = "tests/output/shm_roundtrip.txt"
     shm = StandardHaloModel()
     shm.to_file(output_file)
-    halo = TabulatedVelocityDistribution.from_file(output_file)
+    halo = TabulatedSpeedDistribution.from_file(output_file)
     v = np.linspace(0, shm.maximum_speed, 1000)
 
     assert np.allclose(halo.velocity_pdf(v), shm.velocity_pdf(v), atol=1e-16)
 
 def test_tabulated_from_file_invalid_filename():
     with pytest.raises(ValueError, match="filename"):
-        TabulatedVelocityDistribution.from_file(None)
+        TabulatedSpeedDistribution.from_file(None)
     with pytest.raises(ValueError, match="filename"):
-        TabulatedVelocityDistribution.from_file(filename="")
+        TabulatedSpeedDistribution.from_file(filename="")
 
 def test_to_file_invalid_filename():
     halo = StandardHaloModel()
@@ -32,68 +32,68 @@ def test_from_file_raises_empty_file():
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         with pytest.raises(ValueError):
-            TabulatedVelocityDistribution.from_file(filename=err_file)
+            TabulatedSpeedDistribution.from_file(filename=err_file)
 
 def test_from_file_raises_not_increasing():
     err_file = "tests/input/halo/invalid/duplicate_v.txt"
     with pytest.raises(ValueError, match="increasing"):
-        TabulatedVelocityDistribution.from_file(filename=err_file)
+        TabulatedSpeedDistribution.from_file(filename=err_file)
     err_file = "tests/input/halo/invalid/unsorted_v.txt"
     with pytest.raises(ValueError, match="increasing"):
-        TabulatedVelocityDistribution.from_file(filename=err_file)
+        TabulatedSpeedDistribution.from_file(filename=err_file)
 
 def test_from_file_raises_one_dimensional():
     v = np.asarray([[0., 100, 200, 300],[1, 2, 3, 4]])
     f = [1, 2, 3, 4]
     with pytest.raises(ValueError, match="one-dimensional"):
-        TabulatedVelocityDistribution(v, f)
+        TabulatedSpeedDistribution(v, f)
     v = [0., 100, 200, 300]
     f = np.asarray([[1, 2, 3, 4],[0, 100, 200, 300]])
     with pytest.raises(ValueError, match="one-dimensional"):
-        TabulatedVelocityDistribution(v, f)
+        TabulatedSpeedDistribution(v, f)
 
 def test_from_file_raises_different_lengths():
     v = [0, 100, 200, 300]
     f = [1, 2, 3]
     with pytest.raises(ValueError, match="length"):
-        TabulatedVelocityDistribution(v, f)
+        TabulatedSpeedDistribution(v, f)
 
 def test_from_file_raises_one_point():
     err_file = "tests/input/halo/invalid/one_point.txt"
     with pytest.raises(ValueError):
-        TabulatedVelocityDistribution.from_file(filename=err_file)
+        TabulatedSpeedDistribution.from_file(filename=err_file)
 
 def test_from_file_raises_nan():
     err_file = "tests/input/halo/invalid/nan_f.txt"
     with pytest.raises(ValueError, match="finite"):
-        TabulatedVelocityDistribution.from_file(filename=err_file)
+        TabulatedSpeedDistribution.from_file(filename=err_file)
     err_file = "tests/input/halo/invalid/nan_v.txt"
     with pytest.raises(ValueError, match="finite"):
-        TabulatedVelocityDistribution.from_file(filename=err_file)
+        TabulatedSpeedDistribution.from_file(filename=err_file)
 
 def test_from_file_raises_negative_f():
     err_file = "tests/input/halo/invalid/negative_f.txt"
     with pytest.raises(ValueError, match="negative"):
-        TabulatedVelocityDistribution.from_file(filename=err_file)
+        TabulatedSpeedDistribution.from_file(filename=err_file)
 
 def test_from_file_raises_one_column():
     err_file = "tests/input/halo/invalid/one_column.txt"
     with pytest.raises(ValueError):
-        TabulatedVelocityDistribution.from_file(filename=err_file)
+        TabulatedSpeedDistribution.from_file(filename=err_file)
 
 def test_from_file_raises_three_columns():
     err_file = "tests/input/halo/invalid/three_columns.txt"
     with pytest.raises(ValueError):
-        TabulatedVelocityDistribution.from_file(filename=err_file)
+        TabulatedSpeedDistribution.from_file(filename=err_file)
 
 def test_tabulated_maximum_speed():
     v = [0, 100, 200, 300, 400]
     f = [1, 1, 1, 1, 0]
-    halo = TabulatedVelocityDistribution(v, f)
+    halo = TabulatedSpeedDistribution(v, f)
     assert halo.maximum_speed == 300
 
 def test_tabulated_interpolation():
-    halo = TabulatedVelocityDistribution(v=[0, 100],
+    halo = TabulatedSpeedDistribution(v=[0, 100],
                                          f=[0, 1])
 
     assert halo.velocity_pdf(50) == pytest.approx(0.5)

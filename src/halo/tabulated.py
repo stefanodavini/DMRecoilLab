@@ -1,8 +1,8 @@
 """
-Tabulated halo velocity distributions.
+Tabulated halo speed distributions.
 
-This module provides TabulatedVelocityDistribution, allowing
-isotropic velocity distributions to be constructed from
+This module provides TabulatedSpeedDistribution, allowing
+isotropic speed distributions to be constructed from
 tabulated values stored in external files or supplied as arrays.
 
 Values between tabulated points are obtained by linear
@@ -14,9 +14,9 @@ import numpy as np
 from numpy.typing import ArrayLike, NDArray
 from typing import Self
 
-from src.halo.base_halo_distribution import IsotropicVelocityDistribution
+from src.halo.base_halo_distribution import IsotropicSpeedDistribution
 
-class TabulatedVelocityDistribution(IsotropicVelocityDistribution):
+class TabulatedSpeedDistribution(IsotropicSpeedDistribution):
     """
     Isotropic speed distribution defined by tabulated values.
 
@@ -123,7 +123,7 @@ class TabulatedVelocityDistribution(IsotropicVelocityDistribution):
 
         Returns
         -------
-        TabulatedVelocityDistribution
+        TabulatedSpeedDistribution
         """
         if not filename:
             raise ValueError("Invalid filename")

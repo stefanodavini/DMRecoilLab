@@ -61,7 +61,7 @@ from numpy.typing import NDArray
 from scipy.integrate import cumulative_trapezoid
 
 from src.detectors.detectors import IdealDetector
-from src.halo.base_halo_distribution import IsotropicVelocityDistribution
+from src.halo.base_halo_distribution import IsotropicSpeedDistribution
 from src.interactions.base_interaction_model import InteractionModel
 from src.interactions.particles import WIMP
 from src.kinematics import ScatteringKinematics
@@ -77,7 +77,7 @@ class RateCalculator:
 
     A RateCalculator combines
     - a WIMP model,
-    - a halo velocity distribution,
+    - a halo speed distribution,
     - a scattering interaction model,
     - an optional detector,
 
@@ -90,7 +90,7 @@ class RateCalculator:
 
     def __init__(self,
                  wimp: WIMP,
-                 halo: IsotropicVelocityDistribution,
+                 halo: IsotropicSpeedDistribution,
                  interaction: InteractionModel,
                  rho_dm=rho_dm_eV_cm3,
                  detector: IdealDetector | None = None):

@@ -2,7 +2,7 @@
 Abstract base classes and common utilities for isotropic dark-matter
 halo velocity distributions.
 
-This module defines the IsotropicVelocityDistribution interface,
+This module defines the IsotropicSpeedDistribution interface,
 together with generic functionality shared by all halo models,
 including:
 - velocity modulus distribution f(v)
@@ -12,7 +12,7 @@ including:
 - tabulated export.
 
 Concrete halo models should derive from
-IsotropicVelocityDistribution and implement velocity_pdf()
+IsotropicSpeedyDistribution and implement velocity_pdf()
 and maximum_speed.
 """
 
@@ -25,9 +25,9 @@ from scipy.integrate import cumulative_trapezoid
 
 from src.utils.constants import VEARTH_kmps
 
-class IsotropicVelocityDistribution(ABC):
+class IsotropicSpeedDistribution(ABC):
     """
-    Isotropic velocity distribution.
+    Isotropic speed distribution.
 
     Implementations must provide velocity_pdf(v),
     normalized such that
@@ -43,7 +43,7 @@ class IsotropicVelocityDistribution(ABC):
     @abstractmethod
     def velocity_pdf(self, v: ArrayLike) -> NDArray[np.float64]:
         """
-        Isotropic three-dimensional velocity distribution f(v).
+        Isotropic velocity modulus distribution f(v).
 
         For an isotropic halo:
         ∫ 4π v² f(v) dv = 1
@@ -54,7 +54,7 @@ class IsotropicVelocityDistribution(ABC):
 
     def speed_pdf(self, v: ArrayLike) -> NDArray[np.float64]:
         """
-        Speed distribution in the galactic frame.
+        Speed distribution g(v).
 
         Returns g(v) defined as
         g(v) = 4 pi v^2 f(v)
@@ -72,8 +72,8 @@ class IsotropicVelocityDistribution(ABC):
 
         Parameters
         ----------
-        vmin : array_like
-        Minimum speed.
+        vmin : ArrayLike
+            Minimum speed.
 
         Returns
         -------
@@ -102,7 +102,7 @@ class IsotropicVelocityDistribution(ABC):
                 filename: str,
                 n_points: int = 1000):
         """
-        Save the velocity distribution to a two-column text file.
+        Save the speed distribution to a two-column text file.
 
         The first column contains the speed v and the second column
         contains the corresponding values of f(v).
@@ -158,9 +158,9 @@ class IsotropicVelocityDistribution(ABC):
         return v, eta
 
 
-class _BoostedDistribution(IsotropicVelocityDistribution):
+class _BoostedDistribution(IsotropicSpeedDistribution):
     """
-    An isotropic distribution obtained by angular averaging
+    An isotropic speed distribution obtained by angular averaging
     of a boosted parent distribution.
     
     The averaged velocity PDF is precomputed on a grid during construction 
@@ -169,7 +169,7 @@ class _BoostedDistribution(IsotropicVelocityDistribution):
 
     def __init__(
         self,
-        parent: IsotropicVelocityDistribution,
+        parent: IsotropicSpeedDistribution,
         vboost: float,
         ngrid: int = 10000,
     ):

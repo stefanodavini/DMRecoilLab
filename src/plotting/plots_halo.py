@@ -1,4 +1,4 @@
-from src.halo import IsotropicVelocityDistribution
+from src.halo.base_halo_distribution import IsotropicSpeedDistribution
 
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 def plot_speed_distribution(
-        distribution: IsotropicVelocityDistribution,
+        distribution: IsotropicSpeedDistribution,
         vmax=None,
         num=1000,
         ax=None,
@@ -19,7 +19,7 @@ def plot_speed_distribution(
     Parameters
     ----------
     distribution
-        Velocity distribution object.
+        Isotropic speed distribution object.
     vmax : float
         Maximum speed shown on the x axis.
     num : integer
@@ -58,21 +58,21 @@ def plot_speed_distribution(
 
 
 def plot_boosted_speed_distribution(
-        distribution: IsotropicVelocityDistribution,
+        distribution: IsotropicSpeedDistribution,
         vboost: float,
         vmax=None,
         num=1000,
         ax=None
     ) -> tuple[Figure, Axes]:
     """
-    Compare a galactic-frame velocity distribution
+    Compare a galactic-frame speed distribution
     with the corresponding boosted observer-frame
     distribution.
 
     Parameters
     ----------
     distribution
-        Isotropic Velocity distribution object.
+        Isotropic Speed distribution object.
 
     vboost : float
         Boost speed
