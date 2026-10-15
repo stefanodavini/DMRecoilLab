@@ -148,13 +148,13 @@ pytest
 Run a specific test file:
 
 ```bash
-pytest tests/test_halo.py
+pytest tests/test_halo_shm.py
 ```
 
 Run a specific test:
 
 ```bash
-pytest tests/test_halo.py -k test_shm_normalization
+pytest tests/test_halo_shm.py -k test_shm_normalization
 ```
 
 ---
@@ -164,13 +164,12 @@ pytest tests/test_halo.py -k test_shm_normalization
 ```text
 src/
 ├── detectors/
-├── form_factors/
+├── halo/
 ├── interactions/
 ├── nuclei/
 ├── plotting/
 ├── sensitivity/
 ├── utils/
-├── halo.py
 ├── kinematics.py
 └── rates.py
 

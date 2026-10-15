@@ -6,10 +6,16 @@ This module defines the IsotropicSpeedDistribution interface,
 together with generic functionality shared by all halo models,
 including:
 - velocity modulus distribution f(v)
-- speed distributions g(v),
+- speed distributions g(v) = 4π v² f(v),
 - halo integrals η(vmin),
 - isotropic boosts,
-- tabulated export.
+- tabulated export,
+- normalization
+
+The normalization is such that
+∫ 4π v² f(v) dv = 1,
+equivalent to
+∫ g(v) dv = 1.
 
 Concrete halo models should derive from
 IsotropicSpeedyDistribution and implement velocity_pdf()
@@ -124,6 +130,26 @@ class IsotropicSpeedDistribution(ABC):
 
         np.savetxt(filename, data, header="v f(v)")
 
+    def normalization(self, v: ArrayLike) -> float:
+        """
+        Compute the normalization of the speed distribution.
+
+        Parameters
+        ----------
+        v : ArrayLike
+            Integration grid.
+
+        Returns
+        -------
+        float
+            Value of ∫ g(v) dv
+            where g(v) = 4π v² f(v).
+
+        A properly normalized distribution returns unity.
+        """
+        v = np.asarray(v)
+        return float(np.trapezoid(self.speed_pdf(v), v))
+
     @property
     def maximum_speed(self) -> float:
         """
@@ -179,7 +205,6 @@ class _BoostedDistribution(IsotropicSpeedDistribution):
         self._vgrid = np.linspace(0.0, self.maximum_speed, ngrid)
 
         self._pdf_grid = self._compute_velocity_pdf()
-
 
     def _compute_velocity_pdf(self) -> NDArray:
         """

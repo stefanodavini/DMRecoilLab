@@ -146,3 +146,10 @@ def test_shm_boost_eta_tails():
     lab_eta_tail = shm_lab.eta(vmin=vtail)
 
     assert np.all(lab_eta_tail - gal_eta_tail >= 0)
+
+def test_to_file_invalid_filename():
+    halo = StandardHaloModel()
+    with pytest.raises(ValueError, match="filename"):
+        halo.to_file(None)
+    with pytest.raises(ValueError, match="filename"):
+        halo.to_file(filename="")
