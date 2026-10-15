@@ -18,6 +18,7 @@ graduate-level dark matter phenomenology.
 Current capabilities include:
 
 - Standard Halo Model (SHM)
+- User-defined tabulated halo speed distributions
 - Elastic and inelastic WIMP scattering
 - Spin-independent (SI) interactions
 - Helm nuclear form factors
@@ -30,8 +31,8 @@ Current capabilities include:
 
 The code is organized into independent modules describing:
 
-- Halo models
-- Scattering kinematics
+- Halo models (built-in and tabulated)
+- Scattering kinematics (elastic and inelastic)
 - Nuclear properties
 - Nuclear response functions
 - Interaction models
