@@ -27,17 +27,18 @@ from src.nuclei.form_factors import FormFactor, HelmFormFactor
 from src.utils.factory import create_kinematics
 from src.rates import RateCalculator
 
-from numpy.typing import NDArray
+from numpy.typing import NDArray, ArrayLike
 import numpy as np
 
 def compute_mass_sigma_limit_si(
-    masses: NDArray,
+    masses: ArrayLike,
     detector: IdealDetector,
     delta: float = 0.0,
     halo: IsotropicSpeedDistribution | None = None,
     form_factor: FormFactor | None = None,
     cl: float = 0.9,
-    sigma_reference: float = 1e-45):
+    sigma_reference: float = 1e-45,
+    ) -> NDArray:
     """
     Compute a spin-independent WIMP-proton sensitivity curve.
 
@@ -84,6 +85,8 @@ def compute_mass_sigma_limit_si(
     into an upper limit on the WIMP-proton cross
     section.
     """
+    masses = np.asarray(masses)
+
     if halo is None:
         halo = StandardHaloModel().boost()
 
