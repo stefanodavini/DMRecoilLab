@@ -163,6 +163,7 @@ pytest tests/test_halo_shm.py -k test_shm_normalization
 
 ```text
 src/
+├── analysis/
 ├── detectors/
 ├── halo/
 ├── interactions/
@@ -196,7 +197,7 @@ literature are included in the repository.
 
 ## Intended Use
 
-RecoilLab is primarily intended for:
+DMRecoilLab is primarily intended for:
 
 - Teaching and learning dark matter phenomenology
 - Prototyping new interaction models
@@ -205,6 +206,30 @@ RecoilLab is primarily intended for:
 
 It is not currently intended as a replacement for large-scale
 collaboration software frameworks.
+
+---
+
+## Disclaimer
+
+DMRecoilLab is an educational and research software
+package intended for phenomenological studies of
+dark-matter direct detection.
+
+The detector configurations provided with the package
+are simplified representations intended to reproduce
+approximate detector characteristics such as target
+material, exposure, and threshold.
+
+Results produced by DMRecoilLab:
+- are not official results of LZ, XENON, DEAP, DarkSide, or
+  any other experimental collaboration;
+- are not reviewed, validated, or endorsed by those
+  collaborations;
+- should not be interpreted as official projections,
+  exclusions, or sensitivity estimates.
+
+Users requiring official experimental results should
+refer to collaboration publications and data releases.
 
 ---
 
@@ -234,4 +259,3 @@ Citation metadata is provided through `CITATION.cff`.
 
 This project is distributed under the BSD 3-Clause License.
 See the LICENSE file for details.
-
