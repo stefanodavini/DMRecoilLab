@@ -29,7 +29,7 @@ def _initialize_default_rate_calculator(target: Nucleus,
                              exposure_days=365,
                              threshold_energy=10e3)
     
-    return RateCalculator(wimp=wimp, halo=shm, interaction=si, detector=detector)
+    return RateCalculator(halo=shm, interaction=si, detector=detector)
 
 def test_sigma_upper_limit_returns_correct_mass():
     limit = PoissonUpperLimit(cl=0.9)
@@ -82,8 +82,8 @@ def test_sigma_upper_limit_raises_zero_expected_count():
                              exposure_days=365,
                              threshold_energy=high_threshold)
     
-    rc0 = RateCalculator(wimp=wimp, halo=shm,
-                        interaction=si, detector=detector)
+    rc0 = RateCalculator(halo=shm, interaction=si,
+                         detector=detector)
 
     limit = PoissonUpperLimit(cl=0.95)
 
@@ -111,8 +111,8 @@ def test_sigma_upper_limit_nobkg_linearity_exposure():
         detector = IdealDetector(nucleus=Xe131, mass_kg=1e3,
                                  exposure_days=days,
                                  threshold_energy=3e3)
-        rc0 = RateCalculator(wimp=wimp, halo=shm,
-                             interaction=si, detector=detector)
+        rc0 = RateCalculator(halo=shm, interaction=si,
+                             detector=detector)
 
         result =  sigma_upper_limit(statistic=limit, rate_calculator=rc0)
         sigma_lims.append(result.sigma_p_upper)

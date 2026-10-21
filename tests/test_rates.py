@@ -31,15 +31,15 @@ def _initialize_default_si_elastic_rate(target: Nucleus,
     wimp = WIMP(mass=1e11, spin=0)
     si = _initialize_si_elastic(wimp=wimp, target=target, sigma_p=sigma_p)
     halo = _initialize_halo_shm_boost()
-    return RateCalculator(wimp=wimp, halo=halo, interaction=si, detector=detector)
+    return RateCalculator(halo=halo, interaction=si, detector=detector)
 
 def test_rate_input_rhodm_negative():
     wimp = WIMP(mass=1e11, spin=0)
     si = _initialize_si_elastic(wimp=wimp, target=Ar40)
     halo = _initialize_halo_shm_boost()
     with pytest.raises(ValueError):
-        return RateCalculator(wimp=wimp, halo=halo, 
-                              interaction=si, rho_dm=-1e9)
+        return RateCalculator(halo=halo, interaction=si,
+                              rho_dm=-1e9)
 
 def test_rate_input_different_nuclei():
     wimp = WIMP(mass=1e11, spin=0)
@@ -48,8 +48,8 @@ def test_rate_input_different_nuclei():
     detector = IdealDetector(nucleus=Xe131, mass_kg=50,
                              exposure_days=365)
     with pytest.raises(ValueError):
-        return RateCalculator(wimp=wimp, halo=halo, 
-                              interaction=si, detector=detector)
+        return RateCalculator(halo=halo, interaction=si,
+                              detector=detector)
 
 def test_rate_ERmax_is_scalar():
     rate = _initialize_default_si_elastic_rate(Ar40)
@@ -95,7 +95,7 @@ def test_rate_density_zero():
     si = _initialize_si_elastic(wimp=wimp, target=target)
     halo = _initialize_halo_shm_boost()
 
-    ratecalc = RateCalculator(wimp=wimp, halo=halo, interaction=si,
+    ratecalc = RateCalculator(halo=halo, interaction=si,
                               rho_dm=0.)
     
     ER = np.linspace(0, 1e5, 100)
@@ -133,10 +133,10 @@ def test_rate_detector_mass_linearity():
     shm = _initialize_halo_shm_boost()
     si = _initialize_si_elastic(wimp=wimp, target=nucleus)
 
-    rate_10 = RateCalculator(wimp=wimp, halo=shm,
+    rate_10 = RateCalculator(halo=shm,
                             interaction=si,
                             detector=det_10)
-    rate_500 = RateCalculator(wimp=wimp, halo=shm,
+    rate_500 = RateCalculator(halo=shm,
                               interaction=si,
                               detector=det_500)
 
@@ -156,12 +156,12 @@ def test_rate_detector_exposure_linearity():
     shm = _initialize_halo_shm_boost()
     si = _initialize_si_elastic(wimp=wimp, target=nucleus)
 
-    rate_1day = RateCalculator(wimp=wimp, halo=shm,
-                            interaction=si,
-                            detector=det_1day)
-    rate_1year = RateCalculator(wimp=wimp, halo=shm,
-                              interaction=si,
-                              detector=det_1year)
+    rate_1day = RateCalculator(halo=shm,
+                               interaction=si,
+                               detector=det_1day)
+    rate_1year = RateCalculator(halo=shm,
+                                interaction=si,
+                                detector=det_1year)
 
     ER = np.linspace(1, 1e5, 10)
     ratio =  rate_1year.dRdER(ER) / rate_1day.dRdER(ER)

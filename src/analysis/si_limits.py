@@ -108,7 +108,7 @@ def compute_mass_sigma_limit_si(
                                     form_factor=form_factor,
                                     sigma_p=sigma_reference)
     
-        rate = RateCalculator(wimp=wimp, halo=halo,
+        rate = RateCalculator(halo=halo,
                               interaction=interaction,
                               detector=detector)
     
