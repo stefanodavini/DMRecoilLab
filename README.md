@@ -75,13 +75,16 @@ si = SIInteraction(wimp=wimp, nucleus=target,
 
 detector = IdealDetector(nucleus=target, mass_kg=20e3,
                          exposure_days=3650,
-                         threshold_energy=30e3)
+                         threshold_energy=3e3)
 
-rate_calc = RateCalculator(wimp=wimp, halo=shm,
+rate_calc = RateCalculator(halo=shm,
                            interaction=si, detector=detector)
 
 ER = np.linspace(0, 1e5, 100)
+# get dRdE spectrum
 dRdE = rate_calc.dRdER(ER)
+# get expected counts in the detector
+cnt = rate_calc.expected_counts()
 ```
 
 See the notebooks directory for complete examples.

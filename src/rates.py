@@ -63,7 +63,6 @@ from scipy.integrate import cumulative_trapezoid
 from src.detectors.detectors import IdealDetector
 from src.halo.base_halo_distribution import IsotropicSpeedDistribution
 from src.interactions.base_interaction_model import InteractionModel
-from src.interactions.particles import WIMP
 from src.kinematics import ScatteringKinematics
 from src.utils.constants import CM_TO_M, KM_TO_M, LOCAL_DM_DENSITY_GeV_cm3
 from src.utils.conversions import convert_from_kmps_to_beta
@@ -76,9 +75,8 @@ class RateCalculator:
     event counts for a dark-matter direct-detection experiment.
 
     A RateCalculator combines
-    - a WIMP model,
     - a halo speed distribution,
-    - a scattering interaction model,
+    - a WIMP scattering interaction model,
     - an optional detector,
 
     and provides methods to evaluate differential recoil
@@ -89,15 +87,14 @@ class RateCalculator:
     """
 
     def __init__(self,
-                 wimp: WIMP,
                  halo: IsotropicSpeedDistribution,
                  interaction: InteractionModel,
                  rho_dm=rho_dm_eV_cm3,
                  detector: IdealDetector | None = None):
         
-        self.wimp = wimp
         self.halo = halo
         self.interaction = interaction
+        self.wimp = interaction.wimp
         self.rho_dm = rho_dm
         self.detector = detector
 
