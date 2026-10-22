@@ -20,6 +20,8 @@ currently included:
 - atomic number Z
 - nuclear mass
 - nuclear spin
+- expectation value of proton spin
+- expectation value of neutron spin
 
 Additional quantities relevant for future
 interaction models (e.g. spin-dependent
@@ -53,6 +55,9 @@ class Nucleus:
 
     mass: float
     spin: float
+
+    Sp: float = 0
+    Sn: float = 0
 
     @property
     def N(self) -> int:

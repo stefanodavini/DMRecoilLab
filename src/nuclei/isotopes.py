@@ -7,6 +7,13 @@ pre-configured Nucleus instances with
 approximate nuclear masses and spins.
 
 All masses are expressed in eV (c=1).
+
+References
+----------
+Nucleon spins are taken from
+"A new model-independent method for extracting spin-dependent
+cross section limits from dark matter searches"
+D.R. Tovey et al. PhysLett.B 488 (2000) 17-26
 """
 
 from src.nuclei.nucleus import Nucleus
@@ -43,6 +50,8 @@ Si29 = Nucleus(
     Z=14,
     mass=27.0e9,
     spin=0.5,
+    Sp=-0.002,
+    Sn=0.130,
 )
 
 Si30 = Nucleus(
@@ -91,6 +100,8 @@ Ge73 = Nucleus(
     Z=32,
     mass=68.0e9,
     spin=9/2,
+    Sp=0.030,
+    Sn=0.378,
 )
 
 Ge74 = Nucleus(
@@ -127,6 +138,8 @@ Xe129 = Nucleus(
     Z=54,
     mass=120.1e9,
     spin=1/2,
+    Sp=0.028,
+    Sn=0.359,
 )
 
 Xe130 = Nucleus(
@@ -143,6 +156,8 @@ Xe131 = Nucleus(
     Z=54,
     mass=122.0e9,
     spin=3/2,
+    Sp=-0.009,
+    Sn=-0.227,
 )
 
 Xe132 = Nucleus(
