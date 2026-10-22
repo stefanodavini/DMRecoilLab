@@ -43,6 +43,7 @@ def test_sd_proton_only_coupling():
                        kinematics=kin,
                        an_over_ap=0)
 
+    assert sd.spin_coupling == sd.nucleus.Sp
     assert sd.spin_coupling == Xe131.Sp
 
 def test_sd_neutron_only_coupling():
@@ -55,8 +56,32 @@ def test_sd_neutron_only_coupling():
                        an_over_ap=np.nan)
 
     assert sd.sigma_proton == 0.
+    assert sd.spin_coupling == sd.nucleus.Sn
     assert sd.spin_coupling == Xe131.Sn
 
+def test_sd_sigma_nucleus():
+    """
+    Check the cross secion normalization
+    as parametrized by the appropriate reduced masses
+    and spin factors
+    """
+    wimp = WIMP(mass=1e11, spin=0)
+    target = Xe131
+
+    kin = ElasticKinematics(mX=wimp.mass, mT=target.mass)
+
+    sigma_p = 1.
+    sd = SDInteraction(wimp=wimp, nucleus=target, 
+                       kinematics=kin,
+                       sigma_p=sigma_p)
+
+    mu_ratio2 = (sd._reduced_mass_nucleus / sd._reduced_mass_proton)**2
+    j = Xe131.spin
+    j_factor = 4 / 3 * (j + 1.) / j
+    spin_coupling2 = sd.spin_coupling **2
+    sigma_expected = j_factor * sigma_p * mu_ratio2 * spin_coupling2
+
+    assert np.isclose(sigma_expected, sd.sigma_nucleus, rtol=1e-6)
 
 def test_sd_elastic_shape():
     v = np.linspace(1e-5, 1e-3, 100)
@@ -116,7 +141,7 @@ def test_sd_endothermic_masking_below_threshold():
     dsigma = sd.dsigma_dER(ER=ER, v=v)
     assert np.all(dsigma == 0)
 
-def test_si_endothermic_positive_above_threshold():
+def test_sd_endothermic_positive_above_threshold():
     sd = _initialize_sd_inelastic()
     kin = sd.scattering_kinematics
 
@@ -183,3 +208,18 @@ def test_sd_elastic_speed_scaling():
     assert np.isclose(ratio_12, 4., rtol=1e-4)
     assert np.isclose(ratio_13, 9., rtol=1e-4)
     assert np.isclose(ratio_23, 9./4., rtol=1e-4)
+
+def test_sd_elastic_total_cross_section():
+    """
+    Check that that integral of dsigma/dER
+    int_0^ERmax dsigma_dER dER 
+    is the nucleus cross section
+    """
+    sd = _initialize_sd_elastic()
+    v = np.array([1e-3])
+
+    sigma_num = sd.integrate_sigma(v=v)[0]
+    sigma_nucleus = sd.sigma_nucleus
+    ratio = sigma_num / sigma_nucleus
+
+    assert np.isclose(ratio, 1, rtol=1e-6)

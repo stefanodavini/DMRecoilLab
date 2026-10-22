@@ -8,8 +8,8 @@ commonly used in direct-detection analyses.
 The implementation supports:
 - elastic and inelastic kinematics
 - arbitrary proton/neutron coupling ratios
-- point-like nuclei
-- form factor equals 1
+- point-like SD response
+- F_SD^2(q) = 1
 
 The normalization follows the
 WIMP-proton cross section sigma_p.
@@ -42,7 +42,7 @@ Examples
 
 >>> dsigma = interaction.dsigma_dER(v=v, ER=ER)
 
->>> sigma_over = interaction.integrate_dsigma(v=v, ERmin=1e4)
+>>> sigma_over = interaction.integrate_sigma(v=v, ERmin=1e4)
 """
 
 from numpy.typing import NDArray
@@ -114,6 +114,11 @@ class SDInteraction(InteractionModel):
         Ratio between neutron and proton
         couplings.
         Default is 1 (isospin-conserving).
+
+        If NaN, a neutron-only interaction
+        is assumed and the cross section is
+        normalized according to the internal
+        neutron-only convention.
     """
 
     def __init__(
@@ -143,24 +148,59 @@ class SDInteraction(InteractionModel):
 
     @property
     def spin_coupling(self) -> float:
+        """
+        Effective spin coupling entering the SD cross section.
+
+        Returns
+        -------
+        float
+            Effective nuclear spin coupling
+
+            <Sp> + (an/ap) <Sn>
+
+        for finite an/ap.
+
+        If an_over_ap is NaN, a neutron-only
+        convention is assumed and the returned
+        coupling is simply <Sn>.
+        """
 
         if np.isnan(self.an_over_ap):
             return self.nucleus.Sn
 
-        return (
-            self.nucleus.Sp
-            + self.an_over_ap * self.nucleus.Sn
-        )
+        return self.nucleus.Sp + self.an_over_ap * self.nucleus.Sn
 
     @property
     def sigma_nucleus(self) -> float:
+        """
+        Effective SD WIMP-nucleus cross section.
+
+        Returns
+        -------
+        float
+            Zero-momentum-transfer SD cross section
+            in cm^2.
+
+        Notes
+        -----
+        In the neutron-only convention
+        (an_over_ap = NaN), sigma_p acts as a
+        generic normalization parameter.
+
+        A future sigma_reference abstraction may
+        replace the proton reduced-mass
+        normalization used here.
+        """
         J = self.nucleus.spin
 
         if J == 0.:
             return 0.
 
         mu_ratio2 = (self._reduced_mass_nucleus / self._reduced_mass_proton) ** 2
-        # in the neutron only, scale by reduced mass ratio squared?
+        # TODO:
+        # when sigma_reference is introduced,
+        # neutron-only interactions should use
+        # a neutron-normalized reduced mass.
 
         spin_factor = 4 * (J + 1) / (3 * J)
     
@@ -169,19 +209,57 @@ class SDInteraction(InteractionModel):
     def dsigma_dER(self,
                    v: NDArray,
                    ER: NDArray) -> NDArray:
+        """
+        Differential spin-dependent cross section.
+
+        Parameters
+        ----------
+        v : ndarray, shape (Nv,)
+            Incoming WIMP-speed grid
+            in unit c=1.
+
+        ER : ndarray, shape (NER,)
+            Recoil-energy grid in eV.
+
+        Returns
+        -------
+        ndarray, shape (Nv, NER)
+
+            Differential cross section evaluated
+            on the speed-recoil-energy mesh.
+
+            Axis convention:
+            axis 0 -> speed
+            axis 1 -> recoil energy
+
+        Notes
+        -----
+        The returned values already include:
+        - sping coupling enhancement
+        - reduced-mass scaling
+        - kinematic masking
+
+        Kinematically forbidden regions are
+        automatically set to zero.
+
+        For a point-like nucleus and elastic
+        scattering, integrating the differential
+        cross section over the physically allowed
+        recoil-energy range reproduces the total
+        WIMP-nucleus total cross section sigma_A.
+        """
 
         ER_grid, v_grid = self._broadcast_grids(ER=ER, v=v)
 
-        # check shape here, must be coherent with return type
-        if self.nucleus.spin == 0:
-            return np.zeros((len(v), len(ER)), dtype=float)
+        if self.nucleus.spin == 0.:
+            return np.zeros_like(v_grid * ER_grid, dtype=float)
 
         kinematic_prefactor = np.where(
             v_grid > 0,
             self.nucleus.mass / (2* self._reduced_mass_nucleus**2 * v_grid**2),
             0.0)
 
-        F2 = 1 # modify here to include form factor implementations
+        F2 = 1. # modify here to include form factor implementations
 
         dsigma_unmasked = (kinematic_prefactor * self.sigma_nucleus * F2)
 
@@ -190,6 +268,20 @@ class SDInteraction(InteractionModel):
 
     @property
     def sigma_proton(self) -> float:
+        """
+        Proton-normalized reference cross section.
+
+        Returns
+        -------
+        float
+            The proton cross-section normalization
+            parameter used by this interaction model.
+
+        For neutron-only interactions
+        (an_over_ap = NaN), zero is returned
+        because the interaction is not
+        proton-normalized.
+        """
         if np.isnan(self.an_over_ap):
             return 0.
 
