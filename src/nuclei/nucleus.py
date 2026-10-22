@@ -20,6 +20,8 @@ currently included:
 - atomic number Z
 - nuclear mass
 - nuclear spin
+- expectation value of proton spin
+- expectation value of neutron spin
 
 Additional quantities relevant for future
 interaction models (e.g. spin-dependent
@@ -38,14 +40,18 @@ class Nucleus:
     ----------
     symbol
         Human-readable isotope label.
-    A
+    A : int
         Mass number.
-    Z
+    Z : int
         Atomic number.
-    mass
+    mass : float
         Nuclear mass in eV (c=1).
-    spin
+    spin : float
         Nuclear spin J.
+    Sp : float
+        Expectation value of proton spin.
+    Sn : float
+        Expectation value of neutron spin.
     """
     symbol: str
     A: int
@@ -53,6 +59,9 @@ class Nucleus:
 
     mass: float
     spin: float
+
+    Sp: float = 0.
+    Sn: float = 0.
 
     @property
     def N(self) -> int:
