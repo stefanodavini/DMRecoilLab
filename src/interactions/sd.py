@@ -34,7 +34,8 @@ Examples
 ...     wimp=wimp,
 ...     nucleus=Xe131,
 ...     kinematics=kin,
-...     sigma_p=1e-45,,
+...     sigma_p=1e-45,
+...     an_over_ap=1,
 ... )
 
 >>> v = np.linspace(0, 2.5e-3, 100)
@@ -42,7 +43,7 @@ Examples
 
 >>> dsigma = interaction.dsigma_dER(v=v, ER=ER)
 
->>> sigma_over = interaction.integrate_sigma(v=v, ERmin=1e4)
+>>> sigma_over = interaction.integrate_sigma(v=v, ER_min=1e4)
 """
 
 from numpy.typing import NDArray

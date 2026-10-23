@@ -44,7 +44,7 @@ Examples
 
 >>> dsigma = interaction.dsigma_dER(v=v, ER=ER)
 
->>> sigma_over = interaction.integrate_sigma(v=v, ERmin=1e4)
+>>> sigma_over = interaction.integrate_sigma(v=v, ER_min=1e4)
 """
 
 from numpy.typing import NDArray
