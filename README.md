@@ -21,6 +21,7 @@ Current capabilities include:
 - User-defined tabulated halo speed distributions
 - Elastic and inelastic WIMP scattering
 - Spin-independent (SI) interactions
+- Spin-dependent (SD) interactions
 - Helm nuclear form factors
 - Differential and integrated recoil rates
 - Detector exposure modelling
@@ -242,7 +243,6 @@ Planned extensions include:
 
 - Additional halo models
 - Additional nuclear response models
-- Spin-dependent interactions
 - EFT models
 - Detector response functions
 - Improved sensitivity and exclusion-curve calculations

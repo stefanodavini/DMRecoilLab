@@ -106,7 +106,10 @@ def test_si_endothermic_positive_above_threshold():
     assert np.all(dsigma > 0)
 
 def test_si_elastic_speed_scaling():
-    # test the v^-2 scaling
+    """
+    Check the speed scaling as v^-2,
+    away from masking boundaries
+    """
     v1 = 1e-3
     v2 = 2e-3
     v3 = 3e-3
