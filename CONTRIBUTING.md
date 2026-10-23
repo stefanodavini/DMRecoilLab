@@ -280,6 +280,7 @@ Notebook outputs often contain:
 - execution counters
 - plots
 - machine-specific metadata
+
 These changes make reviews difficult and create unnecessary git conflicts.
 By default, contributors should commit notebooks without outputs.
 
@@ -400,6 +401,8 @@ Review may evaluate:
 - Documentation completeness
 - Test coverage
 
+A reviewer checklist template can be found at .github/review_checklist.md.
+
 Review comments should be viewed as part of the collaborative scientific process rather than as criticism.
 
 ---
@@ -441,10 +444,10 @@ Contributions outside the project's scientific scope may be declined even when t
 
 A task is complete when:
 - implementation is finished
-- tests pass
 - documentation is updated
-- review comments are addressed
 - branch is rebased on current main
+- CI tests pass
+- review comments are addressed
 - PR is approved and merged
 - followup actions are written in the PR
 
