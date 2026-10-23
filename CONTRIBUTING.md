@@ -228,14 +228,13 @@ Before opening a Pull Request,
 git status
 
 # Update local main
-git checkout main
-git pull origin main
+git fetch origin
 
-# Return to your branch
-git checkout 
+# Return to your branch if not already
+git checkout 32-new-eft-feature
 
 # Rebase onto latest main
-git rebase main 32-new-eft-feature
+git rebase origin/main
 ```
 Resolve conflicts if needed.
 
@@ -446,7 +445,7 @@ A task is complete when:
 - implementation is finished
 - documentation is updated
 - branch is rebased on current main
-- CI tests pass
+- Continuous Integration tests pass
 - review comments are addressed
 - PR is approved and merged
 - followup actions are written in the PR
