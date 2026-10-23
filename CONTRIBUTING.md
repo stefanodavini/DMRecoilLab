@@ -187,6 +187,102 @@ Before opening a Pull Request:
 
 The description of the Pull Request must report any deviations from the proposed solution in the linked issue.
 
+## 5. Typical git workflow
+
+Example of a typical development workflow.
+
+Activate the dmrecoillab micromamba environment.
+```bash
+micromamba activate dmrecoillab
+```
+
+Develop your code in the feature branch.
+```bash
+# Start from an up-to-date main
+git checkout main
+git pull origin main
+
+# Switch to the feature branch
+git checkout 32-new-eft-feature
+
+# Work normally...
+# edit files
+
+# Inspect changes
+git status
+
+# Stage selected files
+git add src/interactions/new_interaction.py
+git add tests/test_new_interaction.py
+
+# Commit
+git commit -m "Added new feature interaction"
+
+# Push branch
+git push 
+```
+
+Before opening a Pull Request,
+```bash
+# Check everything is ready
+git status
+
+# Update local main
+git fetch origin
+
+# Return to your branch if not already
+git checkout 32-new-eft-feature
+
+# Rebase onto latest main
+git rebase origin/main
+```
+Resolve conflicts if needed.
+
+Then
+```bash
+pytest
+```
+
+Finally, and only when all the tests pass
+```bash
+git push
+```
+or after a rebase
+```bash
+git push --force-with-lease
+```
+
+## 6. Rule of thumb:
+Every new feature is developed in a featured branch, and every related Pull Request should be based on the latest version of main and pass the full test suite locally before review.
+
+## 7. Jupyter notebook output
+To keep the repository lightweight and avoid unnecessary merge conflicts, notebook outputs are automatically stripped before commits using nbstripout.
+
+First-time setup:
+```bash
+micromamba activate dmrecoillab
+pip install nbstripout
+nbstripout --install
+```
+
+Verify installation:
+```bash
+git config --get filter.nbstripout.clean
+```
+Expected output:
+```bash
+nbstripout
+```
+
+Notebook outputs often contain:
+- large binary data
+- execution counters
+- plots
+- machine-specific metadata
+
+These changes make reviews difficult and create unnecessary git conflicts.
+By default, contributors should commit notebooks without outputs.
+
 ---
 
 # Coding Guidelines
@@ -209,6 +305,16 @@ Please:
 - Prefer clarity over premature optimization.
 
 Code should be understandable by a future contributor without requiring detailed knowledge of the original implementation.
+
+## Scientific coding guidelines
+
+- Use SI units unless otherwise documented.
+- Explicitly state units in module docstrings and API docstrings.
+- Avoid magic numerical constants, add them in the constants module instead.
+- Avoid using units muliples (e.g. prefer eV to keV).
+- Cite equations or references when implementing published methods.
+- Separate physics logic from plotting and I/O.
+- Prefer deterministic tests.
 
 ---
 
@@ -294,6 +400,8 @@ Review may evaluate:
 - Documentation completeness
 - Test coverage
 
+A reviewer checklist template can be found at .github/review_checklist.md.
+
 Review comments should be viewed as part of the collaborative scientific process rather than as criticism.
 
 ---
@@ -328,6 +436,19 @@ Examples of in-scope contributions include:
 - Validation benchmarks
 
 Contributions outside the project's scientific scope may be declined even when technically correct.
+
+---
+
+# Definition of Done
+
+A task is complete when:
+- implementation is finished
+- documentation is updated
+- branch is rebased on current main
+- Continuous Integration tests pass
+- review comments are addressed
+- PR is approved and merged
+- followup actions are written in the PR
 
 ---
 
