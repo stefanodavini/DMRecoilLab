@@ -1,0 +1,38 @@
+name: Development Issue
+description: Report a bug, request a feature, or propose an improvement.
+title: ""
+labels:
+  - triage
+
+body:
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: Short description of the issue.
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: Why is this needed?
+
+  - type: textarea
+    id: proposed_solution
+    attributes:
+      label: Proposed solution
+
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation strategy
+      description: How will correctness be verified?
+
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: Papers, notes, links, discussions.
