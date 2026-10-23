@@ -21,7 +21,7 @@
 
 ## Testing
 
-- [ ] pytest passes
+- [ ] check Continuous Integration pytest is green
 - [ ] New functionality has tests
 - [ ] Edge cases are covered
 
