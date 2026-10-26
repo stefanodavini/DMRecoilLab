@@ -11,7 +11,7 @@ def _initialize_si_elastic() -> SIInteraction:
 
     kin = ElasticKinematics(mX=wimp.mass, mT=target.mass)
     si = SIInteraction(wimp=wimp, nucleus=target,
-                       kinematics=kin, form_factor=PointLikeFormFactor())
+                       kinematics=kin, nuclear_response=PointLikeFormFactor())
     return si
 
 def _initialize_si_inelastic() -> SIInteraction:
@@ -20,7 +20,7 @@ def _initialize_si_inelastic() -> SIInteraction:
 
     kin = InelasticKinematics(mX=wimp.mass, mT=target.mass, delta=300e3)
     si = SIInteraction(wimp=wimp, nucleus=target,
-                       kinematics=kin, form_factor=PointLikeFormFactor())
+                       kinematics=kin, nuclear_response=PointLikeFormFactor())
     return si
 
 def test_si_sigma_proton():
@@ -138,11 +138,11 @@ def test_si_helm_suppression():
 
     si_point = SIInteraction(
         wimp=wimp, nucleus=target, kinematics=kin,
-        form_factor=PointLikeFormFactor())
+        nuclear_response=PointLikeFormFactor())
 
     si_helm = SIInteraction(
         wimp=wimp, nucleus=target, kinematics=kin,
-        form_factor=HelmFormFactor(target))
+        nuclear_response=HelmFormFactor(target))
 
     v = np.linspace(1e-4, 1e-3, 50)
     ER = np.logspace(3, 6, 100)

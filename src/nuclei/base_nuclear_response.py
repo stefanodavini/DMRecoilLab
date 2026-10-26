@@ -9,15 +9,20 @@ structure of the target nucleus.
 The base class defined in this module provides a
 common interface for response functions depending
 on momentum transfer q.
- 
-Current implementations include scalar nuclear
-form factors, while future extensions may include
-spin-dependent and effective-field-theory nuclear
-responses.
+
+Current implementations include:
+- PointLikeNuclearResponse
+
+Derived modules may implement specific
+response families such as:
+- spin-independent form factors
+- spin-dependent form factors
+- EFT nuclear responses
 """
 
 from abc import ABC, abstractmethod
 from numpy.typing import NDArray
+import numpy as np
 
 class NuclearResponse(ABC):
     """
@@ -30,6 +35,57 @@ class NuclearResponse(ABC):
     @abstractmethod
     def response(self, q: NDArray) -> NDArray:
         """
-        Evaluate the response function.
+        Evaluate the nuclear response.
+
+        Parameters
+        ----------
+        q : ndarray
+            Momentum transfer in eV.
+
+        Returns
+        -------
+        ndarray
+            Dimensionless response evaluated at
+            the supplied momentum transfer.
+
+        Notes
+        -----
+        The returned quantity is typically
+        normalized so that
+        response(0) = 1
+        although specific response models may
+        adopt different conventions.
         """
         pass
+
+
+class PointLikeNuclearResponse(NuclearResponse):
+    """
+    Point like nuclear response.
+
+    It can represent one of the physical limits:
+    - zero momentum transfer
+    - point-like nucleus
+
+    The response equals 1
+    for all momentum transfer
+    """
+    def __init__(self):
+        pass
+
+    def response(self, q: NDArray) -> NDArray:
+        """
+        Point Like nuclear response
+
+        Parameters
+        ----------
+        q : ndarray
+            Momentum transfer in eV.
+
+        Returns
+        -------
+        ndarray of 1.
+        """
+        q = np.asarray(q)
+
+        return np.ones_like(q, dtype=float)

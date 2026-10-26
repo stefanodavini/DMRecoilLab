@@ -105,7 +105,7 @@ def compute_mass_sigma_limit_si(
     
         interaction = SIInteraction(wimp=wimp,nucleus=detector.nucleus,
                                     kinematics=kin,
-                                    form_factor=form_factor,
+                                    nuclear_response=form_factor,
                                     sigma_p=sigma_reference)
     
         rate = RateCalculator(halo=halo,

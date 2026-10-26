@@ -12,6 +12,7 @@ for
 - kinematic masking
 - recoil-energy integration
 - reduced-mass calculations
+- nuclear structure momentum dependence
 
 while derived classes implement the
 interaction-specific differential
@@ -42,6 +43,7 @@ import numpy as np
 
 from src.interactions.particles import WIMP
 from src.nuclei.nucleus import Nucleus
+from src.nuclei.base_nuclear_response import NuclearResponse, PointLikeNuclearResponse
 from src.kinematics import ScatteringKinematics
 from src.utils.constants import PROTON_MASS_MeV
 
@@ -64,6 +66,7 @@ class InteractionModel(ABC):
     - kinematic threshold masking
     - velocity/recoil-energy grid broadcasting
     - differential cross section integration
+    - momentum dependence due to finite size
 
     Derived classes only need to implement
     the interaction-specific cross section.
@@ -73,7 +76,26 @@ class InteractionModel(ABC):
         wimp: WIMP,
         nucleus: Nucleus,
         kinematics: ScatteringKinematics,
+        nuclear_response: NuclearResponse | None = None,
     ):
+        """
+        Parameters
+        ----------
+        wimp : WIMP
+            Incident dark matter particle.
+        nucleus : Nucleus
+            Target nucleus.
+        kinematics : ScatteringKinematics
+            Scattering kinematics model.
+        nuclear_response : NuclearResponse, optional
+            Momentum-transfer-dependent nuclear
+            response function.
+
+            If omitted, a PointLikeNuclearResponse
+            is used, corresponding to
+            response(q) = 1
+            for all momentum transfers.
+        """
         self.wimp = wimp
         self.nucleus = nucleus
         self.kin = kinematics
@@ -82,6 +104,11 @@ class InteractionModel(ABC):
             raise ValueError("Masses in WIMP and ScatteringKinematics are not the same")
         if kinematics.mass_target != nucleus.mass:
             raise ValueError("Masses Nucleus and ScatteringKinematics are not the same")
+
+        if nuclear_response is None:
+            nuclear_response = PointLikeNuclearResponse()
+
+        self.nuclear_response = nuclear_response
 
     def kinematic_mask(self, v: NDArray, ER: NDArray) -> NDArray:
         """
@@ -224,7 +251,7 @@ class InteractionModel(ABC):
         recoil-energy axis.
 
         For elastic scattering with a
-        PointLikeFormFactor, the result should
+        PointLikeNuclearResponse, the result should
         reproduce the analytic WIMP-nucleus
         cross section independently of the incoming speed.
 
@@ -238,6 +265,36 @@ class InteractionModel(ABC):
         ERrange = np.linspace(ER_min, ER_max, num=num)
         dsigma = self.dsigma_dER(v=v, ER=ERrange)
         return np.trapezoid(dsigma, ERrange, axis=1)
+
+    def momentum_response(self, q: NDArray) -> NDArray:
+        """
+        Evaluate the momentum-dependent response
+        associated with the interaction.
+
+        Parameters
+        ----------
+        q : ndarray
+            Momentum transfer in eV.
+
+        Returns
+        -------
+        ndarray
+           Dimensionless suppression or enhancement
+            factor evaluated at the supplied
+            momentum transfer.
+
+        Notes
+        -----
+        Currently this consists only of the nuclear
+        response function.
+
+        Future implementations may also include
+        additional propagator-dependent terms.
+        """
+        return (
+            self.nuclear_response.response(q)
+            #* self.propagator.response(q)
+        )
 
     @property
     def _reduced_mass_nucleus(self) -> float:
