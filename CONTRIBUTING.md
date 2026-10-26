@@ -242,7 +242,12 @@ Then
 ```bash
 pytest
 ```
-
+Then open GitHub and create the pull request.
+After the reviewers' comments have been addressed and the pull request has been merged, delete the development branch and the local development branch. To delete the local branch, run:
+```bash
+git switch main
+git branch -d branch_name
+```
 Finally, and only when all the tests pass
 ```bash
 git push
