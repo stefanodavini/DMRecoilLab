@@ -29,7 +29,8 @@ def sigma_upper_limit(
     experiment: CountingExperiment | None = None,
     ) -> MassSigmaSensitivityPoint:
     """
-    Compute the upper limit on the WIMP-proton cross section.
+    Compute the upper limit on the interaction
+    reference cross section.
 
     Parameters
     ----------
@@ -39,7 +40,7 @@ def sigma_upper_limit(
 
     rate_calculator: RateCalculator
         Rate calculator configured with a detector and a
-        reference WIMP-proton cross section.
+        interaction reference cross section.
 
     experiment: CountingExperiment
         Experiment's counts and expected background.
@@ -52,7 +53,7 @@ def sigma_upper_limit(
     -------
     MassSigmaSensitivityPoint
         Sensitivity result containing the WIMP mass and the
-        corresponding WIMP-proton cross-section upper limit.
+        corresponding reference cross-section upper limit.
 
     Notes
     -----
@@ -77,7 +78,7 @@ def sigma_upper_limit(
 
     The conversion returns limits on the interaction-model
     normalization parameter exposed through
-    ``interaction.sigma_proton``.
+    ``interaction.sigma_reference``.
 
     For spin-independent interactions this corresponds
     to the WIMP-proton cross section conventionally
@@ -94,11 +95,11 @@ def sigma_upper_limit(
     if n_ref <= 0:
         raise ValueError("Expected counts must be positive.")
 
-    sigma_up = rate_calculator.interaction.sigma_proton * s_up / n_ref
+    sigma_up = rate_calculator.interaction.sigma_reference * s_up / n_ref
 
     return MassSigmaSensitivityPoint(
         mass_wimp=rate_calculator.wimp.mass,
-        sigma_p_upper=sigma_up,
+        sigma_reference_upper=sigma_up,
         cl=statistic.cl
     )
 

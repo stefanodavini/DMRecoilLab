@@ -30,7 +30,7 @@ def test_sd_sigma_proton():
     kin = ElasticKinematics(mX=wimp.mass, mT=target.mass)
     sd = SDInteraction(wimp=wimp, nucleus=target,
                        kinematics=kin,
-                       sigma_p=sigma_p)
+                       sigma_reference=sigma_p)
 
     assert sd.sigma_proton == sigma_p
 
@@ -43,6 +43,7 @@ def test_sd_proton_only_coupling():
                        kinematics=kin,
                        an_over_ap=0)
 
+    assert sd.is_neutron_only == 0
     assert sd.spin_coupling == sd.nucleus.Sp
     assert sd.spin_coupling == Xe131.Sp
 
@@ -55,6 +56,7 @@ def test_sd_neutron_only_coupling():
                        kinematics=kin,
                        an_over_ap=np.nan)
 
+    assert sd.is_neutron_only == 1
     assert sd.sigma_proton == 0.
     assert sd.spin_coupling == sd.nucleus.Sn
     assert sd.spin_coupling == Xe131.Sn
@@ -73,7 +75,7 @@ def test_sd_sigma_nucleus():
     sigma_p = 1.
     sd = SDInteraction(wimp=wimp, nucleus=target, 
                        kinematics=kin,
-                       sigma_p=sigma_p)
+                       sigma_reference=sigma_p)
 
     mu_ratio2 = (sd._reduced_mass_nucleus / sd._reduced_mass_proton)**2
     j = Xe131.spin
@@ -176,7 +178,7 @@ def test_sd_zero_sigma_proton():
     kin = ElasticKinematics(mX=wimp.mass, mT=target.mass)
     sd = SDInteraction(wimp=wimp, nucleus=target,
                        kinematics=kin,
-                       sigma_p=sigma_p)
+                       sigma_reference=sigma_p)
 
     v = np.linspace(1e-5, 1e-3, 100)
     ER = np.linspace(0, 1e5, 50)

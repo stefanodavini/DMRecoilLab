@@ -10,6 +10,7 @@ The implementation supports:
 - arbitrary proton/neutron coupling ratios
 - point-like and finite-size nuclei
 - arbitrary nuclear form factors
+- propagator momentum dependence
 
 The normalization follows the
 WIMP-proton cross section sigma_p.
@@ -211,6 +212,27 @@ class SIInteraction(InteractionModel):
             dsigmadER=dsigma_unmasked, v=v, ER=ER)
 
     @property
+    def sigma_reference(self) -> float:
+        """
+        Reference cross section used to
+        normalize the SI interaction model.
+
+        For SI interactions this coincides with
+        the WIMP-proton cross section.
+
+        Returns
+        -------
+        float
+            WIMP-proton cross section in cm^2.
+
+        Notes
+        -----
+        Sensitivity calculations operate on this
+        quantity.
+        """
+        return self.sigma_proton
+
+    @property
     def coherent_coupling(self) -> float:
         """
         Effective coherent nuclear coupling.
@@ -254,4 +276,13 @@ class SIInteraction(InteractionModel):
 
     @property
     def sigma_proton(self) -> float:
+        """
+        WIMP-proton cross-section parameter used to
+        normalize the SI interaction model.
+
+        Returns
+        -------
+        float
+            WIMP-proton cross section in cm^2.
+        """
         return self.sigma_p

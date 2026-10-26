@@ -47,7 +47,7 @@ from src.interactions.propagators import Propagator, PointLikePropagator
 from src.nuclei.nucleus import Nucleus
 from src.nuclei.base_nuclear_response import NuclearResponse, PointLikeNuclearResponse
 from src.kinematics import ScatteringKinematics
-from src.utils.constants import PROTON_MASS_MeV
+from src.utils.constants import PROTON_MASS_MeV, NEUTRON_MASS_MeV
 
 class InteractionModel(ABC):
     """
@@ -330,6 +330,14 @@ class InteractionModel(ABC):
         mp = 1e6 * PROTON_MASS_MeV
         return (mp * self.mass_wimp ) / (mp + self.mass_wimp)
 
+    @property
+    def _reduced_mass_neutron(self) -> float:
+        """
+        WIMP-neutron reduced mass (eV)
+        """
+        mn = 1e6 * NEUTRON_MASS_MeV
+        return (mn * self.mass_wimp ) / (mn + self.mass_wimp)
+
     @property 
     def mass_wimp(self) -> float:
         """
@@ -353,22 +361,22 @@ class InteractionModel(ABC):
 
     @property
     @abstractmethod
-    def sigma_proton(self) -> float:
+    def sigma_reference(self) -> float:
         """
-        WIMP-proton cross-section parameter used to
+        Cross-section parameter used to
         normalize the specific interaction model.
 
         Returns
         -------
         float
-            Reference WIMP-proton cross section in cm^2.
+            Reference cross section in cm^2.
 
         Notes
         -----
         Sensitivity calculations operate on this
         quantity and therefore require interaction
         models to implement this method to
-        expose a meaningful proton-level
+        expose a meaningful
         cross-section normalization.
         """
         pass

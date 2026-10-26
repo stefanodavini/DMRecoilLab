@@ -10,9 +10,14 @@ The implementation supports:
 - arbitrary proton/neutron coupling ratios
 - point-like SD response
 - F_SD^2(q) = 1
+- propagator momentum dependence
 
-The normalization follows the
-WIMP-proton cross section sigma_p.
+The normalization is expressed in terms
+of a reference nucleon cross section.
+For proton-normalized interactions the
+usual sigma_proton convention is recovered.
+For neutron-only interactions the
+reference cross section is sigma_neutron.
 
 Units:
     mass      -> eV
@@ -34,7 +39,7 @@ Examples
 ...     wimp=wimp,
 ...     nucleus=Xe131,
 ...     kinematics=kin,
-...     sigma_p=1e-45,
+...     sigma_reference=1e-45,
 ...     an_over_ap=1,
 ... )
 
@@ -58,13 +63,21 @@ class SDInteraction(InteractionModel):
     """
     Spin-dependent (SD) WIMP-nucleus interaction.
 
-    The interaction is normalized to the WIMP-proton
-    cross section sigma_p and supports generic
+    The normalization is expressed in terms
+    of a reference nucleon cross section.
+
+    For proton-normalized interactions the
+    usual sigma_p convention is recovered.
+
+    For neutron-only interactions the
+    reference cross section is sigma_n.
+
+    The interaction supports generic
     proton and neutron couplings through the ratio
 
         an_over_ap = an / ap.
 
-    The nuclear cross section is
+    The nuclear cross section for finite an/ap is
 
         sigma_A 
         = sigma_p *
@@ -116,8 +129,15 @@ class SDInteraction(InteractionModel):
         Supplying any value raises
         NotImplementedError.
 
-    sigma_p : float
-        WIMP-proton cross section (in cm^2).
+    sigma_reference : float
+        Reference WIMP-nucleon cross section (in cm^2).
+
+        For finite an/ap this corresponds to the
+        WIMP-proton cross section.
+
+        For neutron-only interactions
+        (an_over_ap = NaN), this corresponds to
+        the WIMP-neutron cross section.
 
     an_over_ap : float, optional
         Ratio between neutron and proton
@@ -137,7 +157,7 @@ class SDInteraction(InteractionModel):
         nucleus: Nucleus,
         kinematics: ScatteringKinematics,
         form_factor= None,
-        sigma_p: float = 1e-45,
+        sigma_reference: float = 1e-45,
         an_over_ap: float = 1.,
         ):
 
@@ -150,10 +170,10 @@ class SDInteraction(InteractionModel):
             kinematics=kinematics,
             nuclear_response=form_factor)
 
-        if sigma_p < 0:
-            raise ValueError("sigma_p must be non-negative")
+        if sigma_reference < 0:
+            raise ValueError("sigma_reference must be non-negative")
 
-        self.sigma_p = sigma_p
+        self.sigma_ref = sigma_reference
         self.an_over_ap = an_over_ap
 
     @property
@@ -175,7 +195,7 @@ class SDInteraction(InteractionModel):
         coupling is simply <Sn>.
         """
 
-        if np.isnan(self.an_over_ap):
+        if self.is_neutron_only:
             return self.nucleus.Sn
 
         return self.nucleus.Sp + self.an_over_ap * self.nucleus.Sn
@@ -193,28 +213,29 @@ class SDInteraction(InteractionModel):
 
         Notes
         -----
-        In the neutron-only convention
-        (an_over_ap = NaN), sigma_p acts as a
-        generic normalization parameter.
+        The normalization follows a reference
+        WIMP-nucleon cross section.
 
-        A future sigma_reference abstraction may
-        replace the proton reduced-mass
-        normalization used here.
+        For finite an/ap this corresponds to
+        sigma_proton.
+
+        For neutron-only interactions
+        (an_over_ap = NaN) it corresponds to
+        sigma_neutron.
         """
         J = self.nucleus.spin
 
         if J == 0.:
             return 0.
 
-        mu_ratio2 = (self._reduced_mass_nucleus / self._reduced_mass_proton) ** 2
-        # TODO:
-        # when sigma_reference is introduced,
-        # neutron-only interactions should use
-        # a neutron-normalized reduced mass.
+        if not self.is_neutron_only:
+            mu_ratio2 = (self._reduced_mass_nucleus / self._reduced_mass_proton) ** 2
+        else:
+            mu_ratio2 = (self._reduced_mass_nucleus / self._reduced_mass_neutron) ** 2
 
         spin_factor = 4 * (J + 1) / (3 * J)
     
-        return (self.sigma_p * mu_ratio2 * spin_factor * self.spin_coupling**2)
+        return (self.sigma_ref * mu_ratio2 * spin_factor * self.spin_coupling**2)
 
     def dsigma_dER(self,
                    v: NDArray,
@@ -277,24 +298,57 @@ class SDInteraction(InteractionModel):
             dsigmadER=dsigma_unmasked, v=v, ER=ER)
 
     @property
-    def sigma_proton(self) -> float:
+    def is_neutron_only(self) -> bool:
         """
-        Proton-normalized reference cross section.
+        Whether the interaction uses the
+        neutron-only normalization convention.
+
+        Returns
+        -------
+        bool
+            True when an_over_ap is NaN.
+        """
+        return np.isnan(self.an_over_ap)
+
+    @property
+    def sigma_reference(self) -> float:
+        """
+        Reference cross-section parameter used to
+        normalize the SD interaction model.
+
+        The reference cross section is:
+        - the WIMP-neutron cross section in case
+            of neutron-only coupling
+        - the WIMP-proton cross section otherwise
 
         Returns
         -------
         float
-            The proton cross-section normalization
-            parameter used by this interaction model.
+            Reference cross section in cm^2.
+
+        Notes
+        -----
+        Sensitivity calculations operate on this
+        quantity.
+        """
+        return self.sigma_ref
+
+    @property
+    def sigma_proton(self) -> float:
+        """
+        WIMP-proton cross section in cm^2.
+
+        Returns
+        -------
+        float
+            The proton cross-section in cm^2.
 
         For neutron-only interactions
-        (an_over_ap = NaN), zero is returned
-        because the interaction is not
-        proton-normalized.
+        (an_over_ap = NaN), zero is returned.
         """
-        if np.isnan(self.an_over_ap):
+        if self.is_neutron_only:
             return 0.
 
-        return self.sigma_p
+        return self.sigma_ref
 
 

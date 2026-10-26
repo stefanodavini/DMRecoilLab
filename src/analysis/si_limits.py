@@ -60,14 +60,15 @@ def compute_mass_sigma_limit_si(
     cl: float
         Confidence level.
     sigma_reference
-        Reference WIMP-proton cross section used
+        Reference cross section used
         to compute expected counts.
 
     Returns
     -------
     NDarray
         sigma_limits
-        Upper limit on sigma_p over the input WIMP-mass grid.
+        Upper limit on sigma_reference
+        over the input WIMP-mass grid.
 
     Notes
     -----
@@ -82,8 +83,10 @@ def compute_mass_sigma_limit_si(
     - a RateCalculator,
 
     and converts the resulting signal-count limit
-    into an upper limit on the WIMP-proton cross
-    section.
+    into an upper limit on the reference cross section.
+
+    For SI interactions the reference
+    cross section coincides with sigma_p.
     """
     masses = np.asarray(masses)
 
@@ -117,7 +120,7 @@ def compute_mass_sigma_limit_si(
                     statistic=statistic,
                     rate_calculator=rate)
     
-            sigma_limits.append(point.sigma_p_upper)
+            sigma_limits.append(point.sigma_reference_upper)
     
         except ValueError:
             sigma_limits.append(np.nan)

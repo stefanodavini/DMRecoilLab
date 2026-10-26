@@ -43,7 +43,7 @@ def test_sigma_upper_limit_is_positive():
     rc = _initialize_default_rate_calculator(target=Xe131)
     result = sigma_upper_limit(statistic=limit, rate_calculator=rc)
 
-    assert result.sigma_p_upper > 0
+    assert result.sigma_reference_upper > 0
 
 def test_sigma_upper_limit_reference_sigma_independence():
     """
@@ -57,7 +57,8 @@ def test_sigma_upper_limit_reference_sigma_independence():
     result1 = sigma_upper_limit(statistic=limit, rate_calculator=rc1)
     result2 = sigma_upper_limit(statistic=limit, rate_calculator=rc2)
 
-    assert np.isclose(result1.sigma_p_upper, result2.sigma_p_upper, rtol=1e-12)
+    assert np.isclose(result1.sigma_reference_upper,
+                      result2.sigma_reference_upper, rtol=1e-12)
 
 def test_sigma_upper_limit_default_experiment_matches_null_experiment():
     limit = PoissonUpperLimit(cl=0.95)
@@ -67,8 +68,8 @@ def test_sigma_upper_limit_default_experiment_matches_null_experiment():
     result_null = sigma_upper_limit(statistic=limit, rate_calculator=rc,
                                     experiment=experiment)
 
-    assert np.isclose(result_default.sigma_p_upper,
-                      result_null.sigma_p_upper)
+    assert np.isclose(result_default.sigma_reference_upper,
+                      result_null.sigma_reference_upper)
 
 def test_sigma_upper_limit_raises_zero_expected_count():
     shm = StandardHaloModel().boost()
@@ -115,7 +116,7 @@ def test_sigma_upper_limit_nobkg_linearity_exposure():
                              detector=detector)
 
         result =  sigma_upper_limit(statistic=limit, rate_calculator=rc0)
-        sigma_lims.append(result.sigma_p_upper)
+        sigma_lims.append(result.sigma_reference_upper)
 
     ratio = sigma_lims[0] / sigma_lims[1]
     assert np.isclose(2, ratio, rtol=1e-6)
