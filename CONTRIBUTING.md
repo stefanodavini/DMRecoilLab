@@ -251,6 +251,13 @@ or after a rebase
 ```bash
 git push --force-with-lease
 ```
+Then open GitHub and create the pull request.
+After the reviewers' comments have been addressed and the pull request has been merged, delete the development branch and then the local development branch. To delete the local branch, run:
+```bash
+git switch main
+git branch -d branch_name
+```
+
 
 ## 6. Rule of thumb:
 Every new feature is developed in a featured branch, and every related Pull Request should be based on the latest version of main and pass the full test suite locally before review.
