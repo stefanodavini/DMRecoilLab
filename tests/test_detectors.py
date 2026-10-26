@@ -28,14 +28,14 @@ def make_detector(**kwargs):
         {"threshold_energy": np.inf},
     ],
 )
-def test_rejects_invalid_parameters(kwargs):
+def test_detector_invalid_parameters_raise(kwargs):
     params = {"mass_kg": 10.0, **kwargs}
 
     with pytest.raises(ValueError):
         IdealDetector(nucleus=Xe131, **params)
 
 
-def test_default_values():
+def test_detector_default_values():
     detector = make_detector()
 
     assert detector.exposure_days == 365
@@ -43,7 +43,7 @@ def test_default_values():
     assert detector.target_mass_fraction == 1.0
 
 
-def test_number_of_targets_accounts_for_target_mass_fraction():
+def test_detector_number_of_targets_accounts_for_target_mass_fraction():
     detector = make_detector(target_mass_fraction=0.25)
 
     expected = convert_from_kg_to_eV(10.0 * 0.25) / Xe131.mass
