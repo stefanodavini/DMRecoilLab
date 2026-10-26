@@ -50,7 +50,7 @@ def test_detector_number_of_targets_accounts_for_target_mass_fraction():
     assert detector.number_of_targets == pytest.approx(expected)
 
 
-def test_exposure_seconds():
+def test_detector_exposure_seconds():
     detector = make_detector(exposure_days=2)
 
     assert detector.exposure_seconds == pytest.approx(2 * DAY_TO_SECONDS)
