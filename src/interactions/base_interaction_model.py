@@ -266,31 +266,35 @@ class InteractionModel(ABC):
         dsigma = self.dsigma_dER(v=v, ER=ERrange)
         return np.trapezoid(dsigma, ERrange, axis=1)
 
-    def momentum_response(self, q: NDArray) -> NDArray:
+    def momentum_transfer_response(self, ER: NDArray) -> NDArray:
         """
-        Evaluate the momentum-dependent response
+        Evaluate the momentum-transfer response
         associated with the interaction.
 
         Parameters
         ----------
-        q : ndarray
-            Momentum transfer in eV.
+        ER : ndarray
+            Recoil energy transfer in eV.
 
         Returns
         -------
         ndarray
-           Dimensionless suppression or enhancement
-            factor evaluated at the supplied
-            momentum transfer.
+            Dimensionless suppression or enhancement
+            factor evaluated at the recoil energy.
 
         Notes
         -----
+        Conversion from recoil energy to momentum-transfer
+        happens internally.
+
         Currently this consists only of the nuclear
         response function.
 
         Future implementations may also include
         additional propagator-dependent terms.
         """
+        q = self.kin.q_from_ER(ER=ER)
+
         return (
             self.nuclear_response.response(q)
             #* self.propagator.response(q)

@@ -36,7 +36,7 @@ Examples
 ...     nucleus=Xe131,
 ...     kinematics=kin,
 ...     sigma_p=1e-45,
-...     nuclear_response=HelmFormFactor(Xe131),
+...     form_factor=HelmFormFactor(Xe131),
 ... )
 
 >>> v = np.linspace(0, 2.5e-3, 100)
@@ -119,7 +119,7 @@ class SIInteraction(InteractionModel):
 
         Default is 1 (isospin-conserving).
 
-    nuclear_response : FormFactor, optional
+    form_factor : FormFactor, optional
         Nuclear form factor.
 
         If omitted, a PointLikeFormFactor is used,
@@ -132,18 +132,21 @@ class SIInteraction(InteractionModel):
         wimp: WIMP,
         nucleus: Nucleus,
         kinematics: ScatteringKinematics,
-        nuclear_response: FormFactor | None = None,
+        form_factor: FormFactor | None = None,
         sigma_p: float = 1e-45,
         fn_over_fp: float = 1.):
 
-        if nuclear_response is None:
-            nuclear_response = PointLikeFormFactor()
+        if form_factor is None:
+            form_factor = PointLikeFormFactor()
+
+        if not isinstance(form_factor, FormFactor):
+            raise TypeError("SIInteraction requires a FormFactor nuclear response.")
 
         super().__init__(
             wimp=wimp,
             nucleus=nucleus,
             kinematics=kinematics,
-            nuclear_response=nuclear_response)
+            nuclear_response=form_factor)
 
         if sigma_p < 0:
             raise ValueError("sigma_p must be non-negative")
@@ -200,8 +203,7 @@ class SIInteraction(InteractionModel):
             self.nucleus.mass / (2 * self._reduced_mass_nucleus**2 * v_grid**2),
             0.0)
 
-        q = self.kin.q_from_ER(ER=ER_grid)
-        F2 = self.momentum_response(q=q)
+        F2 = self.momentum_transfer_response(ER=ER_grid)
 
         dsigma_unmasked = (kinematic_prefactor * self.sigma_nucleus * F2)
 

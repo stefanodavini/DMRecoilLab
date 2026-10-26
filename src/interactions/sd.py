@@ -108,6 +108,14 @@ class SDInteraction(InteractionModel):
         Elastic or inelastic scattering
         kinematics.
 
+    form_factor : optional
+        Reserved for future SD form-factor
+        implementations.
+
+        Currently only None is supported.
+        Supplying any value raises
+        NotImplementedError.
+
     sigma_p : float
         WIMP-proton cross section (in cm^2).
 
@@ -133,13 +141,14 @@ class SDInteraction(InteractionModel):
         an_over_ap: float = 1.,
         ):
 
+        if form_factor is not None:
+            raise NotImplementedError("SD form factors not implemented yet")
+
         super().__init__(
             wimp=wimp,
             nucleus=nucleus,
-            kinematics=kinematics)
-
-        if form_factor is not None:
-            raise NotImplementedError("SD form factors not implemented yet")
+            kinematics=kinematics,
+            nuclear_response=form_factor)
 
         if sigma_p < 0:
             raise ValueError("sigma_p must be non-negative")
@@ -236,7 +245,7 @@ class SDInteraction(InteractionModel):
         Notes
         -----
         The returned values already include:
-        - sping coupling enhancement
+        - spin coupling enhancement
         - reduced-mass scaling
         - kinematic masking
 
@@ -260,7 +269,7 @@ class SDInteraction(InteractionModel):
             self.nucleus.mass / (2* self._reduced_mass_nucleus**2 * v_grid**2),
             0.0)
 
-        F2 = 1. # modify here to include form factor implementations
+        F2 = self.momentum_transfer_response(ER=ER_grid)
 
         dsigma_unmasked = (kinematic_prefactor * self.sigma_nucleus * F2)
 
