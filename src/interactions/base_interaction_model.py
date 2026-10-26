@@ -13,6 +13,7 @@ for
 - recoil-energy integration
 - reduced-mass calculations
 - nuclear structure momentum dependence
+- propagator momentum dependence
 
 while derived classes implement the
 interaction-specific differential
@@ -42,6 +43,7 @@ from numpy.typing import NDArray
 import numpy as np
 
 from src.interactions.particles import WIMP
+from src.interactions.propagators import Propagator, PointLikePropagator
 from src.nuclei.nucleus import Nucleus
 from src.nuclei.base_nuclear_response import NuclearResponse, PointLikeNuclearResponse
 from src.kinematics import ScatteringKinematics
@@ -77,6 +79,7 @@ class InteractionModel(ABC):
         nucleus: Nucleus,
         kinematics: ScatteringKinematics,
         nuclear_response: NuclearResponse | None = None,
+        propagator: Propagator | None = None,
     ):
         """
         Parameters
@@ -88,10 +91,18 @@ class InteractionModel(ABC):
         kinematics : ScatteringKinematics
             Scattering kinematics model.
         nuclear_response : NuclearResponse, optional
-            Momentum-transfer-dependent nuclear
+            Momentum-transfer dependent nuclear
             response function.
 
             If omitted, a PointLikeNuclearResponse
+            is used, corresponding to
+            response(q) = 1
+            for all momentum transfers.
+        propagator : Propagator, optional
+            Momentum-transfer dependent propagator
+            response function.
+
+            If omitted, a PointLikePropagator
             is used, corresponding to
             response(q) = 1
             for all momentum transfers.
@@ -109,6 +120,11 @@ class InteractionModel(ABC):
             nuclear_response = PointLikeNuclearResponse()
 
         self.nuclear_response = nuclear_response
+
+        if propagator is None:
+            propagator = PointLikePropagator()
+
+        self.propagator = propagator
 
     def kinematic_mask(self, v: NDArray, ER: NDArray) -> NDArray:
         """
@@ -250,10 +266,11 @@ class InteractionModel(ABC):
         The integration is performed over the
         recoil-energy axis.
 
-        For elastic scattering with a
-        PointLikeNuclearResponse, the result should
-        reproduce the analytic WIMP-nucleus
-        cross section independently of the incoming speed.
+        For elastic scattering with point-like
+        nuclear and propagator responses, the
+        result should reproduce the analytic
+        WIMP-nucleus cross section independently
+        of the incoming WIMP speed.
 
         Kinematically forbidden recoil energies
         are automatically excluded through the
@@ -287,17 +304,15 @@ class InteractionModel(ABC):
         Conversion from recoil energy to momentum-transfer
         happens internally.
 
-        Currently this consists only of the nuclear
-        response function.
-
-        Future implementations may also include
-        additional propagator-dependent terms.
+        The effects include:
+        - the nuclear response function
+        - the propagator-dependent terms.
         """
         q = self.kin.q_from_ER(ER=ER)
 
         return (
             self.nuclear_response.response(q)
-            #* self.propagator.response(q)
+            * self.propagator.response(q)
         )
 
     @property

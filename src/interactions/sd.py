@@ -269,9 +269,9 @@ class SDInteraction(InteractionModel):
             self.nucleus.mass / (2* self._reduced_mass_nucleus**2 * v_grid**2),
             0.0)
 
-        F2 = self.momentum_transfer_response(ER=ER_grid)
+        q_response = self.momentum_transfer_response(ER=ER_grid)
 
-        dsigma_unmasked = (kinematic_prefactor * self.sigma_nucleus * F2)
+        dsigma_unmasked = (kinematic_prefactor * self.sigma_nucleus * q_response)
 
         return self._apply_mask_to_dsigmadER(
             dsigmadER=dsigma_unmasked, v=v, ER=ER)

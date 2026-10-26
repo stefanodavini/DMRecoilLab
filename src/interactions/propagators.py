@@ -113,6 +113,7 @@ class PointLikePropagator(Propagator):
     propagator for standard SI and SD
     contact interactions.
     """
+    pass
 
     def response(self, q: NDArray) -> NDArray:
         """
