@@ -36,6 +36,7 @@ The code is organized into independent modules describing:
 - Scattering kinematics (elastic and inelastic)
 - Nuclear properties
 - Nuclear response functions
+- Propagators
 - Interaction models
 - Detector models
 - Event-rate calculations
@@ -171,11 +172,11 @@ src/
 ├── detectors/
 ├── halo/
 ├── interactions/
+├── kinematics/
 ├── nuclei/
 ├── plotting/
 ├── sensitivity/
 ├── utils/
-├── kinematics.py
 └── rates.py
 
 tests/
