@@ -32,6 +32,16 @@ def test_tabulated_data_raises_one_dimensional():
     with pytest.raises(ValueError, match="one-dimensional"):
         TabulatedData(x=x, y=y)
 
+def test_tabulated_data_raises_inf():
+    x = [0, 100, np.inf]
+    y = [1, 2, 3]
+    with pytest.raises(ValueError, match="finite"):
+        TabulatedData(x=x, y=y)
+    x = [0, 100, 200]
+    y = [1, 2, np.inf]
+    with pytest.raises(ValueError, match="finite"):
+        TabulatedData(x=x, y=y)
+
 def test_tabulated_data_raises_nan():
     x = [0, 100, np.nan]
     y = [1, 2, 3]
@@ -42,8 +52,14 @@ def test_tabulated_data_raises_nan():
     with pytest.raises(ValueError, match="finite"):
         TabulatedData(x=x, y=y)
 
-def test_tabulated_data_raises_x_not_increasing():
+def test_tabulated_data_raises_duplicate_x():
     x = [0, 100, 100]
+    y = [1, 2, 3]
+    with pytest.raises(ValueError, match="increasing"):
+        TabulatedData(x=x, y=y)
+
+def test_tabulated_data_raises_x_not_monotonic():
+    x = [0, 200, 100]
     y = [1, 2, 3]
     with pytest.raises(ValueError, match="increasing"):
         TabulatedData(x=x, y=y)
@@ -56,8 +72,21 @@ def test_tabulated_data_file_round_trip():
     output_data.to_file(filename=output_file)
     input_data = TabulatedData.from_file(output_file)
 
+    assert input_data.size == len(x)
+    assert output_data.size == len(x)
     assert np.allclose(output_data.x, input_data.x, atol=1e-12)
     assert np.allclose(output_data.y, input_data.y, atol=1e-12)
+
+def test_tabulated_data_to_file_invalid_filename():
+    x = [0, 1, 2]
+    y = [0, 100, 200]
+    data = TabulatedData(x=x, y=y)
+    with pytest.raises(ValueError, match="filename"):
+        data.to_file(filename=None)
+
+def test_tabulated_data_from_file_invalid_filename():
+    with pytest.raises(ValueError, match="filename"):
+        TabulatedData.from_file(filename=None)
 
 def test_tabulated_data_from_file_raises_empty_file():
     err_file = "tests/input/tabulated_data/invalid/empty_file.txt"
@@ -75,5 +104,6 @@ def test_tabulated_data_from_file_raises_one_column():
 
 def test_tabulated_data_from_file_raises_three_columns():
     file = "tests/input/tabulated_data/valid/valid_data.txt"
-    TabulatedData.from_file(filename=file)
+    data = TabulatedData.from_file(filename=file)
+    assert data.size == 3
 
