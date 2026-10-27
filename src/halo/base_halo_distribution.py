@@ -30,6 +30,7 @@ from numpy.typing import ArrayLike, NDArray
 from scipy.integrate import cumulative_trapezoid
 
 from src.utils.constants import VEARTH_kmps
+from src.utils.tabulated_data import TabulatedData
 
 class IsotropicSpeedDistribution(ABC):
     """
@@ -121,14 +122,12 @@ class IsotropicSpeedDistribution(ABC):
         n_points: int
             Number of sample points used to tabulate f(v).
         """
-        if not filename:
-            raise ValueError("Invalid filename")
-
         v = np.linspace(0.0, self.maximum_speed, n_points)
+        data = TabulatedData(x=v,
+                             y=self.velocity_pdf(v),
+                             x_name="v", y_name="f(v)")
 
-        data = np.column_stack([v, self.velocity_pdf(v)])
-
-        np.savetxt(filename, data, header="v f(v)")
+        data.to_file(filename=filename)
 
     def normalization(self, v: ArrayLike) -> float:
         """
@@ -276,4 +275,7 @@ class _BoostedDistribution(IsotropicSpeedDistribution):
 
     @property
     def maximum_speed(self) -> float:
+        """
+        Maximum speed of the boosted distribution.
+        """
         return self._parent.maximum_speed + self._vboost

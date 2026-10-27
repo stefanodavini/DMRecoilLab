@@ -14,19 +14,19 @@ def test_tabulated_velocity_distribution_round_trip():
 
     assert np.allclose(halo.velocity_pdf(v), shm.velocity_pdf(v), atol=1e-12)
 
-def test_tabulated_raises_empty_arrays():
+def test_tabulated_halo_raises_empty_arrays():
     v = []
     f = []
-    with pytest.raises(ValueError, match="two"):
+    with pytest.raises(ValueError, match="At least"):
         TabulatedSpeedDistribution(v, f)
 
-def test_tabulated_raises_different_lengths():
+def test_tabulated_halo_raises_different_lengths():
     v = [0, 100, 200, 300]
     f = [1, 2, 3]
     with pytest.raises(ValueError, match="length"):
         TabulatedSpeedDistribution(v, f)
 
-def test_tabulated_raises_one_dimensional():
+def test_tabulated_halo_raises_one_dimensional():
     v = np.asarray([[0., 100, 200, 300],[1, 2, 3, 4]])
     f = [1, 2, 3, 4]
     with pytest.raises(ValueError, match="one-dimensional"):
@@ -35,6 +35,12 @@ def test_tabulated_raises_one_dimensional():
     f = np.asarray([[1, 2, 3, 4],[0, 100, 200, 300]])
     with pytest.raises(ValueError, match="one-dimensional"):
         TabulatedSpeedDistribution(v, f)
+
+def test_tabulated_halo_raises_negative_v():
+    v = [-1, 0, 1]
+    f = [1, 2, 3]
+    with pytest.raises(ValueError, match="negative"):
+        TabulatedSpeedDistribution(v=v, f=f)
 
 def test_tabulated_from_file_invalid_filename():
     with pytest.raises(ValueError, match="filename"):
