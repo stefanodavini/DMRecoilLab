@@ -3,7 +3,7 @@ import pytest
 import warnings
 
 from src.halo.shm import StandardHaloModel
-from src.halo.tabulated import TabulatedSpeedDistribution
+from src.halo.tabulated_halo import TabulatedSpeedDistribution
 
 def test_tabulated_velocity_distribution_round_trip():
     output_file = "tests/output/shm_roundtrip.txt"
