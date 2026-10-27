@@ -63,7 +63,7 @@ from scipy.integrate import cumulative_trapezoid
 from src.detectors.detectors import IdealDetector
 from src.halo.base_halo_distribution import IsotropicSpeedDistribution
 from src.interactions.base_interaction_model import InteractionModel
-from src.kinematics import ScatteringKinematics
+from src.kinematics.scattering_kinematics import ScatteringKinematics
 from src.utils.constants import CM_TO_M, KM_TO_M, LOCAL_DM_DENSITY_GeV_cm3
 from src.utils.conversions import convert_from_kmps_to_beta
 

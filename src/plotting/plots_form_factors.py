@@ -1,5 +1,5 @@
 from src.nuclei.form_factors import FormFactor
-from src.kinematics import ScatteringKinematics
+from src.kinematics.scattering_kinematics import ScatteringKinematics
 
 from numpy.typing import NDArray
 from matplotlib.axes import Axes

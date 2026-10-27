@@ -9,7 +9,7 @@ high-level physical parameters.
 from src.interactions.particles import WIMP
 from src.nuclei.nucleus import Nucleus
 
-from src.kinematics import ScatteringKinematics, ElasticKinematics, InelasticKinematics
+from src.kinematics.scattering_kinematics import ScatteringKinematics, ElasticKinematics, InelasticKinematics
 
 def create_kinematics(
     wimp: WIMP,

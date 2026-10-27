@@ -1,5 +1,5 @@
 from src.halo.shm import StandardHaloModel
-from src.kinematics import ElasticKinematics
+from src.kinematics.scattering_kinematics import ElasticKinematics
 from src.interactions.si import SIInteraction
 from src.interactions.particles import WIMP
 from src.nuclei.nucleus import Nucleus

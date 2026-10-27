@@ -54,7 +54,7 @@ Examples
 from numpy.typing import NDArray
 import numpy as np
 
-from src.kinematics import ScatteringKinematics
+from src.kinematics.scattering_kinematics import ScatteringKinematics
 from src.interactions.base_interaction_model import InteractionModel
 from src.interactions.propagators import Propagator
 from src.interactions.particles import WIMP

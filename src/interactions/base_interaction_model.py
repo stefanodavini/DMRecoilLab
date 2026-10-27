@@ -46,7 +46,7 @@ from src.interactions.particles import WIMP
 from src.interactions.propagators import Propagator, PointLikePropagator
 from src.nuclei.nucleus import Nucleus
 from src.nuclei.base_nuclear_response import NuclearResponse, PointLikeNuclearResponse
-from src.kinematics import ScatteringKinematics
+from src.kinematics.scattering_kinematics import ScatteringKinematics
 from src.utils.constants import PROTON_MASS_MeV, NEUTRON_MASS_MeV
 
 class InteractionModel(ABC):

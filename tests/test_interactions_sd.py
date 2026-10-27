@@ -1,5 +1,5 @@
 import numpy as np
-from src.kinematics import ElasticKinematics, InelasticKinematics
+from src.kinematics.scattering_kinematics import ElasticKinematics, InelasticKinematics
 from src.interactions.particles import WIMP
 from src.interactions.sd import SDInteraction
 from src.nuclei.isotopes import Ar40, Xe131

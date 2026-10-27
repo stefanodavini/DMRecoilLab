@@ -1,4 +1,4 @@
-from src.kinematics import ElasticKinematics, InelasticKinematics
+from src.kinematics.scattering_kinematics import ElasticKinematics, InelasticKinematics
 import numpy as np
 import pytest
 
