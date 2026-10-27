@@ -103,6 +103,13 @@ def test_tabulated_data_from_file_raises_one_column():
             TabulatedData.from_file(filename=err_file)
 
 def test_tabulated_data_from_file_raises_three_columns():
+    err_file = "tests/input/tabulated_data/invalid/three_columns.txt"
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        with pytest.raises(ValueError, match="two columns"):
+            TabulatedData.from_file(filename=err_file)
+
+def test_tabulated_data_from_file_valid():
     file = "tests/input/tabulated_data/valid/valid_data.txt"
     data = TabulatedData.from_file(filename=file)
     assert data.size == 3
