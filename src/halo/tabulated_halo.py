@@ -24,6 +24,7 @@ from numpy.typing import ArrayLike, NDArray
 from typing import Self
 
 from src.halo.base_halo_distribution import IsotropicSpeedDistribution
+from src.utils.tabulated_data import TabulatedData
 
 class TabulatedSpeedDistribution(IsotropicSpeedDistribution):
     """
@@ -59,33 +60,19 @@ class TabulatedSpeedDistribution(IsotropicSpeedDistribution):
                  v: ArrayLike,
                  f: ArrayLike,
                  normalize: bool = True):
-        
-        self._v = np.asarray(v, dtype=float)
-        self._f = np.asarray(f, dtype=float)
 
-        if self._v.ndim != 1:
-            raise ValueError("v must be a one-dimensional array.")
+        self._data = TabulatedData(x=v, y=f,
+                                  x_name="v",
+                                  y_name="f(v)")
 
-        if self._f.ndim != 1:
-            raise ValueError("f must be a one-dimensional array.")
+        self._v = self._data.x
+        self._f = self._data.y
 
-        if len(self._v) != len(self._f):
-            raise ValueError("v and f must have the same length.")
-
-        if len(self._v) < 2:
-            raise ValueError("At least two tabulation points are required.")
-
-        if np.any(~np.isfinite(self._v)):
-            raise ValueError("v must contain only finite values.")
-
-        if np.any(~np.isfinite(self._f)):
-            raise ValueError("f must contain only finite values.")
-
-        if np.any(np.diff(self._v) <= 0):
-            raise ValueError("v must be strictly increasing.")
+        if np.any(self._v < 0):
+            raise ValueError("v must be non-negative.")
 
         if np.any(self._f < 0):
-            raise ValueError("f must be non-negative.")
+            raise ValueError("f(v) must be non-negative.")
 
         self._validate_and_normalize(normalize=normalize)
 
@@ -147,15 +134,8 @@ class TabulatedSpeedDistribution(IsotropicSpeedDistribution):
         -------
         TabulatedSpeedDistribution
         """
-        if not filename:
-            raise ValueError("Invalid filename")
-
-        data = np.loadtxt(filename)
-
-        if data.ndim != 2 or data.shape[1] != 2:
-            raise ValueError("Input file must contain two columns: v and f(v).")
-
-        return cls(v=data[:, 0], f=data[:, 1], normalize=normalize)
+        data = TabulatedData.from_file(filename)
+        return cls(v=data.x, f=data.y, normalize=normalize)
 
     def _validate_and_normalize(self, normalize: bool = True) -> None:
         """
