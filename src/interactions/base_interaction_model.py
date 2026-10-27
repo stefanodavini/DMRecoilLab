@@ -363,7 +363,7 @@ class InteractionModel(ABC):
     @abstractmethod
     def sigma_reference(self) -> float:
         """
-        Cross-section parameter used to
+        WIMP-nucleon reference cross section used to
         normalize the specific interaction model.
 
         Returns
@@ -376,7 +376,7 @@ class InteractionModel(ABC):
         Sensitivity calculations operate on this
         quantity and therefore require interaction
         models to implement this method to
-        expose a meaningful
-        cross-section normalization.
+        expose a meaningful WIMP-nucleon reference
+        cross section normalization.
         """
         pass
