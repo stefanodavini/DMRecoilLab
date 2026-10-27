@@ -1,4 +1,4 @@
-from src.kinematics import ScatteringKinematics, ElasticKinematics, InelasticKinematics
+from src.kinematics.scattering_kinematics import ScatteringKinematics, ElasticKinematics, InelasticKinematics
 
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure

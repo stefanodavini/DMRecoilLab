@@ -51,7 +51,7 @@ Examples
 from numpy.typing import NDArray
 import numpy as np
 
-from src.kinematics import ScatteringKinematics
+from src.kinematics.scattering_kinematics import ScatteringKinematics
 from src.interactions.base_interaction_model import InteractionModel
 from src.interactions.propagators import Propagator
 from src.interactions.particles import WIMP
@@ -122,7 +122,7 @@ class SIInteraction(InteractionModel):
         Momentum-depentent propagator.
 
         If omitted, a PointLikePropagator is used,
-        corresponding to response = 1.
+        corresponding to response(q) = 1.
 
     sigma_p : float
         WIMP-proton cross section (in cm^2).
