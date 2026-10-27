@@ -41,7 +41,45 @@ class TabulatedData:
 
     @classmethod
     def from_file(cls, filename: str) -> Self:
-        ...
+        """
+        Construct a tabulated distribution from a text file.
 
-    def to_file(self, filename: str) -> None:
-        ...
+        The file must contain exactly two columns.
+
+        Parameters
+        ----------
+        filename: str
+            Input filename.
+
+        Returns
+        -------
+        TabulatedData
+        """
+        if not filename:
+            raise ValueError("Invalid filename")
+
+        data = np.loadtxt(filename)
+
+        if data.ndim != 2 or data.shape[1] != 2:
+            raise ValueError("Input file must contain two columns.")
+
+        return cls(x=data[:, 0], y=data[:, 1])
+
+    def to_file(self, filename: str):
+        """
+        Save the speed distribution to a two-column text file.
+        
+        The first column contains x and the second column
+        contains y.
+        
+        Parameters
+        ----------
+        filename: str
+            Output filename.
+        """
+        if not filename:
+            raise ValueError("Invalid filename")
+        
+        data = np.column_stack([self.x, self.y])
+        
+        np.savetxt(filename, data, header=f"{self.x_name} {self.y_name}")
