@@ -53,6 +53,7 @@ import numpy as np
 
 from src.kinematics import ScatteringKinematics
 from src.interactions.base_interaction_model import InteractionModel
+from src.interactions.propagators import Propagator
 from src.interactions.particles import WIMP
 from src.nuclei.nucleus import Nucleus
 from src.nuclei.form_factors import FormFactor, PointLikeFormFactor
@@ -111,6 +112,18 @@ class SIInteraction(InteractionModel):
         Elastic or inelastic scattering
         kinematics.
 
+    form_factor : FormFactor, optional
+        Nuclear form factor.
+
+        If omitted, a PointLikeFormFactor is used,
+        corresponding to F(q) = 1.
+
+    propagator : Propagator, optional
+        Momentum-depentent propagator.
+
+        If omitted, a PointLikePropagator is used,
+        corresponding to response = 1.
+
     sigma_p : float
         WIMP-proton cross section (in cm^2).
 
@@ -119,12 +132,6 @@ class SIInteraction(InteractionModel):
         couplings.
 
         Default is 1 (isospin-conserving).
-
-    form_factor : FormFactor, optional
-        Nuclear form factor.
-
-        If omitted, a PointLikeFormFactor is used,
-        corresponding to F(q) = 1.
     """
 
     def __init__(
@@ -134,6 +141,7 @@ class SIInteraction(InteractionModel):
         nucleus: Nucleus,
         kinematics: ScatteringKinematics,
         form_factor: FormFactor | None = None,
+        propagator: Propagator | None = None,
         sigma_p: float = 1e-45,
         fn_over_fp: float = 1.):
 
@@ -147,7 +155,8 @@ class SIInteraction(InteractionModel):
             wimp=wimp,
             nucleus=nucleus,
             kinematics=kinematics,
-            nuclear_response=form_factor)
+            nuclear_response=form_factor,
+            propagator=propagator)
 
         if sigma_p < 0:
             raise ValueError("sigma_p must be non-negative")

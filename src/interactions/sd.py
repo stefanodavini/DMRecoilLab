@@ -56,6 +56,7 @@ import numpy as np
 
 from src.kinematics import ScatteringKinematics
 from src.interactions.base_interaction_model import InteractionModel
+from src.interactions.propagators import Propagator
 from src.interactions.particles import WIMP
 from src.nuclei.nucleus import Nucleus
 
@@ -129,6 +130,12 @@ class SDInteraction(InteractionModel):
         Supplying any value raises
         NotImplementedError.
 
+    propagator : Propagator, optional
+        Momentum-depentent propagator.
+
+        If omitted, a PointLikePropagator is used,
+        corresponding to response(q) = 1.
+
     sigma_reference : float
         Reference WIMP-nucleon cross section (in cm^2).
 
@@ -157,6 +164,7 @@ class SDInteraction(InteractionModel):
         nucleus: Nucleus,
         kinematics: ScatteringKinematics,
         form_factor= None,
+        propagator: Propagator | None = None,
         sigma_reference: float = 1e-45,
         an_over_ap: float = 1.,
         ):
@@ -168,7 +176,8 @@ class SDInteraction(InteractionModel):
             wimp=wimp,
             nucleus=nucleus,
             kinematics=kinematics,
-            nuclear_response=form_factor)
+            nuclear_response=form_factor,
+            propagator=propagator)
 
         if sigma_reference < 0:
             raise ValueError("sigma_reference must be non-negative")
