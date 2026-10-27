@@ -10,6 +10,7 @@ The implementation supports:
 - arbitrary proton/neutron coupling ratios
 - point-like and finite-size nuclei
 - arbitrary nuclear form factors
+- propagator momentum dependence
 
 The normalization follows the
 WIMP-proton cross section sigma_p.
@@ -52,6 +53,7 @@ import numpy as np
 
 from src.kinematics import ScatteringKinematics
 from src.interactions.base_interaction_model import InteractionModel
+from src.interactions.propagators import Propagator
 from src.interactions.particles import WIMP
 from src.nuclei.nucleus import Nucleus
 from src.nuclei.form_factors import FormFactor, PointLikeFormFactor
@@ -110,6 +112,18 @@ class SIInteraction(InteractionModel):
         Elastic or inelastic scattering
         kinematics.
 
+    form_factor : FormFactor, optional
+        Nuclear form factor.
+
+        If omitted, a PointLikeFormFactor is used,
+        corresponding to F(q) = 1.
+
+    propagator : Propagator, optional
+        Momentum-depentent propagator.
+
+        If omitted, a PointLikePropagator is used,
+        corresponding to response = 1.
+
     sigma_p : float
         WIMP-proton cross section (in cm^2).
 
@@ -118,12 +132,6 @@ class SIInteraction(InteractionModel):
         couplings.
 
         Default is 1 (isospin-conserving).
-
-    form_factor : FormFactor, optional
-        Nuclear form factor.
-
-        If omitted, a PointLikeFormFactor
-        is used (F(q) = 1).
     """
 
     def __init__(
@@ -132,19 +140,27 @@ class SIInteraction(InteractionModel):
         wimp: WIMP,
         nucleus: Nucleus,
         kinematics: ScatteringKinematics,
-        form_factor: FormFactor = None,
+        form_factor: FormFactor | None = None,
+        propagator: Propagator | None = None,
         sigma_p: float = 1e-45,
         fn_over_fp: float = 1.):
-
-        super().__init__(
-            wimp=wimp,
-            nucleus=nucleus,
-            kinematics=kinematics)
 
         if form_factor is None:
             form_factor = PointLikeFormFactor()
 
-        self.form_factor = form_factor
+        if not isinstance(form_factor, FormFactor):
+            raise TypeError("SIInteraction requires a FormFactor nuclear response.")
+
+        super().__init__(
+            wimp=wimp,
+            nucleus=nucleus,
+            kinematics=kinematics,
+            nuclear_response=form_factor,
+            propagator=propagator)
+
+        if sigma_p < 0:
+            raise ValueError("sigma_p must be non-negative")
+
         self.sigma_p = sigma_p
         self.fn_over_fp = fn_over_fp
 
@@ -197,13 +213,33 @@ class SIInteraction(InteractionModel):
             self.nucleus.mass / (2 * self._reduced_mass_nucleus**2 * v_grid**2),
             0.0)
 
-        q = self.kin.q_from_ER(ER=ER_grid)
-        F2 = self.form_factor.response(q=q)
+        q_response = self.momentum_transfer_response(ER=ER_grid)
 
-        dsigma_unmasked = (kinematic_prefactor * self.sigma_nucleus * F2)
+        dsigma_unmasked = (kinematic_prefactor * self.sigma_nucleus * q_response)
 
         return self._apply_mask_to_dsigmadER(
             dsigmadER=dsigma_unmasked, v=v, ER=ER)
+
+    @property
+    def sigma_reference(self) -> float:
+        """
+        Reference cross section used to
+        normalize the SI interaction model.
+
+        For SI interactions this coincides with
+        the WIMP-proton cross section.
+
+        Returns
+        -------
+        float
+            WIMP-proton cross section in cm^2.
+
+        Notes
+        -----
+        Sensitivity calculations operate on this
+        quantity.
+        """
+        return self.sigma_proton
 
     @property
     def coherent_coupling(self) -> float:
@@ -249,4 +285,13 @@ class SIInteraction(InteractionModel):
 
     @property
     def sigma_proton(self) -> float:
+        """
+        WIMP-proton cross-section parameter used to
+        normalize the SI interaction model.
+
+        Returns
+        -------
+        float
+            WIMP-proton cross section in cm^2.
+        """
         return self.sigma_p

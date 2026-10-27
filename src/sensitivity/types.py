@@ -40,13 +40,13 @@ class MassSigmaSensitivityPoint:
 
     Parameters
     ----------
-    mass: float
+    mass_wimp: float
         WIMP mass in eV.
-    sigma_p_upper : float
-        Upper limit on the WIMP-proton cross section.
+    sigma_reference_upper : float
+        Upper limit on the reference cross section.
     cl : float
         Confidence Level
     """
     mass_wimp: float
-    sigma_p_upper: float
+    sigma_reference_upper: float
     cl: float

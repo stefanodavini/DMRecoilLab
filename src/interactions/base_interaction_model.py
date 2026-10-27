@@ -12,6 +12,8 @@ for
 - kinematic masking
 - recoil-energy integration
 - reduced-mass calculations
+- nuclear structure momentum dependence
+- propagator momentum dependence
 
 while derived classes implement the
 interaction-specific differential
@@ -41,9 +43,11 @@ from numpy.typing import NDArray
 import numpy as np
 
 from src.interactions.particles import WIMP
+from src.interactions.propagators import Propagator, PointLikePropagator
 from src.nuclei.nucleus import Nucleus
+from src.nuclei.base_nuclear_response import NuclearResponse, PointLikeNuclearResponse
 from src.kinematics import ScatteringKinematics
-from src.utils.constants import PROTON_MASS_MeV
+from src.utils.constants import PROTON_MASS_MeV, NEUTRON_MASS_MeV
 
 class InteractionModel(ABC):
     """
@@ -64,6 +68,7 @@ class InteractionModel(ABC):
     - kinematic threshold masking
     - velocity/recoil-energy grid broadcasting
     - differential cross section integration
+    - momentum dependence due to finite size
 
     Derived classes only need to implement
     the interaction-specific cross section.
@@ -73,7 +78,35 @@ class InteractionModel(ABC):
         wimp: WIMP,
         nucleus: Nucleus,
         kinematics: ScatteringKinematics,
+        nuclear_response: NuclearResponse | None = None,
+        propagator: Propagator | None = None,
     ):
+        """
+        Parameters
+        ----------
+        wimp : WIMP
+            Incident dark matter particle.
+        nucleus : Nucleus
+            Target nucleus.
+        kinematics : ScatteringKinematics
+            Scattering kinematics model.
+        nuclear_response : NuclearResponse, optional
+            Momentum-transfer dependent nuclear
+            response function.
+
+            If omitted, a PointLikeNuclearResponse
+            is used, corresponding to
+            response(q) = 1
+            for all momentum transfers.
+        propagator : Propagator, optional
+            Momentum-transfer dependent propagator
+            response function.
+
+            If omitted, a PointLikePropagator
+            is used, corresponding to
+            response(q) = 1
+            for all momentum transfers.
+        """
         self.wimp = wimp
         self.nucleus = nucleus
         self.kin = kinematics
@@ -82,6 +115,16 @@ class InteractionModel(ABC):
             raise ValueError("Masses in WIMP and ScatteringKinematics are not the same")
         if kinematics.mass_target != nucleus.mass:
             raise ValueError("Masses Nucleus and ScatteringKinematics are not the same")
+
+        if nuclear_response is None:
+            nuclear_response = PointLikeNuclearResponse()
+
+        self.nuclear_response = nuclear_response
+
+        if propagator is None:
+            propagator = PointLikePropagator()
+
+        self.propagator = propagator
 
     def kinematic_mask(self, v: NDArray, ER: NDArray) -> NDArray:
         """
@@ -223,10 +266,11 @@ class InteractionModel(ABC):
         The integration is performed over the
         recoil-energy axis.
 
-        For elastic scattering with a
-        PointLikeFormFactor, the result should
-        reproduce the analytic WIMP-nucleus
-        cross section independently of the incoming speed.
+        For elastic scattering with point-like
+        nuclear and propagator responses, the
+        result should reproduce the analytic
+        WIMP-nucleus cross section independently
+        of the incoming WIMP speed.
 
         Kinematically forbidden recoil energies
         are automatically excluded through the
@@ -238,6 +282,38 @@ class InteractionModel(ABC):
         ERrange = np.linspace(ER_min, ER_max, num=num)
         dsigma = self.dsigma_dER(v=v, ER=ERrange)
         return np.trapezoid(dsigma, ERrange, axis=1)
+
+    def momentum_transfer_response(self, ER: NDArray) -> NDArray:
+        """
+        Evaluate the momentum-transfer response
+        associated with the interaction.
+
+        Parameters
+        ----------
+        ER : ndarray
+            Recoil energy transfer in eV.
+
+        Returns
+        -------
+        ndarray
+            Dimensionless suppression or enhancement
+            factor evaluated at the recoil energy.
+
+        Notes
+        -----
+        Conversion from recoil energy to momentum-transfer
+        happens internally.
+
+        The effects include:
+        - the nuclear response function
+        - the propagator-dependent terms.
+        """
+        q = self.kin.q_from_ER(ER=ER)
+
+        return (
+            self.nuclear_response.response(q)
+            * self.propagator.response(q)
+        )
 
     @property
     def _reduced_mass_nucleus(self) -> float:
@@ -253,6 +329,14 @@ class InteractionModel(ABC):
         """
         mp = 1e6 * PROTON_MASS_MeV
         return (mp * self.mass_wimp ) / (mp + self.mass_wimp)
+
+    @property
+    def _reduced_mass_neutron(self) -> float:
+        """
+        WIMP-neutron reduced mass (eV)
+        """
+        mn = 1e6 * NEUTRON_MASS_MeV
+        return (mn * self.mass_wimp ) / (mn + self.mass_wimp)
 
     @property 
     def mass_wimp(self) -> float:
@@ -277,22 +361,22 @@ class InteractionModel(ABC):
 
     @property
     @abstractmethod
-    def sigma_proton(self) -> float:
+    def sigma_reference(self) -> float:
         """
-        WIMP-proton cross-section parameter used to
+        WIMP-nucleon reference cross section used to
         normalize the specific interaction model.
 
         Returns
         -------
         float
-            Reference WIMP-proton cross section in cm^2.
+            Reference cross section in cm^2.
 
         Notes
         -----
         Sensitivity calculations operate on this
         quantity and therefore require interaction
         models to implement this method to
-        expose a meaningful proton-level
-        cross-section normalization.
+        expose a meaningful WIMP-nucleon reference
+        cross section normalization.
         """
         pass

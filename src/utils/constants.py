@@ -7,6 +7,7 @@ in the variable names.
 
 # Particle masses (MeV)
 PROTON_MASS_MeV = 938.27208943
+NEUTRON_MASS_MeV = 939.56542194   # m_n, 2022 CODATA
 
 # Fundamental constants
 C_kmps = 299792458e-3         # c sim 3e5 km/s
