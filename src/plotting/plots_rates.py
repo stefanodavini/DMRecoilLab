@@ -147,7 +147,7 @@ def plot_integral_rate(
     else:
         fig = ax.figure
 
-    intrate = rate_calc.integrated_rate_above_threshold(ER)
+    intrate = rate_calc.integrated_rate_above_energy(ER)
 
     ER_keV = ER / 1e3
 
