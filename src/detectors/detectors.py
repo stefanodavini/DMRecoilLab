@@ -27,12 +27,14 @@ All detector responses are assumed to act on recoil-energy
 spectra expressed as dR/dER.
 """
 
-from numpy.typing import NDArray, ArrayLike
+from numpy.typing import NDArray
 import numpy as np
+from scipy.interpolate import interp1d
 
 from src.nuclei.nucleus import Nucleus
 from src.utils.conversions import convert_from_kg_to_eV
 from src.utils.constants import DAY_TO_SECONDS
+from src.utils.tabulated_data import TabulatedData
 
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
@@ -212,8 +214,7 @@ class IdealDetector(BaseDetector):
 @dataclass(frozen=True)
 class ResponseDetector(BaseDetector):
     resolution_sigma: float = 0.
-    acceptance_energy: ArrayLike | None = None
-    acceptance: ArrayLike | None = None
+    acceptance_curve: TabulatedData | None = None
 
     def __post_init__(self):
         """
@@ -221,5 +222,58 @@ class ResponseDetector(BaseDetector):
         """
         super().__post_init__()
 
-        if not np.isfinite(self.threshold_energy) or self.resolution_sigma < 0:
+        if not np.isfinite(self.resolution_sigma) or self.resolution_sigma < 0:
             raise ValueError("resolution_sigma must be a finite non-negative number.")
+
+        if self.acceptance_curve is not None:
+
+            object.__setattr__(self, "_acc_ene", np.asarray(self.acceptance_curve.x))
+            object.__setattr__(self, "_acc_val", np.asarray(self.acceptance_curve.y))
+        
+            if np.any(self._acc_ene < 0):
+                raise ValueError("Acceptance energy grid must be non-negative.")
+        
+            if np.any(self._acc_val < 0) or np.any(self._acc_val > 1):
+                raise ValueError("Acceptance must be >= 0 and <= 1.")
+
+            acceptance_interp = interp1d(self._acc_ene,
+                                         self._acc_val,
+                                         bounds_error=False,
+                                         fill_value=(0.0, self._acc_val[-1]))
+
+            object.__setattr__(self, "_acceptance_interp", acceptance_interp)
+
+        else:
+            object.__setattr__(self, "_acceptance_interp", None)
+
+    def apply_detector_response(self,
+                                energy: NDArray,
+                                spectrum: NDArray) -> NDArray:
+        spectrum = self._apply_resolution(energy=energy,
+                                          spectrum=spectrum)
+        spectrum = self._apply_acceptance(energy=energy,
+                                          spectrum=spectrum)
+        return spectrum
+
+    def _apply_resolution(self,
+                          energy: NDArray,
+                          spectrum: NDArray) -> NDArray:
+        ...
+
+    def _apply_acceptance(self,
+                          energy: NDArray,
+                          spectrum: NDArray) -> NDArray:
+        
+        if self.has_acceptance:
+            eff = self._acceptance_interp(energy)
+            return spectrum * eff
+
+        return spectrum
+
+    @property
+    def has_resolution(self) -> bool:
+        return self.resolution_sigma > 0
+
+    @property
+    def has_acceptance(self) -> bool:
+        return self.acceptance_curve is not None
