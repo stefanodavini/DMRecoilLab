@@ -248,7 +248,7 @@ def test_si_isospin_proton_only():
     sigma_expected = sigma_p * mu_ratio2 * (target.Z)**2
     assert np.isclose(sigma_expected, si.sigma_nucleus, rtol=1e-6)
 
-def test_massive_mediator_is_applied_by_si_interaction():
+def test_si_massive_mediator_is_applied_by_interaction():
     """
     SIInteraction applies the massive-mediator response
     in its momentum-transfer response.
@@ -259,6 +259,7 @@ def test_massive_mediator_is_applied_by_si_interaction():
     interaction = SIInteraction(
         wimp=wimp,
         nucleus=Xe131,
+        sigma_p=1,
         kinematics=kinematics,
         propagator=propagator,
     )

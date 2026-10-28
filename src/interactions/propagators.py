@@ -154,9 +154,9 @@ class MassiveMediatorPropagator(Propagator):
     The response is applied directly to the differential
     cross section and is defined as
 
-                         M²
-        response(q) = (-------------)²,
-                        M² + q²
+    .. math::
+
+    R(q) = \left(\frac{M^2}{M^2 + q^2}\right)^2
 
     where M is the mediator mass and q is the momentum
     transfer, both in eV.

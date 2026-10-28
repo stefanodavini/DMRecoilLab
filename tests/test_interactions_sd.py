@@ -228,7 +228,7 @@ def test_sd_elastic_total_cross_section():
 
     assert np.isclose(ratio, 1, rtol=1e-6)
 
-def test_massive_mediator_modifies_sd_differential_cross_section():
+def test_sd_massive_mediator_modifies_differential_cross_section():
     """
     SDInteraction scales its differential cross section
     by the massive-mediator response.
@@ -239,12 +239,14 @@ def test_massive_mediator_modifies_sd_differential_cross_section():
         wimp=wimp,
         nucleus=Xe131,
         kinematics=kinematics,
+        sigma_reference=1,
         propagator=PointLikePropagator(),
     )
     massive_interaction = SDInteraction(
         wimp=wimp,
         nucleus=Xe131,
         kinematics=kinematics,
+        sigma_reference=1,
         propagator=MassiveMediatorPropagator(mediator_mass=100e6),
     )
     velocity = np.array([1e-3, 2e-3])
@@ -277,12 +279,14 @@ def test_sd_heavy_mediator_limit_matches_pointlike_interaction():
         wimp=wimp,
         nucleus=Xe131,
         kinematics=kinematics,
+        sigma_reference=1,
         propagator=PointLikePropagator(),
     )
     heavy_mediator_interaction = SDInteraction(
         wimp=wimp,
         nucleus=Xe131,
         kinematics=kinematics,
+        sigma_reference=1,
         propagator=MassiveMediatorPropagator(mediator_mass=1e12),
     )
     velocity = np.array([1e-3, 2e-3])
