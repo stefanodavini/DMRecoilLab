@@ -22,6 +22,7 @@ Current capabilities include:
 - Elastic and inelastic WIMP scattering
 - Spin-independent (SI) interactions
 - Spin-dependent (SD) interactions
+- Massive mediator propagator in the interaction
 - Helm nuclear form factors
 - Differential and integrated recoil rates
 - Detector exposure modelling

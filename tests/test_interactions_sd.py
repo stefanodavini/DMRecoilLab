@@ -264,3 +264,42 @@ def test_massive_mediator_modifies_sd_differential_cross_section():
         massive_dsigma,
         pointlike_dsigma * massive_interaction.propagator.response(q)[None, :],
     )
+
+
+def test_sd_heavy_mediator_limit_matches_pointlike_interaction():
+    """
+    SDInteraction approaches the point-like result
+    when the mediator mass is much larger than q.
+    """
+    wimp = WIMP(mass=1e11, spin=0)
+    kinematics = ElasticKinematics(mX=wimp.mass, mT=Xe131.mass)
+    pointlike_interaction = SDInteraction(
+        wimp=wimp,
+        nucleus=Xe131,
+        kinematics=kinematics,
+        propagator=PointLikePropagator(),
+    )
+    heavy_mediator_interaction = SDInteraction(
+        wimp=wimp,
+        nucleus=Xe131,
+        kinematics=kinematics,
+        propagator=MassiveMediatorPropagator(mediator_mass=1e12),
+    )
+    velocity = np.array([1e-3, 2e-3])
+    recoil_energy = np.array([1e3, 1e4, 3e4])
+
+    pointlike_dsigma = pointlike_interaction.dsigma_dER(
+        v=velocity,
+        ER=recoil_energy,
+    )
+    heavy_mediator_dsigma = heavy_mediator_interaction.dsigma_dER(
+        v=velocity,
+        ER=recoil_energy,
+    )
+
+    np.testing.assert_allclose(
+        heavy_mediator_dsigma,
+        pointlike_dsigma,
+        rtol=1e-7,
+        atol=0.0,
+    )
