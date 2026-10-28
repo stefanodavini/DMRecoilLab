@@ -149,7 +149,7 @@ class PointLikePropagator(Propagator):
 
 class MassiveMediatorPropagator(Propagator):
     """
-    Massive mediator response normalized to unity at q = 0.
+    Momentum-dependent response for a finite-mass mediator.
 
     The response is applied directly to the differential
     cross section and is defined as
@@ -160,6 +160,34 @@ class MassiveMediatorPropagator(Propagator):
 
     where M is the mediator mass and q is the momentum
     transfer, both in eV.
+
+    Parameters
+    ----------
+    mediator_mass : float
+        Mediator mass in eV. Must be finite and strictly
+        positive.
+
+    Notes
+    -----
+    The response is dimensionless, equals one at q = 0,
+    and approaches the point-like response as the mediator
+    mass becomes much larger than q.
+
+    Examples
+    --------
+    >>> from src.interactions.particles import WIMP
+    >>> from src.interactions.si import SIInteraction
+    >>> from src.kinematics.scattering_kinematics import ElasticKinematics
+    >>> from src.nuclei.isotopes import Xe131
+    >>> wimp = WIMP(mass=50e9, spin=0)
+    >>> kinematics = ElasticKinematics(mX=wimp.mass, mT=Xe131.mass)
+    >>> propagator = MassiveMediatorPropagator(mediator_mass=100e6)
+    >>> interaction = SIInteraction(
+    ...     wimp=wimp,
+    ...     nucleus=Xe131,
+    ...     kinematics=kinematics,
+    ...     propagator=propagator,
+    ... )
     """
 
     def __init__(self, mediator_mass: float):
@@ -175,13 +203,15 @@ class MassiveMediatorPropagator(Propagator):
         Parameters
         ----------
         q : ndarray
-            Momentum transfer in eV.
+            Momentum transfer in eV. May be a scalar or an
+            array of any shape.
 
         Returns
         -------
         ndarray
-            Dimensionless squared propagator response with
-            the same shape as q.
+            Dimensionless squared propagator response. The
+            output has the same shape as q, including a
+            zero-dimensional array for scalar input.
         """
         q = np.asarray(q, dtype=float)
         amplitude_ratio = np.square(self.mediator_mass / np.hypot(self.mediator_mass, q))
