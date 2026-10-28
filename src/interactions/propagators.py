@@ -148,7 +148,7 @@ class PointLikePropagator(Propagator):
 
 
 class MassiveMediatorPropagator(Propagator):
-    """
+    r"""
     Momentum-dependent response for a finite-mass mediator.
 
     The response is applied directly to the differential
@@ -156,7 +156,7 @@ class MassiveMediatorPropagator(Propagator):
 
     .. math::
 
-    R(q) = \left(\frac{M^2}{M^2 + q^2}\right)^2
+        R(q) = \left(\frac{M^2}{M^2 + q^2}\right)^2
 
     where M is the mediator mass and q is the momentum
     transfer, both in eV.
