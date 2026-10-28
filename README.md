@@ -26,6 +26,7 @@ Current capabilities include:
 - Helm nuclear form factors
 - Differential and integrated recoil rates
 - Detector exposure modelling
+- Detector response with resolution and acceptance
 - Benchmark nuclei (Xe, Ar, Ge, Si)
 - Upper limit esitmation
 - Plotting utilities
