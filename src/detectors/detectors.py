@@ -18,8 +18,8 @@ detector response effects:
         Detector model including finite energy resolution
         and energy-dependent acceptance.
 
-Detector effects are applied through the
-``apply_detector_effects`` interface, allowing
+Detector response is applied through the
+``apply_detector_response`` interface, allowing
 RateCalculator to remain independent of the
 specific detector implementation.
 
@@ -118,11 +118,11 @@ class BaseDetector(ABC):
         return DAY_TO_SECONDS * self.exposure_days
 
     @abstractmethod
-    def apply_detector_effects(self,
-                               energy: NDArray,
-                               spectrum: NDArray) -> NDArray:
+    def apply_detector_response(self,
+                                energy: NDArray,
+                                spectrum: NDArray) -> NDArray:
         """
-        Apply detector response effects to a recoil spectrum.
+        Apply the detector response to a recoil spectrum.
 
         Parameters
         ----------
@@ -144,7 +144,7 @@ class BaseDetector(ABC):
         Implementations must not modify the input arrays
         in-place.
 
-        Examples of detector effects include:
+        Examples of detector response include:
         - analysis thresholds,
         - finite energy resolution,
         - energy-dependent acceptance,
@@ -185,9 +185,9 @@ class IdealDetector(BaseDetector):
         if not np.isfinite(self.threshold_energy) or self.threshold_energy < 0:
             raise ValueError("threshold_energy must be a finite non-negative number.")
 
-    def apply_detector_effects(self,
-                               energy: NDArray,
-                               spectrum: NDArray) -> NDArray:
+    def apply_detector_response(self,
+                                energy: NDArray,
+                                spectrum: NDArray) -> NDArray:
         """
         Apply the ideal-detector response.
 

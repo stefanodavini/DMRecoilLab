@@ -117,7 +117,7 @@ def test_rate_integrated_shape():
     ratecalc = _initialize_default_si_elastic_rate(Xe131)
 
     ER = np.linspace(1, 1e5, 100)
-    intrate = ratecalc.integrated_rate_above_threshold(ER)
+    intrate = ratecalc.integrated_rate_above_energy(ER)
 
     assert intrate.shape == ER.shape
     assert len(intrate) == len(ER)
