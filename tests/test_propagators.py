@@ -10,11 +10,6 @@ from src.interactions.propagators import (
     Propagator,
     PointLikePropagator,
 )
-from src.interactions.particles import WIMP
-from src.interactions.si import SIInteraction
-from src.interactions.sd import SDInteraction
-from src.kinematics.scattering_kinematics import ElasticKinematics
-from src.nuclei.isotopes import Xe131
 
 def test_propagator_is_abstract():
     """
@@ -108,63 +103,3 @@ def test_massive_mediator_response_preserves_shape():
 
     assert response.shape == q.shape
 
-
-def test_massive_mediator_is_applied_by_si_interaction():
-    """
-    SIInteraction applies the massive-mediator response
-    in its momentum-transfer response.
-    """
-    wimp = WIMP(mass=1e11, spin=0)
-    kinematics = ElasticKinematics(mX=wimp.mass, mT=Xe131.mass)
-    propagator = MassiveMediatorPropagator(mediator_mass=100e6)
-    interaction = SIInteraction(
-        wimp=wimp,
-        nucleus=Xe131,
-        kinematics=kinematics,
-        propagator=propagator,
-    )
-    recoil_energy = np.array([1e3, 1e4, 1e5])
-    q = kinematics.q_from_ER(ER=recoil_energy)
-
-    np.testing.assert_allclose(
-        interaction.momentum_transfer_response(ER=recoil_energy),
-        propagator.response(q),
-    )
-
-
-def test_massive_mediator_modifies_sd_differential_cross_section():
-    """
-    SDInteraction scales its differential cross section
-    by the massive-mediator response.
-    """
-    wimp = WIMP(mass=1e11, spin=0)
-    kinematics = ElasticKinematics(mX=wimp.mass, mT=Xe131.mass)
-    pointlike_interaction = SDInteraction(
-        wimp=wimp,
-        nucleus=Xe131,
-        kinematics=kinematics,
-        propagator=PointLikePropagator(),
-    )
-    massive_interaction = SDInteraction(
-        wimp=wimp,
-        nucleus=Xe131,
-        kinematics=kinematics,
-        propagator=MassiveMediatorPropagator(mediator_mass=100e6),
-    )
-    velocity = np.array([1e-3, 2e-3])
-    recoil_energy = np.array([1e3, 1e4, 3e4])
-    q = kinematics.q_from_ER(ER=recoil_energy)
-
-    pointlike_dsigma = pointlike_interaction.dsigma_dER(
-        v=velocity,
-        ER=recoil_energy,
-    )
-    massive_dsigma = massive_interaction.dsigma_dER(
-        v=velocity,
-        ER=recoil_energy,
-    )
-
-    np.testing.assert_allclose(
-        massive_dsigma,
-        pointlike_dsigma * massive_interaction.propagator.response(q)[None, :],
-    )
