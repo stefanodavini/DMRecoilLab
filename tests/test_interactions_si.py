@@ -4,7 +4,7 @@ from src.interactions.particles import WIMP
 from src.interactions.si import SIInteraction
 from src.nuclei.form_factors import PointLikeFormFactor, HelmFormFactor
 from src.nuclei.isotopes import Ar40, Xe131
-from src.interactions.propagators import MassiveMediatorPropagator, PointLikePropagator, Propagator
+from src.interactions.propagators import MassiveMediatorPropagator
 
 
 def _initialize_si_elastic() -> SIInteraction:

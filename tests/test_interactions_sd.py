@@ -3,7 +3,7 @@ from src.kinematics.scattering_kinematics import ElasticKinematics, InelasticKin
 from src.interactions.particles import WIMP
 from src.interactions.sd import SDInteraction
 from src.nuclei.isotopes import Ar40, Xe131
-from src.interactions.propagators import PointLikePropagator, Propagator, MassiveMediatorPropagator
+from src.interactions.propagators import PointLikePropagator, MassiveMediatorPropagator
 
 
 def _initialize_sd_elastic() -> SDInteraction:
