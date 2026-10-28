@@ -304,8 +304,8 @@ class RateCalculator:
         """
         Check that the inputs are valid
         """
-        if self.rho_dm < 0:
-            raise ValueError("Local DM density must be non negative")
+        if not np.isfinite(self.rho_dm) or self.rho_dm < 0:
+            raise ValueError("Local DM density must be finite and non negative")
 
         if self.has_detector:
             if self.detector.nucleus != self.interaction.nucleus:

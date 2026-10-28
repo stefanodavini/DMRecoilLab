@@ -50,7 +50,7 @@ class BaseDetector(ABC):
         Target isotope.
 
     mass_kg : float
-        Active detector mass in kg.
+        Active detector fiducial mass in kg.
 
     exposure_days : float, optional
         Exposure time in days.
@@ -80,9 +80,9 @@ class BaseDetector(ABC):
         Validates the input.
         """
         if not np.isfinite(self.mass_kg) or self.mass_kg < 0:
-            raise ValueError("mass_kg must be non negative.")
+            raise ValueError("mass_kg must be finite and non negative.")
         if not np.isfinite(self.target_mass_fraction) or not 0 <= self.target_mass_fraction <= 1:
-            raise ValueError("target_mass_fraction must be finite and in the interval [0, 1].")
+            raise ValueError("target_mass_fraction must be finite, >= 0, and <= 1.")
         if not np.isfinite(self.exposure_days) or self.exposure_days < 0:
             raise ValueError("exposure_days must be a finite non-negative number.")
 
@@ -291,7 +291,6 @@ class ResponseDetector(BaseDetector):
         ----------
         energy : NDArray
             Recoil-energy grid in eV.
-
         spectrum : NDArray
             True recoil spectrum evaluated on
             ``energy``.
@@ -327,7 +326,6 @@ class ResponseDetector(BaseDetector):
         ----------
         energy : NDArray
             Recoil-energy grid in eV.
-
         spectrum : NDArray
             True recoil spectrum evaluated on
             ``energy``.
@@ -383,7 +381,6 @@ class ResponseDetector(BaseDetector):
         ----------
         energy : NDArray
             Recoil-energy grid in eV.
-
         spectrum : NDArray
             Recoil spectrum evaluated on ``energy``.
 

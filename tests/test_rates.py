@@ -37,9 +37,17 @@ def test_rate_input_rhodm_negative():
     wimp = WIMP(mass=1e11, spin=0)
     si = _initialize_si_elastic(wimp=wimp, target=Ar40)
     halo = _initialize_halo_shm_boost()
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="negative"):
         return RateCalculator(halo=halo, interaction=si,
                               rho_dm=-1e9)
+    
+def test_rate_input_rhodm_finite():
+    wimp = WIMP(mass=1e11, spin=0)
+    si = _initialize_si_elastic(wimp=wimp, target=Ar40)
+    halo = _initialize_halo_shm_boost()
+    with pytest.raises(ValueError, match="finite"):
+        return RateCalculator(halo=halo, interaction=si,
+                              rho_dm=np.nan)
 
 def test_rate_input_different_nuclei():
     wimp = WIMP(mass=1e11, spin=0)
