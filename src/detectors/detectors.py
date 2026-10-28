@@ -213,6 +213,41 @@ class IdealDetector(BaseDetector):
 
 @dataclass(frozen=True)
 class ResponseDetector(BaseDetector):
+    """
+    Detector model with finite resolution and
+    energy-dependent acceptance.
+
+    Parameters
+    ----------
+    resolution_sigma : float, optional
+        Gaussian energy-resolution width in eV.
+
+    acceptance_curve : TabulatedData, optional
+        Tabulated detector acceptance as a function
+        of recoil energy.
+
+    Notes
+    -----
+    The detector response is applied in two stages:
+    1. Gaussian energy smearing.
+    2. Energy-dependent acceptance.
+
+    The observed spectrum is therefore:
+
+    true spectrum
+        ↓
+    resolution
+        ↓
+    acceptance
+        ↓
+    observed spectrum
+
+    If ``resolution_sigma`` is zero, perfect energy
+    resolution is assumed.
+
+    If ``acceptance_curve`` is None, unit acceptance
+    is assumed at all energies.
+    """
     resolution_sigma: float = 0.
     acceptance_curve: TabulatedData | None = None
 
@@ -249,31 +284,146 @@ class ResponseDetector(BaseDetector):
     def apply_detector_response(self,
                                 energy: NDArray,
                                 spectrum: NDArray) -> NDArray:
-        spectrum = self._apply_resolution(energy=energy,
-                                          spectrum=spectrum)
-        spectrum = self._apply_acceptance(energy=energy,
-                                          spectrum=spectrum)
-        return spectrum
+        """
+        Apply the detector response to a recoil spectrum.
+
+        Parameters
+        ----------
+        energy : NDArray
+            Recoil-energy grid in eV.
+
+        spectrum : NDArray
+            True recoil spectrum evaluated on
+            ``energy``.
+
+        Returns
+        -------
+        NDArray
+            Observed recoil spectrum after detector
+            response effects have been applied.
+
+        Notes
+        -----
+        Detector response is applied in the order
+        1. energy resolution;
+        2. acceptance.
+
+        The input arrays are not modified.
+        """
+        observed_spectrum = spectrum.copy()
+        observed_spectrum = self._apply_resolution(energy=energy,
+                                                   spectrum=observed_spectrum)
+        observed_spectrum = self._apply_acceptance(energy=energy,
+                                                   spectrum=observed_spectrum)
+        return observed_spectrum
 
     def _apply_resolution(self,
                           energy: NDArray,
                           spectrum: NDArray) -> NDArray:
-        ...
+        """
+        Apply Gaussian energy smearing to a recoil spectrum.
+
+        Parameters
+        ----------
+        energy : NDArray
+            Recoil-energy grid in eV.
+
+        spectrum : NDArray
+            True recoil spectrum evaluated on
+            ``energy``.
+
+        Returns
+        -------
+        NDArray
+            Smeared recoil spectrum evaluated on the
+            same energy grid.
+
+        Notes
+        -----
+        The smearing is implemented through a Gaussian
+        response matrix
+
+        .. math::
+
+        G(E, E')
+
+        which maps true recoil energies to reconstructed
+        recoil energies.
+
+        The response matrix is normalized numerically so
+        that event counts are conserved on the supplied
+        energy grid.
+
+        If ``resolution_sigma == 0``, the input spectrum
+        is returned unchanged.
+        """
+        if not self.has_resolution:
+            return spectrum
+
+        deltaE = energy[:, None] - energy[None, :]
+
+        kernel = np.exp( -0.5 * (deltaE / self.resolution_sigma)**2 )
+
+        norm = np.trapezoid(kernel, energy, axis=0)
+        if np.any(norm == 0):
+            raise RuntimeError("Resolution kernel normalization failed.")
+
+        kernel /= norm
+
+        smeared = kernel @ (spectrum * np.gradient(energy))
+        return smeared
 
     def _apply_acceptance(self,
                           energy: NDArray,
                           spectrum: NDArray) -> NDArray:
-        
-        if self.has_acceptance:
-            eff = self._acceptance_interp(energy)
-            return spectrum * eff
+        """
+        Apply detector acceptance to a recoil spectrum.
 
-        return spectrum
+        Parameters
+        ----------
+        energy : NDArray
+            Recoil-energy grid in eV.
+
+        spectrum : NDArray
+            Recoil spectrum evaluated on ``energy``.
+
+        Returns
+        -------
+        NDArray
+            Acceptance-corrected spectrum.
+
+        Notes
+        -----
+        Acceptance values are obtained by interpolation
+        of ``acceptance_curve``.
+
+        For energies below the first tabulated point,
+        the acceptance is assumed to be zero.
+
+        For energies above the last tabulated point,
+        the acceptance is assumed to remain constant at
+        the last tabulated value.
+
+        If no acceptance curve is provided, the input
+        spectrum is returned unchanged.
+        """
+        if not self.has_acceptance:
+            return spectrum
+        
+        eff = self._acceptance_interp(energy)
+        return spectrum * eff
 
     @property
     def has_resolution(self) -> bool:
+        """
+        Whether finite energy resolution is enabled.
+        """
         return self.resolution_sigma > 0
 
     @property
     def has_acceptance(self) -> bool:
+        """
+        Whether an acceptance curve is associated
+        with the detector.
+        """
         return self.acceptance_curve is not None
