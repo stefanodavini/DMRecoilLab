@@ -3,6 +3,8 @@ from src.kinematics.scattering_kinematics import ElasticKinematics, InelasticKin
 from src.interactions.particles import WIMP
 from src.interactions.sd import SDInteraction
 from src.nuclei.isotopes import Ar40, Xe131
+from src.interactions.propagators import PointLikePropagator, MassiveMediatorPropagator
+
 
 def _initialize_sd_elastic() -> SDInteraction:
     wimp = WIMP(mass=1e11, spin=0)
@@ -225,3 +227,83 @@ def test_sd_elastic_total_cross_section():
     ratio = sigma_num / sigma_nucleus
 
     assert np.isclose(ratio, 1, rtol=1e-6)
+
+def test_sd_massive_mediator_modifies_differential_cross_section():
+    """
+    SDInteraction scales its differential cross section
+    by the massive-mediator response.
+    """
+    wimp = WIMP(mass=1e11, spin=0)
+    kinematics = ElasticKinematics(mX=wimp.mass, mT=Xe131.mass)
+    pointlike_interaction = SDInteraction(
+        wimp=wimp,
+        nucleus=Xe131,
+        kinematics=kinematics,
+        sigma_reference=1,
+        propagator=PointLikePropagator(),
+    )
+    massive_interaction = SDInteraction(
+        wimp=wimp,
+        nucleus=Xe131,
+        kinematics=kinematics,
+        sigma_reference=1,
+        propagator=MassiveMediatorPropagator(mediator_mass=100e6),
+    )
+    velocity = np.array([1e-3, 2e-3])
+    recoil_energy = np.array([1e3, 1e4, 3e4])
+    q = kinematics.q_from_ER(ER=recoil_energy)
+
+    pointlike_dsigma = pointlike_interaction.dsigma_dER(
+        v=velocity,
+        ER=recoil_energy,
+    )
+    massive_dsigma = massive_interaction.dsigma_dER(
+        v=velocity,
+        ER=recoil_energy,
+    )
+
+    np.testing.assert_allclose(
+        massive_dsigma,
+        pointlike_dsigma * massive_interaction.propagator.response(q)[None, :],
+    )
+
+
+def test_sd_heavy_mediator_limit_matches_pointlike_interaction():
+    """
+    SDInteraction approaches the point-like result
+    when the mediator mass is much larger than q.
+    """
+    wimp = WIMP(mass=1e11, spin=0)
+    kinematics = ElasticKinematics(mX=wimp.mass, mT=Xe131.mass)
+    pointlike_interaction = SDInteraction(
+        wimp=wimp,
+        nucleus=Xe131,
+        kinematics=kinematics,
+        sigma_reference=1,
+        propagator=PointLikePropagator(),
+    )
+    heavy_mediator_interaction = SDInteraction(
+        wimp=wimp,
+        nucleus=Xe131,
+        kinematics=kinematics,
+        sigma_reference=1,
+        propagator=MassiveMediatorPropagator(mediator_mass=1e12),
+    )
+    velocity = np.array([1e-3, 2e-3])
+    recoil_energy = np.array([1e3, 1e4, 3e4])
+
+    pointlike_dsigma = pointlike_interaction.dsigma_dER(
+        v=velocity,
+        ER=recoil_energy,
+    )
+    heavy_mediator_dsigma = heavy_mediator_interaction.dsigma_dER(
+        v=velocity,
+        ER=recoil_energy,
+    )
+
+    np.testing.assert_allclose(
+        heavy_mediator_dsigma,
+        pointlike_dsigma,
+        rtol=1e-7,
+        atol=0.0,
+    )
