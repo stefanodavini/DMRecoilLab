@@ -27,7 +27,7 @@ All detector responses are assumed to act on recoil-energy
 spectra expressed as dR/dER.
 """
 
-from numpy.typing import NDArray
+from numpy.typing import NDArray, ArrayLike
 import numpy as np
 
 from src.nuclei.nucleus import Nucleus
@@ -208,3 +208,18 @@ class IdealDetector(BaseDetector):
         result = spectrum.copy()
         result[energy < self.threshold_energy] = 0
         return result
+
+@dataclass(frozen=True)
+class ResponseDetector(BaseDetector):
+    resolution_sigma: float = 0.
+    acceptance_energy: ArrayLike | None = None
+    acceptance: ArrayLike | None = None
+
+    def __post_init__(self):
+        """
+        Validates the input.
+        """
+        super().__post_init__()
+
+        if not np.isfinite(self.threshold_energy) or self.resolution_sigma < 0:
+            raise ValueError("resolution_sigma must be a finite non-negative number.")
