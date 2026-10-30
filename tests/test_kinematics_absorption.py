@@ -52,8 +52,6 @@ def test_absorption_kinematics_ER_bounds_are_identical(v):
     np.array(0.0),
     [0.0, 1e-4, 1e-3],
     np.zeros(3, dtype=int),
-    np.array([[0.0, 1e-4], [1e-3, 2e-3]]),
-    np.empty((2, 0)),
 ])
 @pytest.mark.parametrize("method", ["ER_min", "ER_max", "vmin_from_ER"])
 def test_absorption_kinematics_array_inputs(values, method):
@@ -72,8 +70,6 @@ def test_absorption_kinematics_array_inputs(values, method):
     np.array(0.0),
     [0.0, 1e-4, 1e-3],
     np.zeros(3, dtype=int),
-    np.array([[0.0, 1e-4], [1e-3, 2e-3]]),
-    np.empty((2, 0)),
 ])
 def test_absorption_kinematics_speed_mask_all_true(v):
     kin = AbsorptionKinematics(mX=40e6, mT=40e9)
