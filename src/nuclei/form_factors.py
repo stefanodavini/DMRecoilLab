@@ -156,7 +156,7 @@ class TabulatedFormFactor(FormFactor):
     F : ArrayLike
         Tabulated values of F(q).
     check_normalization : bool, optional
-        Check that F(0)=1.
+        Check that F(q=0) = 1.
         Default is true.
     """
     def __init__(self,
