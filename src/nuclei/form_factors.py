@@ -14,13 +14,16 @@ while the corresponding nuclear response is
 Implemented models
 ------------------
 PointLikeFormFactor
-    Idealized point-like nucleus with
+    Idealized point-like nucleus with F(q) = 1.
 
-        F(q) = 1.
+TabulatedFormFactor
+    Form Factor defined by tabulated values.
+    The form factor is specified by arrays of momentum q
+    and corresponding values of F(q).
 
 HelmFormFactor
     Standard Helm parameterization based on a
-    unifrom shperical nuclear density profile
+    unifrom spherical nuclear density profile
     convolved with a Gaussian surface thickness.
 
 Notes
@@ -40,11 +43,13 @@ Astroparticle Physics 6 (1996) 87-112.
 from src.nuclei.base_nuclear_response import NuclearResponse
 from src.nuclei.nucleus import Nucleus
 from src.utils.conversions import convert_qr_to_dimensionless
+from src.utils.tabulated_data import TabulatedData
 
 from scipy.special import spherical_jn
 
 from abc import abstractmethod
-from numpy.typing import NDArray
+from typing import Self
+from numpy.typing import NDArray, ArrayLike
 import numpy as np
 
 class FormFactor(NuclearResponse):
@@ -61,6 +66,9 @@ class FormFactor(NuclearResponse):
 
     @abstractmethod
     def F(self, q: NDArray) -> NDArray:
+        """
+        Form factor F(q).
+        """
         pass
 
     def response(self, q: NDArray) -> NDArray:
@@ -70,6 +78,35 @@ class FormFactor(NuclearResponse):
         The response is evaluated as |F(q)|^2
         """
         return self.F(q)**2
+
+    def to_file(self,
+                filename: str,
+                q_max: float,
+                n_points: int = 1000):
+        """
+        Save the form factor to a two-column text file.
+
+        The first column contains the momentum transfer q, 
+        the second column contains the corresponding values of F(q).
+
+        Parameters
+        ----------
+        filename: str
+            Output filename.
+
+        q_max: float
+            Maximum tabulated momentum transfer q (in eV).
+
+        n_points: int
+            Number of sample points used to tabulate F(q).
+        """
+        q = np.linspace(0.0, q_max, n_points)
+        data = TabulatedData(x=q,
+                             y=self.F(q),
+                             x_name="q", y_name="F(q)")
+
+        data.to_file(filename=filename)
+
 
 class PointLikeFormFactor(FormFactor):
     """
@@ -87,7 +124,7 @@ class PointLikeFormFactor(FormFactor):
 
     def F(self, q: NDArray) -> NDArray:
         """
-        Point Like form factor
+        Point Like form factor F(q) = 1.
 
         Parameters
         ----------
@@ -101,6 +138,87 @@ class PointLikeFormFactor(FormFactor):
         q = np.asarray(q)
 
         return np.ones_like(q, dtype=float)
+
+
+class TabulatedFormFactor(FormFactor):
+    """
+    Form Factor defined by tabulated values.
+
+    The form factor is specified by arrays of momentum q
+    and corresponding values of F(q).
+
+    The tabulated form factor must satisfy |F(q)| <= 1.
+
+    Parameters
+    ----------
+    q : ArrayLike
+        Monotonically increasing momentum grid q in eV.
+    F : ArrayLike
+        Tabulated values of F(q).
+    check_normalization : bool, optional
+        Check that F(q=0) = 1.
+        Default is true.
+    """
+    def __init__(self,
+                 q: ArrayLike,
+                 F: ArrayLike,
+                 check_normalization=True):
+
+        self._data = TabulatedData(x=q, y=F,
+                                   x_name="q",
+                                   y_name="F(q)")
+
+        self._data.check_x_non_negative()
+        self._data.check_abs_y_less_equal_one()
+
+        self._q = np.asarray(self._data.x)
+        self._F = np.asarray(self._data.y)
+
+        if check_normalization:
+            if not np.isclose(self.F(q=0.), 1.):
+                raise ValueError("F(q=0) must equal 1.")
+
+    def F(self, q: NDArray) -> NDArray:
+        """
+        Form factor F(q) for tabulated values.
+
+        Values between tabulated points are obtained by linear interpolation.
+        Values outside the tabulated range are taken to be zero.
+
+        Parameters
+        ----------
+        q : ndarray
+            Momentum transfer in eV.
+
+        Returns
+        -------
+        ndarray.
+        """
+        return np.interp(q, self._q, self._F,
+                         left=0.0, right=0.0)
+
+    @classmethod
+    def from_file(cls,
+                  filename: str) -> Self:
+        """
+        Construct a tabulated form factor from a text file produced
+        by to_file().
+
+        The file must contain exactly two columns corresponding to
+        momentum and F(q) values.
+
+        Parameters
+        ----------
+        filename: str
+            Input filename.
+
+        Returns
+        -------
+        TabulatedFormFactor
+        """
+        data = TabulatedData.from_file(filename)
+        return cls(q=data.x, F=data.y)
+
 
 class HelmFormFactor(FormFactor):
     """
@@ -176,4 +294,3 @@ class HelmFormFactor(FormFactor):
         a_fm = 0.52
         return np.sqrt(
             self.c_fm**2 + 7 / 3 * np.pi**2 * a_fm**2  - 5 * self.s_fm**2)
-
