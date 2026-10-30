@@ -544,7 +544,3 @@ class InelasticKinematics(ScatteringKinematics):
         sol_neg = muvcosth - np.sqrt(muvcosth2 - 2 *self.mu * self.delta)
 
         return sol_neg, sol_pos
-
-
-
-
