@@ -120,6 +120,48 @@ class TabulatedData:
         
         np.savetxt(filename, data, header=f"{self.x_name} {self.y_name}")
 
+    def check_x_positive(self):
+        """
+        Check the x values are > 0
+        """
+        if np.any(self.x <= 0):
+            raise ValueError(f"{self.x_name} must be positive.")
+
+    def check_x_non_negative(self):
+        """
+        Check the x values are >= 0
+        """
+        if np.any(self.x < 0):
+            raise ValueError(f"{self.x_name} must be non-negative.")
+
+    def check_y_positive(self):
+        """
+        Check the y values are > 0
+        """
+        if np.any(self.y <= 0):
+            raise ValueError(f"{self.y_name} must be positive.")
+
+    def check_y_non_negative(self):
+        """
+        Check the y values are >= 0
+        """
+        if np.any(self.y < 0):
+            raise ValueError(f"{self.y_name} must be non-negative.")
+
+    def check_y_less_equal_one(self):
+        """
+        Check the y values are <= 1
+        """
+        if np.any(self.y > 1):
+            raise ValueError(f"{self.y_name} must be <= 1.")
+
+    def check_abs_y_less_equal_one(self):
+        """
+        Check that |y| <= 1
+        """
+        if np.any(abs(self.y) > 1):
+            raise ValueError(f"|{self.y_name}| must be <= 1.")
+
     @property
     def size(self) -> int:
         """

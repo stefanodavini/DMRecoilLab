@@ -114,3 +114,70 @@ def test_tabulated_data_from_file_valid():
     data = TabulatedData.from_file(filename=file)
     assert data.size == 3
 
+def test_tabulated_data_check_x_positive():
+    x = [0, 1, 2]
+    y = [0, 100, 200]
+    data = TabulatedData(x=x, y=y)
+    with pytest.raises(ValueError, match="positive"):
+            data.check_x_positive()
+
+def test_tabulated_data_check_x_non_negative():
+    # pass with x = 0
+    x = [0, 1, 2]
+    y = [0, 100, 200]
+    data = TabulatedData(x=x, y=y)
+    data.check_x_non_negative()
+    # fails for x < 0
+    x = [-1, 1, 2]
+    y = [0, 100, 200]
+    data = TabulatedData(x=x, y=y)
+    with pytest.raises(ValueError, match="non-negative"):
+            data.check_x_non_negative()
+
+def test_tabulated_data_check_y_positive():
+    x = [0, 1, 2]
+    y = [0, 100, 200]
+    data = TabulatedData(x=x, y=y)
+    with pytest.raises(ValueError, match="positive"):
+            data.check_y_positive()
+
+def test_tabulated_data_check_y_non_negative():
+    # pass with y = 0
+    x = [0, 1, 2]
+    y = [0, 100, 200]
+    data = TabulatedData(x=x, y=y)
+    data.check_y_non_negative()
+    # fails for y < 0
+    x = [0, 1, 2]
+    y = [-1, 100, 200]
+    data = TabulatedData(x=x, y=y)
+    with pytest.raises(ValueError, match="non-negative"):
+            data.check_y_non_negative()
+
+def test_tabulated_data_check_y_less_equal_one():
+    # pass with y = 1
+    x = [0, 1, 2]
+    y = [1, 0.5, 0]
+    data = TabulatedData(x=x, y=y)
+    data.check_y_less_equal_one()
+    # fails with y > 1
+    x = [0, 1, 2]
+    y = [1.1, 0.5, 0]
+    data = TabulatedData(x=x, y=y)
+    with pytest.raises(ValueError, match="<= 1"):
+            data.check_y_less_equal_one()
+
+def test_tabulated_data_check_abs_y_less_equal_one():
+    # pass with |y| = 1
+    x = [0, 1, 2]
+    y = [1, 0, -1]
+    data = TabulatedData(x=x, y=y)
+    data.check_abs_y_less_equal_one()
+    # fails with y < 1
+    x = [0, 1, 2]
+    y = [0.9, 0.5, -1.2]
+    data = TabulatedData(x=x, y=y)
+    with pytest.raises(ValueError, match="<= 1"):
+            data.check_abs_y_less_equal_one()
+
+
