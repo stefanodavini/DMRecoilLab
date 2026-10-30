@@ -14,9 +14,12 @@ while the corresponding nuclear response is
 Implemented models
 ------------------
 PointLikeFormFactor
-    Idealized point-like nucleus with
+    Idealized point-like nucleus with F(q) = 1.
 
-        F(q) = 1.
+TabulatedFormFactor
+    Form Factor defined by tabulated values.
+    The form factor is specified by arrays of momentum q
+    and corresponding values of F(q).
 
 HelmFormFactor
     Standard Helm parameterization based on a
@@ -143,6 +146,8 @@ class TabulatedFormFactor(FormFactor):
 
     The form factor is specified by arrays of momentum q
     and corresponding values of F(q).
+
+    The tabulated form factor must satisfy |F(q)| <= 1.
 
     Parameters
     ----------
@@ -281,4 +286,3 @@ class HelmFormFactor(FormFactor):
         a_fm = 0.52
         return np.sqrt(
             self.c_fm**2 + 7 / 3 * np.pi**2 * a_fm**2  - 5 * self.s_fm**2)
-

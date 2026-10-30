@@ -159,12 +159,12 @@ class TabulatedData:
         """
         Check that |y| <= 1
         """
-        if np.any(abs(self.y) > 1):
+        if np.any(np.abs(self.y) > 1):
             raise ValueError(f"|{self.y_name}| must be <= 1.")
 
     @property
     def size(self) -> int:
         """
-        Lenght of the data columns
+        Length of the data columns
         """
         return len(self.x)

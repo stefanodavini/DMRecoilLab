@@ -32,6 +32,10 @@ def test_tabulated_data_raises_one_dimensional():
     with pytest.raises(ValueError, match="one-dimensional"):
         TabulatedData(x=x, y=y)
 
+def test_tabulated_data_raises_min_points():
+    with pytest.raises(ValueError, match="At least"):
+         TabulatedData(x=[0,1], y=[1,2], min_points=3)
+
 def test_tabulated_data_raises_inf():
     x = [0, 100, np.inf]
     y = [1, 2, 3]
@@ -179,5 +183,3 @@ def test_tabulated_data_check_abs_y_less_equal_one():
     data = TabulatedData(x=x, y=y)
     with pytest.raises(ValueError, match="<= 1"):
             data.check_abs_y_less_equal_one()
-
-

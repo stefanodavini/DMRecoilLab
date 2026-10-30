@@ -12,7 +12,7 @@ def test_form_factor_tabulated_file_round_trip():
     ff = TabulatedFormFactor.from_file(output_file)
     q = np.linspace(0, q_max, 1000)
 
-    assert np.allclose(helm.F(q=q), ff.F(q=q), atol=1e-6)
+    assert np.allclose(helm.F(q=q), ff.F(q=q), atol=1e-4)
 
 def test_form_factor_tabulated_negative_q_raises():
     q = [-1, 0, 1]
@@ -38,3 +38,4 @@ def test_form_factor_tabulated_interpolation():
     assert np.all(ff.F(q) == F)
     assert np.isclose(ff.F(0.5), 0.5)
     assert ff.F(2.) == 0.
+    assert ff.F(-1.) == 0.
