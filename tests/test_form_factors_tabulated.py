@@ -30,6 +30,16 @@ def test_form_factor_tabulated_abs_F_gt_1_raises():
     with pytest.raises(ValueError, match="<= 1"):
         TabulatedFormFactor(q=q, F=F)
 
+def test_form_factor_tabulated_check_normalization():
+    # Raise error by default if F(q=0) != 1
+    q = [0, 1, 2]
+    F = [0.9, 0.5, 0]
+    with pytest.raises(ValueError, match="must equal 1"):
+        TabulatedFormFactor(q=q, F=F)
+    # The input check_normalization = False
+    # bypass the check
+    TabulatedFormFactor(q=q, F=F, check_normalization=False)
+
 def test_form_factor_tabulated_interpolation():
     q = [0., 1.]
     F = [1., 0.]

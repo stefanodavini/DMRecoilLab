@@ -23,7 +23,7 @@ TabulatedFormFactor
 
 HelmFormFactor
     Standard Helm parameterization based on a
-    unifrom shperical nuclear density profile
+    unifrom spherical nuclear density profile
     convolved with a Gaussian surface thickness.
 
 Notes
@@ -155,10 +155,14 @@ class TabulatedFormFactor(FormFactor):
         Monotonically increasing momentum grid q in eV.
     F : ArrayLike
         Tabulated values of F(q).
+    check_normalization : bool, optional
+        Check that F(0)=1.
+        Default is true.
     """
     def __init__(self,
                  q: ArrayLike,
-                 F: ArrayLike):
+                 F: ArrayLike,
+                 check_normalization=True):
 
         self._data = TabulatedData(x=q, y=F,
                                    x_name="q",
@@ -169,6 +173,10 @@ class TabulatedFormFactor(FormFactor):
 
         self._q = np.asarray(self._data.x)
         self._F = np.asarray(self._data.y)
+
+        if check_normalization:
+            if not np.isclose(self.F(q=0.), 1.):
+                raise ValueError("F(q=0) must equal 1.")
 
     def F(self, q: NDArray) -> NDArray:
         """
