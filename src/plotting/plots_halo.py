@@ -11,7 +11,7 @@ def plot_speed_distribution(
         vmax=None,
         num=1000,
         ax=None,
-        label=None
+        **plot_kwargs
     ) -> tuple[Figure, Axes]:
     """
     Plot a speed distribution.
@@ -27,8 +27,9 @@ def plot_speed_distribution(
     ax : Axes, optional
         Existing matplotlib axis.
         If None, a new figure is created.
-    label: str, optional
-        Curve label.
+    **plot_kwargs
+        Additional keyword arguments passed directly
+        to matplotlib.axes.Axes.plot.
 
     Returns
     -------
@@ -47,11 +48,11 @@ def plot_speed_distribution(
     v = np.linspace(0, vmax, num)
     g = distribution.speed_pdf(v=v)
 
-    ax.plot(v, g, label=label)
+    ax.plot(v, g, **plot_kwargs)
     ax.set_xlabel("Speed (km/s)")
     ax.set_ylabel(r"$g(v) = 4 \pi v^2  \,f(v)$")
 
-    if label is not None:
+    if "label" in plot_kwargs:
         ax.legend()
 
     return fig, ax
@@ -83,8 +84,6 @@ def plot_boosted_speed_distribution(
     ax : Axes, optional
         Existing matplotlib axis.
         If None, a new figure is created.
-    label: str, optional
-        Curve label.
 
     Returns
     -------
