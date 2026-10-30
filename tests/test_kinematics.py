@@ -147,3 +147,10 @@ def test_inelastic_ER_bounds_nan_mask():
     assert np.isfinite(ERmin[1])
     assert np.isfinite(ERmax[1])
 
+def test_elastic_kinematics_supported_by_scattering_interactions():
+    kin = ElasticKinematics(mX=40e10, mT=40e9)
+    assert kin.supports_scattering_interactions
+
+def test_inelastic_kinematics_supported_by_scattering_interactions():
+    kin = InelasticKinematics(mX=40e10, mT=40e9, delta=1e5)
+    assert kin.supports_scattering_interactions

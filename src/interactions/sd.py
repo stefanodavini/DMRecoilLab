@@ -169,6 +169,10 @@ class SDInteraction(InteractionModel):
         an_over_ap: float = 1.,
         ):
 
+        if not kinematics.supports_scattering_interactions:
+            raise TypeError("" \
+            "SDInteraction requires a kinematics that supports scattering")
+
         if form_factor is not None:
             raise NotImplementedError("SD form factors not implemented yet")
 

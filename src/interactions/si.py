@@ -145,6 +145,10 @@ class SIInteraction(InteractionModel):
         sigma_p: float = 1e-45,
         fn_over_fp: float = 1.):
 
+        if not kinematics.supports_scattering_interactions:
+            raise TypeError("" \
+            "SIInteraction requires a kinematics that supports scattering")
+
         if form_factor is None:
             form_factor = PointLikeFormFactor()
 
