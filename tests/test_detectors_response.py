@@ -25,7 +25,7 @@ def test_detectors_acceptance_energy_must_be_non_negative():
 
 def test_detectors_acceptance_must_be_non_negative():
     curve = TabulatedData(x=[1.0, 10.0], y=[0.0, -1.0])
-    with pytest.raises(ValueError, match=">= 0"):
+    with pytest.raises(ValueError, match="non-negative"):
         ResponseDetector(nucleus=Ar40, mass_kg=1.0, acceptance_curve=curve)
 
 def test_detectors_acceptance_must_be_less_than_one():

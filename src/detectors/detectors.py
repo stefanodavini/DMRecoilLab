@@ -261,15 +261,14 @@ class ResponseDetector(BaseDetector):
             raise ValueError("resolution_sigma must be a finite non-negative number.")
 
         if self.acceptance_curve is not None:
+            self.acceptance_curve.x_name = "Acceptance Energy"
+            self.acceptance_curve.y_name = "Acceptance"
+            self.acceptance_curve.check_x_non_negative()
+            self.acceptance_curve.check_y_non_negative()
+            self.acceptance_curve.check_y_less_equal_one()
 
             object.__setattr__(self, "_acc_ene", np.asarray(self.acceptance_curve.x))
             object.__setattr__(self, "_acc_val", np.asarray(self.acceptance_curve.y))
-        
-            if np.any(self._acc_ene < 0):
-                raise ValueError("Acceptance energy grid must be non-negative.")
-        
-            if np.any(self._acc_val < 0) or np.any(self._acc_val > 1):
-                raise ValueError("Acceptance must be >= 0 and <= 1.")
 
             acceptance_interp = interp1d(self._acc_ene,
                                          self._acc_val,

@@ -10,7 +10,7 @@ def plot_recoil_spectrum(
     rate_calc: RateCalculator,
     ER: NDArray,
     ax=None,
-    label=None) -> tuple[Figure, Axes]:
+    **plot_kwargs) -> tuple[Figure, Axes]:
     """
     Plot a recoil energy spectrum dR/dE.
 
@@ -23,8 +23,9 @@ def plot_recoil_spectrum(
     ax : Axes, optional
         Existing matplotlib axis.
         If None, a new figure is created.
-    label: str, optional
-        Curve label.
+    **plot_kwargs
+        Additional keyword arguments passed directly
+        to matplotlib.axes.Axes.plot.
 
     Returns
     -------
@@ -46,11 +47,13 @@ def plot_recoil_spectrum(
     dRdER = rate_calc.dRdER(ER)
     ER_keV = ER / 1e3
 
-    ax.plot(ER_keV, dRdER, label=label)
+    ax.plot(ER_keV, dRdER, **plot_kwargs)
     ax.set_xlabel("recoil energy (keV)")
     ax.set_ylabel("differential rate")
     ax.set_yscale("log")
     ax.grid(True, alpha=0.3)
+    if "label" in plot_kwargs:
+        ax.legend()
 
     return fig, ax
 
@@ -59,7 +62,7 @@ def plot_normalized_recoil_spectrum(
     rate_calc: RateCalculator,
     ER: NDArray,
     ax=None,
-    label=None,
+    **plot_kwargs,
     ) -> tuple[Figure, Axes]:
     """
     Plot a recoil energy spectrum dR/dE,
@@ -74,8 +77,9 @@ def plot_normalized_recoil_spectrum(
     ax : Axes, optional
         Existing matplotlib axis.
         If None, a new figure is created.
-    label: str, optional
-        Curve label.
+    **plot_kwargs
+        Additional keyword arguments passed directly
+        to matplotlib.axes.Axes.plot.
 
     Returns
     -------
@@ -97,11 +101,13 @@ def plot_normalized_recoil_spectrum(
     norm = np.trapezoid(dRdER, ER)
     ER_keV = ER / 1e3
 
-    ax.plot(ER_keV, dRdER / norm, label=label)
+    ax.plot(ER_keV, dRdER / norm, **plot_kwargs)
     ax.set_xlabel("recoil energy (keV)")
     ax.set_ylabel("normalized differential rate")
     ax.set_yscale("log")
     ax.grid(True, alpha=0.3)
+    if "label" in plot_kwargs:
+        ax.legend()
 
     return fig, ax
 
@@ -111,7 +117,7 @@ def plot_integral_rate(
     xlim=None,
     ylim=None,
     ax=None,
-    label=None,
+    **plot_kwargs,
     ) -> tuple[Figure, Axes]:
     """
     Plot the recoil rate above threshold.
@@ -125,8 +131,9 @@ def plot_integral_rate(
     ax : Axes, optional
         Existing matplotlib axis.
         If None, a new figure is created.
-    label: str, optional
-        Curve label.
+    **plot_kwargs
+        Additional keyword arguments passed directly
+        to matplotlib.axes.Axes.plot.
 
     Returns
     -------
@@ -151,7 +158,7 @@ def plot_integral_rate(
 
     ER_keV = ER / 1e3
 
-    ax.plot(ER_keV, intrate, label=label)
+    ax.plot(ER_keV, intrate, **plot_kwargs)
     ax.set_xlabel("threshold recoil energy (keV)")
     ax.set_ylabel("integral rate (counts/detector mass/ exposure time)")
     ax.set_yscale("log")
@@ -162,5 +169,8 @@ def plot_integral_rate(
 
     if ylim is not None:
         ax.set_ylim(*ylim)
+
+    if "label" in plot_kwargs:
+        ax.legend()
 
     return fig, ax

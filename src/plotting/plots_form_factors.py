@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 def plot_form_factor(form_factor: FormFactor,
                      q: NDArray,
                      ax=None,
-                     label=None) -> tuple[Figure, Axes]:
+                     **plot_kwargs) -> tuple[Figure, Axes]:
     """
     Plot a form factor's F(q).
 
@@ -22,8 +22,9 @@ def plot_form_factor(form_factor: FormFactor,
     ax : Axes, optional
         Existing matplotlib axis.
         If None, a new figure is created.
-    label: str, optional
-        Curve label.
+    **plot_kwargs
+        Additional keyword arguments passed directly
+        to matplotlib.axes.Axes.plot.
 
     Returns
     -------
@@ -36,21 +37,22 @@ def plot_form_factor(form_factor: FormFactor,
     else:
         fig = ax.figure
     
-    ax.plot(q, form_factor.F(q=q), label=label)
+    ax.plot(q, form_factor.F(q=q), **plot_kwargs)
 
     ax.ticklabel_format(style="sci", axis="x", scilimits=(0, 0))
     ax.set_yscale("log")
     ax.grid(True, alpha=0.3)
     ax.set_xlabel(r"$q$ (eV)")
     ax.set_ylabel(r"$F(q)$")
-    ax.legend()
+    if "label" in plot_kwargs:
+        ax.legend()
 
     return fig, ax
 
 def plot_response(form_factor: FormFactor,
                   q: NDArray,
                   ax=None,
-                  label=None) -> tuple[Figure, Axes]:
+                  **plot_kwargs) -> tuple[Figure, Axes]:
 
     """
     Plot a form factor's response |F(q)|^2.
@@ -64,8 +66,9 @@ def plot_response(form_factor: FormFactor,
     ax : Axes, optional
         Existing matplotlib axis.
         If None, a new figure is created.
-    label: str, optional
-        Curve label.
+    **plot_kwargs
+        Additional keyword arguments passed directly
+        to matplotlib.axes.Axes.plot.
 
     Returns
     -------
@@ -78,13 +81,14 @@ def plot_response(form_factor: FormFactor,
     else:
         fig = ax.figure
     
-    ax.plot(q, form_factor.response(q=q), label=label)
+    ax.plot(q, form_factor.response(q=q), **plot_kwargs)
     ax.ticklabel_format(style="sci", axis="x", scilimits=(0, 0))
     ax.set_yscale("log")
     ax.grid(True, alpha=0.3)
     ax.set_xlabel(r"$q$ (eV)")
     ax.set_ylabel(r"$|F(q)|^2$")
-    ax.legend()
+    if "label" in plot_kwargs:
+        ax.legend()
 
     return fig, ax
 
@@ -92,7 +96,7 @@ def plot_response_vs_ER(form_factor: FormFactor,
                         kinematics: ScatteringKinematics,
                         ER: NDArray,
                         ax=None,
-                        label=None) -> tuple[Figure, Axes]:
+                        **plot_kwargs) -> tuple[Figure, Axes]:
     """
     Plot a form factor's response |F(ER)|^2
     as function of recoil energy.
@@ -106,8 +110,9 @@ def plot_response_vs_ER(form_factor: FormFactor,
     ax : Axes, optional
         Existing matplotlib axis.
         If None, a new figure is created.
-    label: str, optional
-        Curve label.
+    **plot_kwargs
+        Additional keyword arguments passed directly
+        to matplotlib.axes.Axes.plot.
 
     Returns
     -------
@@ -122,13 +127,13 @@ def plot_response_vs_ER(form_factor: FormFactor,
 
     q = kinematics.q_from_ER(ER=ER)
 
-    ax.plot(ER, form_factor.response(q=q), label=label)
+    ax.plot(ER, form_factor.response(q=q), **plot_kwargs)
     ax.ticklabel_format(style="sci", axis="x", scilimits=(0, 0))
     ax.set_yscale("log")
     ax.grid(True, alpha=0.3)
     ax.set_xlabel(r"$E_R$ (eV)")
     ax.set_ylabel(r"$|F(q)|^2$")
-    ax.legend()
+    if "label" in plot_kwargs:
+        ax.legend()
 
     return fig, ax
-    

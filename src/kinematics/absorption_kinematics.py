@@ -73,3 +73,12 @@ class AbsorptionKinematics(ScatteringKinematics):
         raise NotImplementedError(
             "Angular kinematics are not defined for absorption.")
 
+    @property
+    def supports_scattering_interactions(self) -> bool:
+        """
+        The class instance can not be used
+        in scattering interaction models
+        such as SI/SD
+        """
+        return False
+

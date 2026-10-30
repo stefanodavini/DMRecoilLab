@@ -9,7 +9,8 @@ import numpy as np
 def plot_vmin(
     kin: ScatteringKinematics,
     ER: ArrayLike,
-    ax=None) -> tuple[Figure, Axes]:
+    ax=None,
+    **plot_kwargs) -> tuple[Figure, Axes]:
     """
     Plot the minimum WIMP speed required
     to produce a recoil of energy ER.
@@ -23,8 +24,9 @@ def plot_vmin(
     ax : Axes, optional
         Existing axes. If None, a new
         figure is created.
-    label : str, optional
-        Curve label.
+    **plot_kwargs
+        Additional keyword arguments passed directly
+        to matplotlib.axes.Axes.plot.
 
     Returns
     -------
@@ -39,7 +41,7 @@ def plot_vmin(
 
     ER = np.asarray(ER)
 
-    ax.plot(ER, kin.vmin_from_ER(ER))
+    ax.plot(ER, kin.vmin_from_ER(ER), **plot_kwargs)
 
     ax.set_xlabel("Recoil Energy (eV)")
     ax.set_ylabel(r"$v_{\min}$ ($c=1$)")
@@ -96,7 +98,8 @@ def plot_ER_bounds(kin: ScatteringKinematics,
 
 def plot_q_vs_ER(kin: ScatteringKinematics,
                  ER: ArrayLike,
-                 ax=None) -> tuple[Figure, Axes]:
+                 ax=None,
+                 **plot_kwargs) -> tuple[Figure, Axes]:
     """
     Plot momentum transfer as a function
     of recoil energy.
@@ -109,6 +112,9 @@ def plot_q_vs_ER(kin: ScatteringKinematics,
         Recoil-energy grid in eV.
     ax : Axes, optional
         Existing axes.
+    **plot_kwargs
+        Additional keyword arguments passed directly
+        to matplotlib.axes.Axes.plot.
 
     Returns
     -------
@@ -129,7 +135,7 @@ def plot_q_vs_ER(kin: ScatteringKinematics,
 
     ER = np.asarray(ER)
 
-    ax.plot(ER, kin.q_from_ER(ER))
+    ax.plot(ER, kin.q_from_ER(ER), **plot_kwargs)
     ax.set_xlabel("Recoil Energy (eV)")
     ax.set_ylabel(r"Momentum Transfer $q$ (eV)")
 

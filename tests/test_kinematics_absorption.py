@@ -4,6 +4,9 @@ import pytest
 from src.kinematics.scattering_kinematics import ScatteringKinematics
 from src.kinematics.absorption_kinematics import AbsorptionKinematics
 
+def test_absorption_kinematics_not_supported_by_scattering_interactions():
+    kin = AbsorptionKinematics(mX=40e6, mT=40e9)
+    assert not kin.supports_scattering_interactions
 
 @pytest.mark.parametrize("mX, mT", [
     (0.0, 40e9),
