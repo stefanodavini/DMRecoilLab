@@ -1,10 +1,8 @@
 import numpy as np
 import pytest
 
-from src.kinematics.scattering_kinematics import (
-    AbsorptionKinematics,
-    ScatteringKinematics,
-)
+from src.kinematics.scattering_kinematics import ScatteringKinematics
+from src.kinematics.absorption_kinematics import AbsorptionKinematics
 
 
 @pytest.mark.parametrize("mX, mT", [
@@ -17,6 +15,9 @@ def test_absorption_kinematics_mass_validation(mX, mT):
     with pytest.raises(ValueError):
         AbsorptionKinematics(mX=mX, mT=mT)
 
+def test_absorption_kinematics_inheritance():
+    kin = AbsorptionKinematics(mX=1e6, mT=1e12)
+    assert isinstance(kin, ScatteringKinematics)
 
 @pytest.mark.parametrize("mX, mT, expected_eV", [
     (10e6, 40e9, 1250.0),
@@ -25,18 +26,14 @@ def test_absorption_kinematics_mass_validation(mX, mT):
 ])
 def test_absorption_kinematics_recoil_energy(mX, mT, expected_eV):
     kin = AbsorptionKinematics(mX=mX, mT=mT)
-    assert isinstance(kin, ScatteringKinematics)
-    assert kin.ER_absorption() == pytest.approx(expected_eV)
+    assert kin.ER == pytest.approx(expected_eV)
 
-
-@pytest.mark.parametrize("mX, mT", [
-    (10e6, 40e9),
-    (40e6, 40e9),
-    (40e6, 125e9),
-])
+@pytest.mark.parametrize("mX, mT", [(10e6, 40e9),
+                                    (40e6, 40e9),
+                                    (40e6, 125e9)])
 def test_absorption_kinematics_q_from_ER(mX, mT):
     kin = AbsorptionKinematics(mX=mX, mT=mT)
-    assert kin.q_from_ER(kin.ER_absorption()) == pytest.approx(mX)
+    assert kin.q_from_ER(kin.ER) == pytest.approx(mX)
 
 
 @pytest.mark.parametrize("v", [
@@ -63,7 +60,7 @@ def test_absorption_kinematics_array_inputs(values, method):
     kin = AbsorptionKinematics(mX=7e6, mT=122e9)
 
     result = getattr(kin, method)(values)
-    expected = 0.0 if method == "vmin_from_ER" else kin.ER_absorption()
+    expected = 0.0 if method == "vmin_from_ER" else kin.ER
 
     assert np.shape(result) == np.shape(values)
     assert np.asarray(result).dtype.kind == "f"
@@ -87,9 +84,15 @@ def test_absorption_kinematics_speed_mask_all_true(v):
     assert np.all(mask)
     assert kin.threshold_speed == 0.0
 
-
 def test_absorption_kinematics_angular_not_implemented():
     kin = AbsorptionKinematics(mX=40e6, mT=40e9)
-
     with pytest.raises(NotImplementedError):
         kin.q_from_v_theta(1e-3, 0.0)
+
+def test_absorption_recoil_independent_of_speed():
+    kin = AbsorptionKinematics(40e6, 40e9)
+
+    np.testing.assert_allclose(
+        kin.ER_min(1e-5),
+        kin.ER_min(1e-3),
+    )
