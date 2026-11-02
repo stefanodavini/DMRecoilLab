@@ -64,6 +64,7 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.integrate import cumulative_trapezoid
 
+from src.nuclei.nucleus import Nucleus
 from src.detectors.detectors import BaseDetector
 from src.halo.base_halo_distribution import IsotropicSpeedDistribution
 from src.interactions.base_interaction_model import InteractionModel
@@ -419,3 +420,10 @@ class RateCalculator:
         cross-section.
         """
         return self.interaction.sigma_reference
+
+    @property
+    def target_nucleus(self) -> Nucleus:
+        """
+        Detector target nucleus.
+        """
+        return self.detector.nucleus
