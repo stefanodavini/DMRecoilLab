@@ -99,6 +99,10 @@ def plot_normalized_recoil_spectrum(
 
     dRdER = rate_calc.dRdER(ER)
     norm = np.trapezoid(dRdER, ER)
+
+    if norm <= 0:
+        raise RuntimeError("Unphysical normalization")
+    
     ER_keV = ER / 1e3
 
     ax.plot(ER_keV, dRdER / norm, **plot_kwargs)

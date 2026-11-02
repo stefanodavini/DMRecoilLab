@@ -19,7 +19,7 @@ def plot_vmin(
     ----------
     kin : ScatteringKinematics
         Kinematics model.
-    ER_grid : ArrayLike
+    ER : ArrayLike
         Recoil-energy grid in eV.
     ax : Axes, optional
         Existing axes. If None, a new
@@ -66,7 +66,7 @@ def plot_ER_bounds(kin: ScatteringKinematics,
     ----------
     kin : ScatteringKinematics
         Kinematics model.
-    v_grid : ArrayLike
+    vgrid : ArrayLike
         Speed grid (c=1).
     ax : Axes, optional
         Existing axes.
@@ -108,7 +108,7 @@ def plot_q_vs_ER(kin: ScatteringKinematics,
     ----------
     kin : ScatteringKinematics
         Kinematics model.
-    ER_grid : ArrayLike
+    ER : ArrayLike
         Recoil-energy grid in eV.
     ax : Axes, optional
         Existing axes.
