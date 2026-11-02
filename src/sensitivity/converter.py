@@ -4,17 +4,17 @@ dark-matter cross-section limits.
 
 The statistical methods implemented in the sensitivity package
 operate on expected signal counts. This module converts those
-count limits into limits on the WIMP-proton cross section using
-a RateCalculator instance.
+count limits into limits on the WIMP-nucleon reference cross section
+using a RateCalculator instance.
 
 The returned cross section corresponds to the interaction-model
-parameter used to generate the expected counts. For standard
-spin-independent interactions this is the WIMP-proton cross
-section sigma_p, which is the quantity conventionally reported
-by direct-detection experiments.
+parameter used to generate the expected counts.
+For standard spin-independent interactions this is the 
+WIMP-proton cross section sigma_p, which is the quantity
+conventionally reported by direct-detection experiments.
 
 The conversion assumes that the expected number of signal
-events scales linearly with the cross section parameter.
+events scales linearly with the reference cross section.
 """
 
 
@@ -60,16 +60,12 @@ def sigma_upper_limit(
     The calculation proceeds as follows:
 
     1. Compute the signal-count upper limit
-       s_up
-       from the statistical model.
+       s_up from the statistical model.
 
-    2. Compute the expected number of signal events
-       N_ref
-       for the reference cross section specified in the
-       RateCalculator.
-
-    3. Rescale the cross section according to
-       sigma_up = sigma_ref * s_up / N_ref.
+    2. Convert the signal-count upper limit into an
+       upper limit on the interaction-model reference
+       cross section using
+       RateCalculator.infer_cross_section_from_counts().
 
     The current implementation assumes the reference
     experiment corresponding to
@@ -81,7 +77,7 @@ def sigma_upper_limit(
     ``interaction.sigma_reference``.
 
     For spin-independent interactions this corresponds
-    to the WIMP-proton cross section conventionally
+    to the WIMP-proton reference cross section conventionally
     exported by direct-detection experiments.
     """
     if experiment is None:
@@ -89,13 +85,8 @@ def sigma_upper_limit(
                                         background=0.0)
 
     s_up = statistic.signal_upper_bound(experiment)
-
-    n_ref = rate_calculator.expected_counts()
-
-    if n_ref <= 0:
-        raise ValueError("Expected counts must be positive.")
-
-    sigma_up = rate_calculator.interaction.sigma_reference * s_up / n_ref
+    
+    sigma_up = rate_calculator.infer_cross_section_from_counts(counts=s_up)
 
     return MassSigmaSensitivityPoint(
         mass_wimp=rate_calculator.wimp.mass,

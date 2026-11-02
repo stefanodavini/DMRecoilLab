@@ -88,8 +88,11 @@ def test_sigma_upper_limit_raises_zero_expected_count():
 
     limit = PoissonUpperLimit(cl=0.95)
 
-    with pytest.raises(ValueError):
-        sigma_upper_limit(statistic=limit, rate_calculator=rc0)
+    with pytest.warns(RuntimeWarning):
+        result = sigma_upper_limit(statistic=limit, rate_calculator=rc0)
+
+    assert np.isnan(result.sigma_reference_upper)
+
 
 def test_sigma_upper_limit_nobkg_linearity_exposure():
     """

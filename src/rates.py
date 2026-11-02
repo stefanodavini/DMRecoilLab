@@ -59,6 +59,7 @@ exposure after all detector-response effects have
 been applied.
 """
 
+import warnings
 import numpy as np
 from numpy.typing import NDArray
 from scipy.integrate import cumulative_trapezoid
@@ -300,6 +301,51 @@ class RateCalculator:
 
         return integrated_counts[0]
 
+    def infer_cross_section_from_counts(self,
+                                        counts: float,
+                                        num: int = 500) -> float:
+        """
+        Infer the WIMP-nucleon reference cross section required to
+        produce a specified number of expected signal counts.
+
+        Parameters
+        ----------
+        counts : float
+            Target number of expected signal events.
+        num : int, optional
+            Number of recoil-energy samples used in the
+            internal expected-counts calculation.
+
+        Returns
+        -------
+        float
+            Required interection model reference cross section
+            in cm^2.
+
+        Notes
+        -----
+        Assumes the event rate scales linearly with the
+        interaction-model reference cross section
+        ``sigma_reference``.
+        """
+        if counts < 0:
+            raise ValueError("counts must be non-negative")
+        
+        if counts == 0:
+            return 0.0
+
+        reference_counts = self.expected_counts(num=num)
+
+        if reference_counts < 0:
+            raise RuntimeError("Expected counts became negative.")
+
+        if reference_counts == 0:
+            warnings.warn("Model predicts zero expected counts.",
+                          RuntimeWarning)
+            return np.nan
+
+        return self.sigma_reference * counts / reference_counts
+
     def _check_input(self):
         """
         Check that the inputs are valid
@@ -356,21 +402,20 @@ class RateCalculator:
         return self.detector is not None
 
     @property
-    def sigma_proton(self) -> float:
+    def sigma_reference(self) -> float:
         """
-        WIMP-proton cross-section parameter used to
-        normalize the interaction model.
+        Interaction-model reference cross-section parameter.
 
         Returns
         -------
         float
-            Reference WIMP-proton cross section in cm^2.
+            Reference interaction cross section in cm^2.
 
         Notes
         -----
         Sensitivity calculations operate on this
         quantity and therefore require interaction
-        models to expose a meaningful proton-level
-        cross-section normalization.
+        models to expose a meaningful reference
+        cross-section.
         """
-        return self.interaction.sigma_proton
+        return self.interaction.sigma_reference
