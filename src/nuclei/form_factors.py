@@ -199,7 +199,8 @@ class TabulatedFormFactor(FormFactor):
 
     @classmethod
     def from_file(cls,
-                  filename: str) -> Self:
+                  filename: str,
+                  check_normalization=True) -> Self:
         """
         Construct a tabulated form factor from a text file produced
         by to_file().
@@ -211,13 +212,17 @@ class TabulatedFormFactor(FormFactor):
         ----------
         filename: str
             Input filename.
+        check_normalization : bool, optional
+            Check that F(q=0) = 1.
+            Default is true.
 
         Returns
         -------
         TabulatedFormFactor
         """
         data = TabulatedData.from_file(filename)
-        return cls(q=data.x, F=data.y)
+        return cls(q=data.x, F=data.y,
+                   check_normalization=check_normalization)
 
 
 class HelmFormFactor(FormFactor):

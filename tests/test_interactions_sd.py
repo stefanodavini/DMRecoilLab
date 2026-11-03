@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 from src.kinematics.scattering_kinematics import ElasticKinematics, InelasticKinematics
 from src.interactions.particles import WIMP
 from src.interactions.sd import SDInteraction
@@ -62,6 +63,17 @@ def test_sd_neutron_only_coupling():
     assert sd.sigma_proton == 0.
     assert sd.spin_coupling == sd.nucleus.Sn
     assert sd.spin_coupling == Xe131.Sn
+
+def test_sd_sigma_reference_input_check_raises():
+    wimp = WIMP(mass=1e11, spin=0)
+    target = Xe131
+    kin = InelasticKinematics(mX=wimp.mass, mT=target.mass, delta=300e3)
+
+    sigmas = [np.nan, np.inf, -1.e-40]
+    for s in sigmas:
+        with pytest.raises(ValueError, match="sigma_reference"):
+            SDInteraction(wimp=wimp, nucleus=target,kinematics=kin,
+                          sigma_reference=s)
 
 def test_sd_sigma_nucleus():
     """

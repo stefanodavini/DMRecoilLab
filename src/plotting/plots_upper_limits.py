@@ -25,7 +25,6 @@ def plot_mass_sigma_limit_si(
     cl: float = 0.9,
     sigma_reference: float = 1e-45,
     ax: Axes | None = None,
-    label: str | None = None,
     **plot_kwargs,
     ) -> tuple[Figure, Axes]:
     """
@@ -51,8 +50,6 @@ def plot_mass_sigma_limit_si(
     ax : matplotlib.axes.Axes, optional
         Existing axes. If None, a new figure and axes
         are created.
-    label : str, optional
-        Curve label.
     **plot_kwargs
         Additional keyword arguments passed directly
         to matplotlib.axes.Axes.loglog.
@@ -77,14 +74,15 @@ def plot_mass_sigma_limit_si(
                                         sigma_reference=sigma_reference)
 
     ax.loglog(masses / 1e9, sigma,
-              label=label,
               **plot_kwargs)
 
     ax.set_xlabel(r"$m_\chi$ [GeV]")
     ax.set_ylabel(r"${\sigma}_p$ [cm$^2$]")
     ax.grid(which="both", alpha=0.3)
 
-    ax.legend()
+    if "label" in plot_kwargs:
+        ax.legend()
+
     fig.tight_layout()
 
     return fig, ax

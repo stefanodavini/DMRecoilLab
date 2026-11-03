@@ -3,20 +3,32 @@ import numpy as np
 import pytest
 
 def test_mX_zero():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Unphysical WIMP mass"):
         ElasticKinematics(mX=0, mT=40e9)
 
 def test_mX_negative():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Unphysical WIMP mass"):
         ElasticKinematics(mX=-1e9, mT=40e9)
 
+def test_mX_not_finite():
+    mXs = [np.inf, np.nan]
+    for m in mXs:
+        with pytest.raises(ValueError, match="Unphysical WIMP mass"):
+            ElasticKinematics(mX=m, mT=40e9)
+
 def test_mT_zero():
-    with pytest.raises(ValueError):
-        ElasticKinematics(mX=-1e12, mT=0)
+    with pytest.raises(ValueError, match="Unphysical target mass"):
+        ElasticKinematics(mX=1e12, mT=0)
 
 def test_mT_negative():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Unphysical target mass"):
         ElasticKinematics(mX=1e12, mT=-122e9)
+
+def test_mT_not_finite():
+    mTs = [np.inf, np.nan]
+    for m in mTs:
+        with pytest.raises(ValueError, match="Unphysical target mass"):
+            ElasticKinematics(mX=1e12, mT=m)
 
 def test_mu_limit():
     m_low = 1e3
@@ -147,3 +159,10 @@ def test_inelastic_ER_bounds_nan_mask():
     assert np.isfinite(ERmin[1])
     assert np.isfinite(ERmax[1])
 
+def test_elastic_kinematics_supported_by_scattering_interactions():
+    kin = ElasticKinematics(mX=40e10, mT=40e9)
+    assert kin.supports_scattering_interactions
+
+def test_inelastic_kinematics_supported_by_scattering_interactions():
+    kin = InelasticKinematics(mX=40e10, mT=40e9, delta=1e5)
+    assert kin.supports_scattering_interactions

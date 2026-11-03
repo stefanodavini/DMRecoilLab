@@ -145,6 +145,10 @@ class SIInteraction(InteractionModel):
         sigma_p: float = 1e-45,
         fn_over_fp: float = 1.):
 
+        if not kinematics.supports_scattering_interactions:
+            raise TypeError("" \
+            "SIInteraction requires a kinematics that supports scattering")
+
         if form_factor is None:
             form_factor = PointLikeFormFactor()
 
@@ -158,10 +162,14 @@ class SIInteraction(InteractionModel):
             nuclear_response=form_factor,
             propagator=propagator)
 
-        if sigma_p < 0:
-            raise ValueError("sigma_p must be non-negative")
+        if not np.isfinite(sigma_p) or sigma_p < 0:
+            raise ValueError("sigma_p must be finite and non-negative.")
 
         self.sigma_p = sigma_p
+
+        if not np.isfinite(fn_over_fp):
+            raise ValueError("fn_over_fp must be finite.")
+        
         self.fn_over_fp = fn_over_fp
 
     def dsigma_dER(self, v: NDArray, ER: NDArray) -> NDArray:
