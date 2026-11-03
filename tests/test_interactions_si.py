@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 from src.kinematics.scattering_kinematics import ElasticKinematics, InelasticKinematics
 from src.interactions.particles import WIMP
 from src.interactions.si import SIInteraction
@@ -155,6 +156,28 @@ def test_si_helm_suppression():
 
     assert np.all(ds_helm <= ds_point)
     assert np.all(ds_point[:, 0] == ds_helm[:, 0])
+
+def test_si_sigma_p_input_check_raises():
+    wimp = WIMP(mass=1e11, spin=0)
+    target = Xe131
+    kin = InelasticKinematics(mX=wimp.mass, mT=target.mass, delta=300e3)
+
+    sigma_ps = [np.nan, np.inf, -1.e-40]
+    for s in sigma_ps:
+        with pytest.raises(ValueError, match="sigma_p"):
+            SIInteraction(wimp=wimp, nucleus=target,kinematics=kin,
+                          sigma_p=s)
+
+def test_si_fn_over_fp_input_check_raises():
+    wimp = WIMP(mass=1e11, spin=0)
+    target = Xe131
+    kin = InelasticKinematics(mX=wimp.mass, mT=target.mass, delta=300e3)
+
+    fn_over_fps = [np.nan, np.inf]
+    for f in fn_over_fps:
+        with pytest.raises(ValueError, match="fn_over_fp"):
+            SIInteraction(wimp=wimp, nucleus=target,kinematics=kin,
+                          fn_over_fp=f)
 
 def test_si_elastic_total_cross_section():
     """
