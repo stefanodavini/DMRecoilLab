@@ -65,7 +65,7 @@ def sigma_upper_limit(
     2. Convert the signal-count upper limit into an
        upper limit on the interaction-model reference
        cross section using
-       RateCalculator.infer_cross_section_from_counts().
+       RateCalculator.expected_cross_section_from_counts().
 
     The current implementation assumes the reference
     experiment corresponding to
@@ -86,7 +86,7 @@ def sigma_upper_limit(
 
     s_up = statistic.signal_upper_bound(experiment)
     
-    sigma_up = rate_calculator.infer_cross_section_from_counts(counts=s_up)
+    sigma_up = rate_calculator.expected_cross_section_from_counts(counts=s_up)
 
     return MassSigmaSensitivityPoint(
         mass_wimp=rate_calculator.wimp.mass,

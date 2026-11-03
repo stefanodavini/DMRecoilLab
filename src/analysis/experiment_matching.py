@@ -70,7 +70,7 @@ def predict_counts_from_counts_match(
 
     Notes
     -----
-    The prediction is obtained by first inferring the
+    The prediction is obtained by first computing the
     interaction-model reference cross section that
     reproduces the specified counts in detector A and
     then evaluating the corresponding expectation in
@@ -108,7 +108,7 @@ def predict_counts_from_counts_match_same_target(
         raise ValueError("predict_counts_from_counts_match_same_target "
                          "requires identical target nuclei.")
 
-    sigma_hat = rate_calculator_a.infer_cross_section_from_counts(counts_a)
+    sigma_hat = rate_calculator_a.expected_cross_section_from_counts(counts=counts_a)
 
     rate_calculator_b = RateCalculator(
         halo=rate_calculator_a.halo,
@@ -145,7 +145,7 @@ def predict_counts_from_counts_match_different_target(
         detector=detector_b,
         rho_dm=rate_calculator_a.rho_dm)
 
-    sigma_hat = rate_calculator_a.infer_cross_section_from_counts(counts_a)
+    sigma_hat = rate_calculator_a.expected_cross_section_from_counts(counts=counts_a)
 
     return _predict_counts(sigma_hat=sigma_hat,
                            rate_calculator=rate_calculator_b)
@@ -155,7 +155,7 @@ def _predict_counts(sigma_hat: float,
                     rate_calculator: RateCalculator) -> float:
     """
     Scale the reference prediction of a rate calculator
-    to the inferred cross section sigma_hat.
+    to the expected cross section sigma_hat.
     """
 
     if np.isnan(sigma_hat):

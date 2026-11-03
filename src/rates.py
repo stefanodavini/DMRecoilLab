@@ -302,11 +302,11 @@ class RateCalculator:
 
         return integrated_counts[0]
 
-    def infer_cross_section_from_counts(self,
-                                        counts: float,
-                                        num: int = 500) -> float:
+    def expected_cross_section_from_counts(self,
+                                           counts: float,
+                                           num: int = 500) -> float:
         """
-        Infer the WIMP-nucleon reference cross section required to
+        Compute the WIMP-nucleon reference cross section required to
         produce a specified number of expected signal counts.
 
         Parameters
@@ -424,6 +424,6 @@ class RateCalculator:
     @property
     def target_nucleus(self) -> Nucleus:
         """
-        Detector target nucleus.
+        Target nucleus.
         """
-        return self.detector.nucleus
+        return self.interaction.nucleus

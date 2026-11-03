@@ -275,6 +275,13 @@ def test_rate_expected_counts_thr_above_ERmax():
 
     assert rc.expected_counts() == 0
 
+def test_rate_target_nuclei():
+    det = IdealDetector(nucleus=Xe131, mass_kg=100)
+    rc = _initialize_default_si_elastic_rate(target=Xe131,
+                                             detector=det)
+
+    assert rc.target_nucleus == Xe131
+
 def test_rate_sigma_reference():
     sigma_p = 1e-47
     rc = _initialize_default_si_elastic_rate(target=Ar40,
@@ -282,7 +289,7 @@ def test_rate_sigma_reference():
 
     assert rc.sigma_reference == sigma_p
 
-def test_rate_infer_cross_section_identity():
+def test_rate_expect_cross_section_identity():
     sigma_p = 1e-40
     det = IdealDetector(nucleus=Ar40, mass_kg=20e3,
                         exposure_days=3650, threshold_energy=0)
@@ -291,12 +298,12 @@ def test_rate_infer_cross_section_identity():
                                              detector=det)
 
     cnt = rc.expected_counts()
-    sigma = rc.infer_cross_section_from_counts(counts=cnt)
+    sigma = rc.expected_cross_section_from_counts(counts=cnt)
     ratio = sigma / sigma_p
 
     assert np.isclose(ratio, 1., rtol=1e-6)
 
-def test_rate_infer_cross_section_linearity():
+def test_rate_expected_cross_section_linearity():
     sigma_p = 1e-40
     det = IdealDetector(nucleus=Ar40, mass_kg=20e3,
                         exposure_days=3650, threshold_energy=0)
@@ -306,43 +313,43 @@ def test_rate_infer_cross_section_linearity():
 
     cnt = rc.expected_counts()
     scale = 10.
-    sigma = rc.infer_cross_section_from_counts(counts=scale*cnt)
+    sigma = rc.expected_cross_section_from_counts(counts=scale*cnt)
     ratio = sigma / sigma_p
 
     assert np.isclose(ratio, scale, rtol=1e-6)
 
-def test_rate_infer_cross_section_zero():
+def test_rate_expected_cross_section_zero():
     det = IdealDetector(nucleus=Ar40, mass_kg=20e3)
     rc = _initialize_default_si_elastic_rate(target=Ar40,
                                              detector=det)
-    sigma = rc.infer_cross_section_from_counts(counts=0)
+    sigma = rc.expected_cross_section_from_counts(counts=0)
 
     assert sigma == 0.
 
-def test_rate_infer_cross_section_negative_counts():
+def test_rate_expected_cross_section_negative_counts():
     det = IdealDetector(nucleus=Ar40, mass_kg=20e3)
 
     rc = _initialize_default_si_elastic_rate(target=Ar40,
                                              detector=det)
 
     with pytest.raises(ValueError, match="non-negative"):
-        rc.infer_cross_section_from_counts(-1.)
+        rc.expected_cross_section_from_counts(-1.)
 
-def test_rate_infer_cross_section_zero_reference_counts():
+def test_rate_expected_cross_section_zero_reference_counts():
     det = IdealDetector(nucleus=Ar40, mass_kg=0)
     rc = _initialize_default_si_elastic_rate(target=Ar40,
                                              detector=det)
     with pytest.warns(RuntimeWarning):
-        sigma = rc.infer_cross_section_from_counts(1.)
+        sigma = rc.expected_cross_section_from_counts(1.)
 
     assert np.isnan(sigma)
 
-def test_rate_infer_cross_section_round_trip():
+def test_rate_expected_cross_section_round_trip():
     det = IdealDetector(nucleus=Ar40, mass_kg=20e3)
     rc = _initialize_default_si_elastic_rate(target=Ar40,
                                              detector=det)
     target_counts = 7.3
-    sigma = rc.infer_cross_section_from_counts(target_counts)
+    sigma = rc.expected_cross_section_from_counts(target_counts)
     scale = sigma / rc.sigma_reference
 
     recovered_counts = scale * rc.expected_counts()
