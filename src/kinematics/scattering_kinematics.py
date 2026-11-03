@@ -501,9 +501,40 @@ class InelasticKinematics(ScatteringKinematics):
         return v * np.cos(theta) >= self.threshold_speed
 
     def vmin_from_ER(self, ER: ArrayLike) -> NDArray:
+        """
+        Minimum incoming WIMP speed required to produce
+        a recoil of energy ER.
+
+        Parameters
+        ----------
+        ER : ArrayLike
+            Recoil energy in eV.
+
+        Returns
+        -------
+        ndarray
+            Minimum physically allowed WIMP speed (c=1).
+
+        Notes
+        -----
+        For inelastic scattering,
+        vmin = q/(2μ) + δ/q
+        where
+        q = sqrt(2 mT ER).
+
+        For exothermic scattering (δ < 0), the analytic
+        expression can become negative at low recoil
+        energies. Since negative speeds are unphysical,
+        the returned value is clipped to zero.
+
+        Consequently, a returned value of zero indicates
+        that the recoil can be produced by arbitrarily
+        small incoming WIMP speeds.
+        """
         ER = np.asarray(ER)
         qmax = self.q_from_ER(ER)
-        return qmax / (2 * self.mu) + self.delta / qmax
+        vmin = qmax / (2 * self.mu) + self.delta / qmax
+        return np.maximum(vmin, 0.0)
 
     def ER_min(self, v: ArrayLike) -> NDArray:
         """
