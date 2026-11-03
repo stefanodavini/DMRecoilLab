@@ -3,19 +3,19 @@ import numpy as np
 import pytest
 
 def test_mX_zero():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Unphysical WIMP mass"):
         ElasticKinematics(mX=0, mT=40e9)
 
 def test_mX_negative():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Unphysical WIMP mass"):
         ElasticKinematics(mX=-1e9, mT=40e9)
 
 def test_mT_zero():
-    with pytest.raises(ValueError):
-        ElasticKinematics(mX=-1e12, mT=0)
+    with pytest.raises(ValueError, match="Unphysical target mass"):
+        ElasticKinematics(mX=1e12, mT=0)
 
 def test_mT_negative():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Unphysical target mass"):
         ElasticKinematics(mX=1e12, mT=-122e9)
 
 def test_mu_limit():
