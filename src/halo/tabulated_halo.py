@@ -65,14 +65,11 @@ class TabulatedSpeedDistribution(IsotropicSpeedDistribution):
                                   x_name="v",
                                   y_name="f(v)")
 
-        self._v = self._data.x
-        self._f = self._data.y
+        self._data.check_x_non_negative()
+        self._data.check_y_non_negative()
 
-        if np.any(self._v < 0):
-            raise ValueError("v must be non-negative.")
-
-        if np.any(self._f < 0):
-            raise ValueError("f(v) must be non-negative.")
+        self._v = np.asarray(self._data.x)
+        self._f = np.asarray(self._data.y)
 
         self._validate_and_normalize(normalize=normalize)
 

@@ -169,6 +169,10 @@ class SDInteraction(InteractionModel):
         an_over_ap: float = 1.,
         ):
 
+        if not kinematics.supports_scattering_interactions:
+            raise TypeError("" \
+            "SDInteraction requires a kinematics that supports scattering")
+
         if form_factor is not None:
             raise NotImplementedError("SD form factors not implemented yet")
 
@@ -179,8 +183,8 @@ class SDInteraction(InteractionModel):
             nuclear_response=form_factor,
             propagator=propagator)
 
-        if sigma_reference < 0:
-            raise ValueError("sigma_reference must be non-negative")
+        if not np.isfinite(sigma_reference) or sigma_reference < 0:
+            raise ValueError("sigma_reference must be finite and non-negative.")
 
         self.sigma_ref = sigma_reference
         self.an_over_ap = an_over_ap

@@ -16,7 +16,7 @@ with:
 
 The module provides kinematic relations for
 elastic and inelastic two-body scattering of
-a WIMP on a nuclear target.
+a WIMP on a fixed target.
 
 Main quantities
 ---------------
@@ -27,7 +27,7 @@ q
     Momentum transfer.
 
 ER
-    Nuclear recoil energy.
+    Target recoil energy.
 
 vmin
     Minimum incoming WIMP speed required
@@ -40,27 +40,33 @@ ScatteringKinematics
     two-body kinematic relations.
 
 ElasticKinematics
-    Elastic WIMP-nucleus scattering.
+    Elastic WIMP-target scattering.
 
 InelasticKinematics
-    Inelastic WIMP-nucleus scattering with
+    Inelastic WIMP-target scattering with
     mass splitting delta.
+
+AbsorptionKinematics
+    Absorption processes leading to mono-energetic
+    recoil energy,
+    such as fermionic DM absorption on nuclei.
 """
 
 from abc import ABC, abstractmethod
 from numpy.typing import ArrayLike, NDArray
 import numpy as np
 
+
 class ScatteringKinematics(ABC):
     """
-    Abstract base class for WIMP-nucleus
+    Abstract base class for WIMP-target
     scattering kinematics.
 
     Defines the kinematic relations connecting
     - recoil energy ER
     - momentum transfer q
     - incoming WIMP speed v
-    for non-relativistic WIMP-nucleus scattering.
+    for non-relativistic WIMP-target scattering.
 
     Subclasses implement specific kinematic
     models (elastic or inelastic).
@@ -75,7 +81,7 @@ class ScatteringKinematics(ABC):
         WIMP mass in eV.
 
     mT
-        Target nucleus mass in eV.
+        Target mass in eV.
 
     Notes
     -----
@@ -277,10 +283,10 @@ class ScatteringKinematics(ABC):
         """
         Raise error in case of unphysical masses.
         """
-        if self.mX <= 0:
+        if not np.isfinite(self.mX) or self.mX <= 0:
             raise ValueError("Unphysical WIMP mass")
         
-        if self.mT <=0:
+        if not np.isfinite(self.mT) or self.mT <=0:
             raise ValueError("Unphysical target mass")
 
     @property
@@ -302,10 +308,21 @@ class ScatteringKinematics(ABC):
         """
         return 0.0
 
+    @property
+    @abstractmethod
+    def supports_scattering_interactions(self) -> bool:
+        """
+        Whether the class instance can be used
+        in scattering interaction models
+        such as SI/SD
+        """
+        pass
+
+
 
 class ElasticKinematics(ScatteringKinematics):
     """
-    Elastic WIMP-nucleus scattering.
+    Elastic WIMP-target scattering.
 
     The initial and final WIMP masses
     are identical.
@@ -316,7 +333,7 @@ class ElasticKinematics(ScatteringKinematics):
         WIMP mass in eV.
 
     mT : float
-        Target nucleus mass in eV.
+        Target mass in eV.
     """
     def __init__(self, mX: float, mT: float):
         super().__init__(mX=mX, mT=mT)
@@ -368,11 +385,20 @@ class ElasticKinematics(ScatteringKinematics):
         v = np.asarray(v)
         theta = np.asarray(theta)
         return 0., 2 * self.mu * v * np.cos(theta)
+
+    @property
+    def supports_scattering_interactions(self) -> bool:
+        """
+        The class instance can be used
+        in scattering interaction models
+        such as SI/SD
+        """
+        return True
     
 
 class InelasticKinematics(ScatteringKinematics):
     """
-    Inelastic WIMP-nucleus scattering.
+    Inelastic WIMP-target scattering.
 
     Parameters
     ----------
@@ -475,9 +501,40 @@ class InelasticKinematics(ScatteringKinematics):
         return v * np.cos(theta) >= self.threshold_speed
 
     def vmin_from_ER(self, ER: ArrayLike) -> NDArray:
+        """
+        Minimum incoming WIMP speed required to produce
+        a recoil of energy ER.
+
+        Parameters
+        ----------
+        ER : ArrayLike
+            Recoil energy in eV.
+
+        Returns
+        -------
+        ndarray
+            Minimum physically allowed WIMP speed (c=1).
+
+        Notes
+        -----
+        For inelastic scattering,
+        vmin = q/(2μ) + δ/q
+        where
+        q = sqrt(2 mT ER).
+
+        For exothermic scattering (δ < 0), the analytic
+        expression can become negative at low recoil
+        energies. Since negative speeds are unphysical,
+        the returned value is clipped to zero.
+
+        Consequently, a returned value of zero indicates
+        that the recoil can be produced by arbitrarily
+        small incoming WIMP speeds.
+        """
         ER = np.asarray(ER)
         qmax = self.q_from_ER(ER)
-        return qmax / (2 * self.mu) + self.delta / qmax
+        vmin = qmax / (2 * self.mu) + self.delta / qmax
+        return np.maximum(vmin, 0.0)
 
     def ER_min(self, v: ArrayLike) -> NDArray:
         """
@@ -544,3 +601,12 @@ class InelasticKinematics(ScatteringKinematics):
         sol_neg = muvcosth - np.sqrt(muvcosth2 - 2 *self.mu * self.delta)
 
         return sol_neg, sol_pos
+
+    @property
+    def supports_scattering_interactions(self) -> bool:
+        """
+        The class instance can be used
+        in scattering interaction models
+        such as SI/SD
+        """
+        return True
