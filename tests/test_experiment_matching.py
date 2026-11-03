@@ -1,40 +1,29 @@
 from src.halo.shm import StandardHaloModel
-from src.kinematics.scattering_kinematics import ElasticKinematics
-from src.interactions.si import SIInteraction
 from src.interactions.particles import WIMP
-from src.nuclei.nucleus import Nucleus
 from src.nuclei.isotopes import Ar40, Xe131
 from src.detectors.detectors import BaseDetector, IdealDetector
 from src.detectors.reference_detectors import DS50_2018, XENON100_2012
+from src.utils.factory import create_interaction_si
 from src.rates import RateCalculator
 
 from src.analysis.experiment_matching import predict_counts_from_counts_match
 from src.analysis.experiment_matching import predict_counts_from_counts_match_same_target
 from src.analysis.experiment_matching import predict_counts_from_counts_match_different_target
+from src.analysis.experiment_matching import matched_counts_grid_si
 
 import pytest
 import numpy as np
 
-def _initialize_si_elastic(wimp: WIMP,
-                           target: Nucleus,
-                           sigma_p=1e-45) -> SIInteraction:
-
-    kin = ElasticKinematics(mX=wimp.mass, mT=target.mass)
-    si = SIInteraction(wimp=wimp, nucleus=target,
-                       kinematics=kin,
-                       sigma_p=sigma_p)
-    return si
 
 def _initialize_halo_shm_boost():
-    shm = StandardHaloModel()
-    return shm.boost()
+    return StandardHaloModel().boost()
 
 def _initialize_default_si_elastic_rate(detector: BaseDetector,
                                         sigma_p=1e-45,
                                         ) -> RateCalculator:
     target = detector.nucleus
     wimp = WIMP(mass=1e11, spin=0)
-    si = _initialize_si_elastic(wimp=wimp, target=target, sigma_p=sigma_p)
+    si = create_interaction_si(wimp=wimp, nucleus=target, sigma_p=sigma_p)
     halo = _initialize_halo_shm_boost()
     return RateCalculator(halo=halo, interaction=si, detector=detector)
 
@@ -51,9 +40,7 @@ def test_experiment_matching_counts_wimp_mass_mismatch():
     wimp_b = WIMP(mass=10 * rcA.wimp.mass + 1,
                   spin=0)
 
-    kin_b = ElasticKinematics(mX=wimp_b.mass, mT=Ar40.mass)
-    si_b = SIInteraction(wimp=wimp_b, nucleus=Ar40,
-                         kinematics=kin_b)
+    si_b = create_interaction_si(wimp=wimp_b, nucleus=Ar40)
 
     with pytest.raises(ValueError, match="same WIMP mass"):
         predict_counts_from_counts_match(rate_calculator_a=rcA,
@@ -122,3 +109,61 @@ def test_experiment_matching_counts_nan_propagation():
                 detector_b=detectorA)
 
     assert np.isnan(countsB)
+
+
+def test_experiment_matched_counts_grid_shape():
+    masses = [1e10, 1e11]
+    deltas = [0, 1e5, 2e5]
+
+    grid = matched_counts_grid_si(wimp_masses=masses,
+                                  deltas=deltas,
+                                  counts_a=1,
+                                  detector_a=XENON100_2012,
+                                  detector_b=DS50_2018)
+
+    assert grid.shape == (2, 3)
+    assert np.all(grid.masses == masses)
+    assert np.all(grid.deltas == deltas)
+
+def test_experiment_matched_counts_identity_detector():
+    masses = [1e11, 1e12]
+    deltas = [0, 1e5]
+    count = 7
+
+    grid = matched_counts_grid_si(wimp_masses=masses,
+                                  deltas=deltas,
+                                  counts_a=count,
+                                  detector_a=XENON100_2012,
+                                  detector_b=XENON100_2012)
+
+    assert np.allclose(grid.counts_b, count)
+
+def test_experiment_matched_counts_grid_sigma_forwarding():
+    """
+    Verifies that the matching procedure is independent
+    of the arbitrary reference cross section normalization.
+    """
+    masses = [1e11]
+    deltas = [0]
+
+    grid1 = matched_counts_grid_si(
+        wimp_masses=masses,
+        deltas=deltas,
+        counts_a=1,
+        detector_a=XENON100_2012,
+        detector_b=DS50_2018,
+        interaction_a_kwargs={"sigma_p": 1e-45},
+        interaction_b_kwargs={"sigma_p": 1e-45},
+    )
+
+    grid2 = matched_counts_grid_si(
+        wimp_masses=masses,
+        deltas=deltas,
+        counts_a=1,
+        detector_a=XENON100_2012,
+        detector_b=DS50_2018,
+        interaction_a_kwargs={"sigma_p": 1.},
+        interaction_b_kwargs={"sigma_p": 1.},
+    )
+
+    assert np.allclose(grid1.counts_b, grid2.counts_b)
