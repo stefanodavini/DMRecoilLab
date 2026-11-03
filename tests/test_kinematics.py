@@ -10,6 +10,12 @@ def test_mX_negative():
     with pytest.raises(ValueError, match="Unphysical WIMP mass"):
         ElasticKinematics(mX=-1e9, mT=40e9)
 
+def test_mX_not_finite():
+    mXs = [np.inf, np.nan]
+    for m in mXs:
+        with pytest.raises(ValueError, match="Unphysical WIMP mass"):
+            ElasticKinematics(mX=m, mT=40e9)
+
 def test_mT_zero():
     with pytest.raises(ValueError, match="Unphysical target mass"):
         ElasticKinematics(mX=1e12, mT=0)
@@ -17,6 +23,12 @@ def test_mT_zero():
 def test_mT_negative():
     with pytest.raises(ValueError, match="Unphysical target mass"):
         ElasticKinematics(mX=1e12, mT=-122e9)
+
+def test_mT_not_finite():
+    mTs = [np.inf, np.nan]
+    for m in mTs:
+        with pytest.raises(ValueError, match="Unphysical target mass"):
+            ElasticKinematics(mX=1e12, mT=m)
 
 def test_mu_limit():
     m_low = 1e3

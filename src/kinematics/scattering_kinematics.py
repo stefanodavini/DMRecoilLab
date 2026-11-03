@@ -283,10 +283,10 @@ class ScatteringKinematics(ABC):
         """
         Raise error in case of unphysical masses.
         """
-        if self.mX <= 0:
+        if not np.isfinite(self.mX) or self.mX <= 0:
             raise ValueError("Unphysical WIMP mass")
         
-        if self.mT <=0:
+        if not np.isfinite(self.mT) or self.mT <=0:
             raise ValueError("Unphysical target mass")
 
     @property
