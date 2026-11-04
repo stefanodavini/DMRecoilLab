@@ -27,6 +27,16 @@ def _initialize_default_si_elastic_rate(detector: BaseDetector,
     halo = _initialize_halo_shm_boost()
     return RateCalculator(halo=halo, interaction=si, detector=detector)
 
+def test_experiment_matching_invalid_counts_raise():
+    rcA = _initialize_default_si_elastic_rate(detector=XENON100_2012)
+    counts = [np.inf, -np.inf, np.nan, 0, -1.]
+    for c in counts:
+        with pytest.raises(ValueError, match="finite and positive"):
+                predict_counts_from_counts_match(
+                     rate_calculator_a=rcA,
+                     counts_a=c,
+                     detector_b=XENON100_2012)
+
 def test_experiment_matching_counts_missing_interaction_different_target():
     rcA = _initialize_default_si_elastic_rate(detector=XENON100_2012)
     with pytest.raises(ValueError, match="required"):

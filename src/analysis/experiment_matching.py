@@ -84,6 +84,9 @@ def predict_counts_from_counts_match(
     detector B.
     """
 
+    if not np.isfinite(counts_a) or counts_a <= 0:
+        raise ValueError("counts_a must be finite and positive.")
+
     if rate_calculator_a.target_nucleus == detector_b.nucleus:
         return predict_counts_from_counts_match_same_target(
             rate_calculator_a=rate_calculator_a,
