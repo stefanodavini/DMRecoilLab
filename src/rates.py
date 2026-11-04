@@ -154,8 +154,8 @@ class RateCalculator:
         mass_kg=1
         exposure_days=365
         returns
-        - counts / eV / kg / year
-        after appropriate energy-unit conversion.
+        - counts / eV
+        in the given mass * exposure.
         """
 
         vmin = self.interaction.scattering_kinematics.threshold_speed
