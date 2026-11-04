@@ -323,11 +323,23 @@ class RateCalculator:
             Required interection model reference cross section
             in cm^2.
 
+            Returns ``np.nan`` when the reference model predicts
+            zero expected counts.
+            In this case no finite rescaling of the reference
+            cross section can produce the requested signal yield.
+
         Notes
         -----
         Assumes the event rate scales linearly with the
         interaction-model reference cross section
         ``sigma_reference``.
+
+        When the reference model predicts zero expected counts,
+        the required cross section is undefined and ``np.nan``
+        is returned. This behavior is intended to support
+        parameter-space scans, where some benchmark points may
+        be kinematically inaccessible or otherwise produce no
+        observable events.
         """
         if counts < 0:
             raise ValueError("counts must be non-negative")

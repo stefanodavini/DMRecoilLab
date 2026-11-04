@@ -165,7 +165,37 @@ def _predict_counts(sigma_hat: float,
                     rate_calculator: RateCalculator) -> float:
     """
     Scale the reference prediction of a rate calculator
-    to the expected cross section sigma_hat.
+    to an inferred reference cross section.
+
+    Parameters
+    ----------
+    sigma_hat : float
+        Reference cross section inferred from the signal
+        observed in detector A.
+
+    rate_calculator : RateCalculator
+        Calculator defining the reference prediction for
+        detector B.
+
+    Returns
+    -------
+    float
+        Predicted number of counts in detector B.
+
+        Returns ``np.nan`` when ``sigma_hat`` is ``np.nan``.
+
+    Notes
+    -----
+    A ``np.nan`` value for ``sigma_hat`` indicates that the
+    cross section required to reproduce the detector-A
+    signal is undefined, typically because the reference
+    model predicts zero expected counts in detector A.
+
+    In this situation the detector-B prediction is also
+    undefined, and ``np.nan`` is propagated unchanged.
+    This behavior allows parameter-space scans to continue
+    without raising exceptions while clearly identifying
+    invalid benchmark points.
     """
 
     if np.isnan(sigma_hat):
@@ -208,8 +238,8 @@ class MatchedCountGrid:
         suitable for contour and density plots.
         """
         return np.meshgrid(
-            self.masses,
-            self.deltas,
+            np.asarray(self.masses),
+            np.asarray(self.deltas),
             indexing="ij",
         )
 
