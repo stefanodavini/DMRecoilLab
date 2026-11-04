@@ -22,9 +22,8 @@ from src.detectors.detectors import IdealDetector
 from src.sensitivity.poisson import PoissonUpperLimit
 from src.sensitivity.converter import sigma_upper_limit
 from src.interactions.particles import WIMP
-from src.interactions.si import SIInteraction
-from src.nuclei.form_factors import FormFactor, HelmFormFactor
-from src.utils.factory import create_kinematics
+from src.nuclei.form_factors import FormFactor
+from src.utils.factory import create_interaction_si
 from src.rates import RateCalculator
 
 from numpy.typing import NDArray, ArrayLike
@@ -51,10 +50,10 @@ def compute_mass_sigma_limit_si(
     delta: float
         Inelastic mass splitting in eV.
         If zero, uses elasic kinematics.
-    halo: IsotropicSpeedDistribution
+    halo: IsotropicSpeedDistribution, optional
         Halo speed distribution.
         If None, uses SHM in Earth's frame.
-    form_factor: FormFactor
+    form_factor: FormFactor, optional
         Nucleus form factor.
         If None, uses the Helm form factor.
     cl: float
@@ -92,9 +91,6 @@ def compute_mass_sigma_limit_si(
 
     if halo is None:
         halo = StandardHaloModel().boost()
-
-    if form_factor is None:
-        form_factor = HelmFormFactor(nucleus=detector.nucleus)
     
     statistic = PoissonUpperLimit(cl=cl)
     sigma_limits = []
@@ -103,13 +99,12 @@ def compute_mass_sigma_limit_si(
     
         wimp = WIMP(mass=mass, spin=0)
     
-        kin = create_kinematics(wimp=wimp, nucleus=detector.nucleus,
-                                delta=delta)
-    
-        interaction = SIInteraction(wimp=wimp,nucleus=detector.nucleus,
-                                    kinematics=kin,
-                                    form_factor=form_factor,
-                                    sigma_p=sigma_reference)
+        interaction = create_interaction_si(
+            wimp=wimp,
+            nucleus=detector.nucleus,
+            delta=delta,
+            form_factor=form_factor,
+            sigma_p=sigma_reference)
     
         rate = RateCalculator(halo=halo,
                               interaction=interaction,

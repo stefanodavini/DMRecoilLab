@@ -59,10 +59,12 @@ exposure after all detector-response effects have
 been applied.
 """
 
+import warnings
 import numpy as np
 from numpy.typing import NDArray
 from scipy.integrate import cumulative_trapezoid
 
+from src.nuclei.nucleus import Nucleus
 from src.detectors.detectors import BaseDetector
 from src.halo.base_halo_distribution import IsotropicSpeedDistribution
 from src.interactions.base_interaction_model import InteractionModel
@@ -152,8 +154,8 @@ class RateCalculator:
         mass_kg=1
         exposure_days=365
         returns
-        - counts / eV / kg / year
-        after appropriate energy-unit conversion.
+        - counts / eV
+        in the given mass * exposure.
         """
 
         vmin = self.interaction.scattering_kinematics.threshold_speed
@@ -300,6 +302,63 @@ class RateCalculator:
 
         return integrated_counts[0]
 
+    def expected_cross_section_from_counts(self,
+                                           counts: float,
+                                           num: int = 500) -> float:
+        """
+        Compute the WIMP-nucleon reference cross section required to
+        produce a specified number of expected signal counts.
+
+        Parameters
+        ----------
+        counts : float
+            Target number of expected signal events.
+        num : int, optional
+            Number of recoil-energy samples used in the
+            internal expected-counts calculation.
+
+        Returns
+        -------
+        float
+            Required interection model reference cross section
+            in cm^2.
+
+            Returns ``np.nan`` when the reference model predicts
+            zero expected counts.
+            In this case no finite rescaling of the reference
+            cross section can produce the requested signal yield.
+
+        Notes
+        -----
+        Assumes the event rate scales linearly with the
+        interaction-model reference cross section
+        ``sigma_reference``.
+
+        When the reference model predicts zero expected counts,
+        the required cross section is undefined and ``np.nan``
+        is returned. This behavior is intended to support
+        parameter-space scans, where some benchmark points may
+        be kinematically inaccessible or otherwise produce no
+        observable events.
+        """
+        if counts < 0:
+            raise ValueError("counts must be non-negative")
+        
+        if counts == 0:
+            return 0.0
+
+        reference_counts = self.expected_counts(num=num)
+
+        if reference_counts < 0:
+            raise RuntimeError("Expected counts became negative.")
+
+        if reference_counts == 0:
+            warnings.warn("Model predicts zero expected counts.",
+                          RuntimeWarning)
+            return np.nan
+
+        return self.sigma_reference * counts / reference_counts
+
     def _check_input(self):
         """
         Check that the inputs are valid
@@ -356,21 +415,27 @@ class RateCalculator:
         return self.detector is not None
 
     @property
-    def sigma_proton(self) -> float:
+    def sigma_reference(self) -> float:
         """
-        WIMP-proton cross-section parameter used to
-        normalize the interaction model.
+        Interaction-model reference cross-section parameter.
 
         Returns
         -------
         float
-            Reference WIMP-proton cross section in cm^2.
+            Reference interaction cross section in cm^2.
 
         Notes
         -----
         Sensitivity calculations operate on this
         quantity and therefore require interaction
-        models to expose a meaningful proton-level
-        cross-section normalization.
+        models to expose a meaningful reference
+        cross-section.
         """
-        return self.interaction.sigma_proton
+        return self.interaction.sigma_reference
+
+    @property
+    def target_nucleus(self) -> Nucleus:
+        """
+        Target nucleus.
+        """
+        return self.interaction.nucleus
