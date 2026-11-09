@@ -355,3 +355,29 @@ def test_rate_expected_cross_section_round_trip():
     recovered_counts = scale * rc.expected_counts()
 
     assert np.isclose(recovered_counts, target_counts, rtol=1e-6)
+
+def test_rate_normalized_spectrum_integral():
+    det = IdealDetector(nucleus=Xe131, mass_kg=5e3,
+                        threshold_energy=1e3)
+    rc = _initialize_default_si_elastic_rate(target=Xe131,
+                                             detector=det)
+    ER = np.linspace(0., 100e3, 100)
+
+    norm_spectrum = rc.normalized_spectrum(ER=ER)
+    assert np.all(norm_spectrum >= 0)
+    norm = np.trapezoid(norm_spectrum, ER)
+
+    assert np.isclose(norm, 1., 1e-3)
+
+def test_rate_normalized_spectrum_zero_counts():
+    high_thr = 200e3
+    det = IdealDetector(nucleus=Xe131, mass_kg=5e3,
+                        threshold_energy=high_thr)
+    rc = _initialize_default_si_elastic_rate(target=Xe131,
+                                             detector=det)
+    ER = np.linspace(0., high_thr / 2, 100)
+
+    norm_spectrum = rc.normalized_spectrum(ER=ER)
+    assert len(norm_spectrum) == len(ER)
+    assert np.all(norm_spectrum == 0)
+

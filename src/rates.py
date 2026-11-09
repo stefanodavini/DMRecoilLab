@@ -239,6 +239,39 @@ class RateCalculator:
 
         return integral
 
+    def normalized_spectrum(self, ER: NDArray, num=1000) -> NDArray:
+        """
+        Normalized differential recoil spectrum.
+
+        Parameters
+        ----------
+        ER : NDArray
+            Recoil-energy grid in eV.
+
+        num : int, optional
+            Number of speed samples used in the
+            numerical integration.
+
+        Returns
+        -------
+        NDArray
+            Differential recoil spectrum evaluated on
+            ``ER``, normalized to one.
+        """
+        ER = np.asarray(ER)
+
+        norm = self.integrated_rate_above_energy(ER=ER)[0]
+
+        if norm > 0:
+            return self.dRdER(ER=ER) / norm
+
+        if norm == 0:
+            return np.zeros_like(ER)
+
+        if norm < 0:
+            raise RuntimeError("Negative norm in dR/dER.")
+    
+
     def expected_counts(self, num=500) -> float:
         """
         Total expected signal counts.
