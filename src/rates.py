@@ -199,7 +199,8 @@ class RateCalculator:
         return nt * time_s * spectrum
 
 
-    def integrated_rate_above_energy(self, ER: NDArray) -> NDArray:
+    def integrated_rate_above_energy(self, ER: NDArray,
+                                     num=1000) -> NDArray:
         """
         Integrated recoil rate above each recoil energy.
 
@@ -207,6 +208,10 @@ class RateCalculator:
         ----------
         ER : ndarray
             Monotonically increasing recoil-energy grid in eV.
+
+        num : int, optional
+            Number of speed samples used in the
+            numerical integration.
 
         Returns
         -------
@@ -232,7 +237,7 @@ class RateCalculator:
         is present;
         - expected counts if a detector is present.
         """
-        rate = self.dRdER(ER)
+        rate = self.dRdER(ER=ER, num=num)
 
         integral = cumulative_trapezoid(rate[::-1], -ER[::-1],
                                         initial=0,)[::-1]
@@ -260,16 +265,42 @@ class RateCalculator:
         """
         ER = np.asarray(ER)
 
-        norm = self.integrated_rate_above_energy(ER=ER)[0]
+        norm = self.integrated_rate_above_energy(ER=ER, num=num)[0]
 
         if norm > 0:
-            return self.dRdER(ER=ER) / norm
+            return self.dRdER(ER=ER, num=num) / norm
 
         if norm == 0:
             return np.zeros_like(ER)
 
         if norm < 0:
             raise RuntimeError("Negative norm in dR/dER.")
+
+    def interpolate_normalized_spectrum(self,
+                                        ER : NDArray,
+                                        num=500) -> NDArray:
+        """
+        Interpolate the normalized recoil spectrum.
+
+        Parameters
+        ----------
+        ER : NDArray
+            Recoil-energy sample points grid in eV.
+
+        num : int, optional
+            Number of recoil-energy samples used to
+            construct the interpolation grid.
+
+        Returns
+        -------
+        NDArray
+            Interpolated differential recoil spectrum,
+            normalized to one, evaluated on ``ER``.
+        """
+        ER_grid = np.linspace(0., self.ER_max, num=num)
+        f_grid = self.normalized_spectrum(ER=ER_grid)
+
+        return np.interp(ER, ER_grid, f_grid, left=0.0, right=0.0)
     
 
     def expected_counts(self, num=500) -> float:

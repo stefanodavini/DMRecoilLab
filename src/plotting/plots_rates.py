@@ -4,7 +4,6 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 from numpy.typing import NDArray
-import numpy as np
 
 def plot_recoil_spectrum(
     rate_calc: RateCalculator,
@@ -98,7 +97,7 @@ def plot_normalized_recoil_spectrum(
         fig = ax.figure
 
     dRdER = rate_calc.normalized_spectrum(ER=ER)
-    
+
     ER_keV = ER / 1e3
 
     ax.plot(ER_keV, dRdER, **plot_kwargs)

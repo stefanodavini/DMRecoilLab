@@ -381,3 +381,27 @@ def test_rate_normalized_spectrum_zero_counts():
     assert len(norm_spectrum) == len(ER)
     assert np.all(norm_spectrum == 0)
 
+def test_rate_interpolate_normalized_spectrum_grid_values():
+    det = IdealDetector(nucleus=Xe131, mass_kg=5e3,
+                        threshold_energy=1e3)
+    rc = _initialize_default_si_elastic_rate(target=Xe131,
+                                             detector=det)
+    grid_size = 500
+    ER = np.linspace(0., rc.ER_max, grid_size)
+
+    f = rc.normalized_spectrum(ER=ER)
+    fp = rc.interpolate_normalized_spectrum(ER=ER, num=grid_size)
+
+    assert len(f) == len(fp)
+    assert np.allclose(f, fp, atol=1e-6)
+
+def test_rate_interpolate_normalized_spectrum_outside():
+    det = IdealDetector(nucleus=Xe131, mass_kg=5e3,
+                        threshold_energy=1e3)
+    rc = _initialize_default_si_elastic_rate(target=Xe131,
+                                             detector=det)
+    ER = [-1.e6, 1.01 * rc.ER_max]
+    fp = rc.interpolate_normalized_spectrum(ER=ER)
+
+    assert np.all(fp == 0.)
+
