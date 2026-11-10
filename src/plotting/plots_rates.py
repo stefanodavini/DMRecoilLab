@@ -157,9 +157,14 @@ def plot_integral_rate(
 
     ER_keV = ER / 1e3
 
+    if rate_calc.has_detector:
+        ylabel = "integral rate (counts in detector mass * exposure time)"
+    else:
+        ylabel = "integral rate (counts/s per target nucleus)"
+
     ax.plot(ER_keV, intrate, **plot_kwargs)
     ax.set_xlabel("threshold recoil energy (keV)")
-    ax.set_ylabel("integral rate (counts/detector mass/ exposure time)")
+    ax.set_ylabel(ylabel=ylabel)
     ax.set_yscale("log")
     ax.grid(True, alpha=0.3)
 
