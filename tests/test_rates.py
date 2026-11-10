@@ -399,7 +399,7 @@ def test_rate_interpolate_normalized_spectrum_grid_values():
     rc = _initialize_default_si_elastic_rate(target=det.nucleus,
                                              detector=det)
     grid_size = 500
-    ER = np.linspace(0., rc.ER_max, grid_size)
+    ER = np.linspace(0., rc.ER_integration_max, grid_size)
 
     f = rc.normalized_spectrum(ER=ER)
     fp = rc.interpolate_normalized_spectrum(ER=ER, num=grid_size)
@@ -412,7 +412,7 @@ def test_rate_interpolate_normalized_spectrum_outside():
                         threshold_energy=1e3)
     rc = _initialize_default_si_elastic_rate(target=det.nucleus,
                                              detector=det)
-    ER = [-1.e6, 1.01 * rc.ER_max]
+    ER = [-1.e6, 1.01 * rc.ER_integration_max]
     fp = rc.interpolate_normalized_spectrum(ER=ER)
 
     assert np.all(fp == 0.)

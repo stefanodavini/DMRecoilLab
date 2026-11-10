@@ -305,14 +305,16 @@ class RateCalculator:
 
         norm = self.integrated_rate_above_energy(ER=ER, num=num)[0]
 
-        if norm > 0:
-            return self.dRdER(ER=ER, num=num) / norm
+        if not np.isfinite(norm):
+            raise RuntimeError(f"Non-finite normalization: {norm}")
+
+        if norm < 0:
+            raise RuntimeError(f"Negative normalization: {norm}")
 
         if norm == 0:
             return np.zeros_like(ER)
 
-        if norm < 0:
-            raise RuntimeError("Negative norm in dR/dER.")
+        return self.dRdER(ER=ER, num=num) / norm
 
     def interpolate_normalized_spectrum(self,
                                         ER : NDArray,
@@ -335,7 +337,7 @@ class RateCalculator:
             Interpolated differential recoil spectrum,
             normalized to one, evaluated on ``ER``.
         """
-        ER_grid = np.linspace(0., self.ER_max, num=num)
+        ER_grid = np.linspace(0., self.ER_integration_max, num=num)
         f_grid = self.normalized_spectrum(ER=ER_grid)
 
         return np.interp(ER, ER_grid, f_grid, left=0.0, right=0.0)
@@ -370,8 +372,8 @@ class RateCalculator:
         Samples are generated using inverse-transform
         sampling.
 
-        A recoil-energy grid between zero and ``ER_max`` is
-        constructed internally. The cumulative distribution
+        A recoil-energy grid between zero and ``ER_integration_max``
+        is constructed internally. The cumulative distribution
         function is obtained from the integrated recoil rate,
 
         .. math::
@@ -399,7 +401,7 @@ class RateCalculator:
         """
 
         rng = np.random.default_rng(seed=seed)
-        ER = np.linspace(0., self.ER_max, 2000)
+        ER = np.linspace(0., self.ER_integration_max, 2000)
 
         surv = self.integrated_rate_above_energy(ER)
         total = surv[0]
@@ -460,20 +462,7 @@ class RateCalculator:
         # through the detector-response model and may
         # interact with energy smearing.
 
-        # MINOR-MINOR:ISSUE:
-        # Current detector-response calculations use a 
-        # recoil-energy grid terminating at the kinematic 
-        # endpoint EmaxE​. 
-        # For detectors with finite energy resolution,
-        # a small fraction of events may be reconstructed above 
-        # Emax​ and are therefore lost.
-        # The effect is expected to be negligible 
-        # but could be eliminated in the 
-        # future by introducing separate true-energy and 
-        # reconstructed-energy grids or by extending the 
-        # reconstructed-energy range beyond the kinematic endpoint.
-
-        ER = np.linspace(0., self.ER_max, num=num)
+        ER = np.linspace(0., self.ER_integration_max, num=num)
         integrated_counts = self.integrated_rate_above_energy(ER)
 
         return integrated_counts[0]
@@ -545,6 +534,19 @@ class RateCalculator:
         if self.has_detector:
             if self.detector.nucleus != self.interaction.nucleus:
                 raise ValueError("Detector and interaction nuclei are different")
+
+    @property
+    def ER_integration_max(self):
+        """
+        Maximum recoil energy used
+        for automatic numerical integration.
+        """
+        ERmax = self.ER_max
+
+        if not np.isfinite(ERmax) or ERmax <= 0:
+            return 1. #ev
+
+        return 1.1 * ERmax
 
     @property
     def wimp_number_density(self) -> float:

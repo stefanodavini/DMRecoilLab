@@ -228,7 +228,11 @@ class InteractionModel(ABC):
         are set to zero.
         """
         mask = self.kinematic_mask(v=v, ER=ER)
-        return np.where(mask, dsigmadER, 0.0)
+
+        masked = np.where(mask, dsigmadER, 0.0)
+
+        return np.nan_to_num(masked, nan=0.0,
+                             posinf=0.0,neginf=0.0)
 
     def integrate_sigma(self, v: NDArray, ER_min=0.,
                         ER_max=None, num=10000) -> NDArray:
