@@ -84,6 +84,30 @@ def _lz_acceptance() -> TabulatedData:
         y_name="Signal efficiency",
     )
 
+
+def _deap_acceptance() -> TabulatedData:
+    """Return a rough PE-to-energy mapping of the DEAP total acceptance.
+
+    Figure 8 of arXiv:2603.13965 gives the total WIMP acceptance in PE.
+    For this lightweight benchmark, PE is converted to reconstructed
+    electron-equivalent energy using the reported 6.1 PE/keV light yield.
+    This is not an NR-energy calibration because the energy-dependent NR
+    quenching factor is not applied here.
+    """
+    return TabulatedData(
+        # Rough digitization of the black total-acceptance curve in Fig. 8.
+        # x is E_ee [eV] = PE / (6.1 PE/keV). Assumed up to 1 MeV since in the paper
+        # they show the alpha background
+        x=[0, 90e3 / 6.1, 110e3 / 6.1, 130e3 / 6.1, 150e3 / 6.1,
+           175e3 / 6.1, 200e3 / 6.1, 225e3 / 6.1, 250e3 / 6.1,
+           275e3 / 6.1, 300e3 / 6.1, 6100e3 / 6.1, 6200e3 / 6.1],
+        # Rough visual digitization of the black curve in Fig. 8; the paper
+        # does not provide these points as a numerical table.
+        y=[0, 0.18, 0.22, 0.25, 0.27, 0.29, 0.30, 0.30, 0.30, 0.30, 0.30, 0.30, 0],
+        x_name="Reconstructed energy [eVee] (rough PE mapping)",
+        y_name="Total WIMP acceptance",
+    )
+
 #
 # Xenon
 #
@@ -141,8 +165,7 @@ LZ_2026_RESPONSE = ResponseDetector(
     exposure_days=220,
     acceptance_curve=_lz_acceptance(),
     resolution_sigma=1300,
-    target_mass_fraction=0.21
-)
+    )
 # LZ_2024_RESPONSE
 # LZ Collaboration, Search for dark matter particle interactions in an extended
 # nuclear recoil energy window with the LZ experiment.
@@ -196,6 +219,21 @@ DEAP3600_2019 = IdealDetector(
 # Dark Matter Search with a 231-day Exposure
 # PRD 100, 022004 (2019)
 # arXiv:1902.04048
+
+DEAP_2026_RESPONSE = ResponseDetector(
+    nucleus=Ar40,
+    mass_kg=1266,
+    exposure_days=790.8,
+    acceptance_curve=_deap_acceptance(),
+    resolution_sigma=3e3,
+)
+# DEAP_2026_RESPONSE
+# DEAP Collaboration, Dark Matter Search with the DEAP-3600 Detector
+# using the Profile Likelihood Ratio Method.
+# arXiv:2603.13965v1.
+# The acceptance curve is a rough PE-to-energy digitization of Fig. 8.
+# resolution_sigma remains a simple benchmark value; the paper does not
+# provide a single Gaussian NR-resolution parameter.
 
 DS20K_10YEAR = IdealDetector(
     nucleus=Ar40,
