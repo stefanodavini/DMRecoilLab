@@ -58,8 +58,31 @@ configuration for the exact detector
 definition and event selection.
 """
 
-from src.detectors.detectors import IdealDetector
-from src.nuclei.isotopes import Xe131, Ar40
+from src.detectors.detectors import IdealDetector, ResponseDetector
+from src.nuclei.isotopes import Ar40, Xe131
+from src.utils.tabulated_data import TabulatedData
+
+
+def _lz_acceptance() -> TabulatedData:
+    """Return the digitized LZ high-energy NR efficiency from arXiv:2410.17036 and arXiv:2609.02823"""
+    return TabulatedData(
+        x=[
+            0, 1e3, 2e3, 3e3, 4e3, 5.4e3, 6e3, 7e3, 8e3,
+            10e3, 12e3, 14e3, 20e3, 50e3, 100e3, 150e3, 200e3,
+            225e3, 240e3, 250e3, 255e3, 260e3, 265e3, 269.9e3,
+            275e3, 280e3, 285e3, 290e3, 295e3, 300e3,
+        ],
+        y=[
+            0.0, 0.0, 0.001000, 0.045376, 0.240994, 0.572080,
+            0.681770, 0.796122, 0.863085, 0.916027, 0.936026,
+            0.944187, 0.942740, 0.955819, 0.955805, 0.955750,
+            0.955799, 0.955605, 0.954773, 0.937306, 0.897118,
+            0.815262, 0.670568, 0.498860, 0.312901, 0.161969,
+            0.073781, 0.025910, 0.007525, 0.001609,
+        ],
+        x_name="NR recoil energy [eV]",
+        y_name="Signal efficiency",
+    )
 
 #
 # Xenon
@@ -111,6 +134,20 @@ LZ_2024 = IdealDetector(
 # First Dark Matter Search Results from the LZ Experiment
 # PRL 131, 041002 (2023)
 # arXiv:2207.03764
+
+LZ_2026_RESPONSE = ResponseDetector(
+    nucleus=Xe131,
+    mass_kg=4710,
+    exposure_days=220,
+    acceptance_curve=_lz_acceptance(),
+    resolution_sigma=1300,
+    target_mass_fraction=0.21
+)
+# LZ_2024_RESPONSE
+# LZ Collaboration, Search for dark matter particle interactions in an extended
+# nuclear recoil energy window with the LZ experiment.
+# Fig. S2 WS ROI efficiency, digitized from arXiv:2609.02823v1.
+# Resolution is estimated at the 248 keVnr event
 
 LZ_1000DAYS = IdealDetector(
     nucleus=Xe131,
