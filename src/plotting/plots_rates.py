@@ -4,7 +4,6 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 from numpy.typing import NDArray
-import numpy as np
 
 def plot_recoil_spectrum(
     rate_calc: RateCalculator,
@@ -97,15 +96,11 @@ def plot_normalized_recoil_spectrum(
     else:
         fig = ax.figure
 
-    dRdER = rate_calc.dRdER(ER)
-    norm = np.trapezoid(dRdER, ER)
+    dRdER = rate_calc.normalized_spectrum(ER=ER)
 
-    if norm <= 0:
-        raise RuntimeError("Unphysical normalization")
-    
     ER_keV = ER / 1e3
 
-    ax.plot(ER_keV, dRdER / norm, **plot_kwargs)
+    ax.plot(ER_keV, dRdER, **plot_kwargs)
     ax.set_xlabel("recoil energy (keV)")
     ax.set_ylabel("normalized differential rate")
     ax.set_yscale("log")
@@ -162,9 +157,14 @@ def plot_integral_rate(
 
     ER_keV = ER / 1e3
 
+    if rate_calc.has_detector:
+        ylabel = "integral rate (counts in detector mass * exposure time)"
+    else:
+        ylabel = "integral rate (counts/s per target nucleus)"
+
     ax.plot(ER_keV, intrate, **plot_kwargs)
     ax.set_xlabel("threshold recoil energy (keV)")
-    ax.set_ylabel("integral rate (counts/detector mass/ exposure time)")
+    ax.set_ylabel(ylabel=ylabel)
     ax.set_yscale("log")
     ax.grid(True, alpha=0.3)
 

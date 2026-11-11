@@ -176,6 +176,18 @@ def test_rate_detector_exposure_linearity():
 
     assert np.allclose(ratio, 365)
 
+def test_rate_integrated_above_energy_no_increasing_raise():
+    rc = _initialize_default_si_elastic_rate(target= Ar40,
+                                             detector=None)
+
+    ER_decreasing = [0., -1.e-3, -2.e-3]
+    with pytest.raises(ValueError):
+        rc.integrated_rate_above_energy(ER=ER_decreasing)
+
+    ER_no_incr = [0., 1.e3, 1.e-3]
+    with pytest.raises(ValueError):
+        rc.integrated_rate_above_energy(ER=ER_no_incr)
+
 def test_rate_expected_count_no_detector():
 
     rc = _initialize_default_si_elastic_rate(target= Ar40,
@@ -355,3 +367,75 @@ def test_rate_expected_cross_section_round_trip():
     recovered_counts = scale * rc.expected_counts()
 
     assert np.isclose(recovered_counts, target_counts, rtol=1e-6)
+
+def test_rate_normalized_spectrum_integral():
+    det = IdealDetector(nucleus=Xe131, mass_kg=5e3,
+                        threshold_energy=1e3)
+    rc = _initialize_default_si_elastic_rate(target=det.nucleus,
+                                             detector=det)
+    ER = np.linspace(0., 100e3, 100)
+
+    norm_spectrum = rc.normalized_spectrum(ER=ER)
+    assert np.all(norm_spectrum >= 0)
+    norm = np.trapezoid(norm_spectrum, ER)
+
+    assert np.isclose(norm, 1., 1e-3)
+
+def test_rate_normalized_spectrum_zero_counts():
+    high_thr = 200e3
+    det = IdealDetector(nucleus=Xe131, mass_kg=5e3,
+                        threshold_energy=high_thr)
+    rc = _initialize_default_si_elastic_rate(target=det.nucleus,
+                                             detector=det)
+    ER = np.linspace(0., high_thr / 2, 100)
+
+    norm_spectrum = rc.normalized_spectrum(ER=ER)
+    assert len(norm_spectrum) == len(ER)
+    assert np.all(norm_spectrum == 0)
+
+def test_rate_interpolate_normalized_spectrum_grid_values():
+    det = IdealDetector(nucleus=Xe131, mass_kg=5e3,
+                        threshold_energy=1e3)
+    rc = _initialize_default_si_elastic_rate(target=det.nucleus,
+                                             detector=det)
+    grid_size = 500
+    ER = np.linspace(0., rc.ER_integration_max, grid_size)
+
+    f = rc.normalized_spectrum(ER=ER)
+    fp = rc.interpolate_normalized_spectrum(ER=ER, num=grid_size)
+
+    assert len(f) == len(fp)
+    assert np.allclose(f, fp, atol=1e-6)
+
+def test_rate_interpolate_normalized_spectrum_outside():
+    det = IdealDetector(nucleus=Xe131, mass_kg=5e3,
+                        threshold_energy=1e3)
+    rc = _initialize_default_si_elastic_rate(target=det.nucleus,
+                                             detector=det)
+    ER = [-1.e6, 1.01 * rc.ER_integration_max]
+    fp = rc.interpolate_normalized_spectrum(ER=ER)
+
+    assert np.all(fp == 0.)
+
+def test_rate_sample_energies():
+    thr = 20e3
+    det = IdealDetector(nucleus=Ar40, mass_kg=5e3,
+                        threshold_energy=thr)
+    rc = _initialize_default_si_elastic_rate(target=det.nucleus,
+                                             detector=det)
+
+    size = 100
+    samples = rc.sample_recoil_energies(size=size, seed=42)
+    assert len(samples) == size
+    assert np.all(samples >= thr)
+    assert np.all(samples <= rc.ER_max)
+
+def test_rate_sample_energies_zero_counts():
+    high_thr = 1e6
+    det = IdealDetector(nucleus=Ar40, mass_kg=5e3,
+                        threshold_energy=high_thr)
+    rc = _initialize_default_si_elastic_rate(target=det.nucleus,
+                                             detector=det)
+    with pytest.raises(ValueError, match="Cannot sample"):
+        rc.sample_recoil_energies()
+

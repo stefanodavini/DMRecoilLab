@@ -199,14 +199,19 @@ class RateCalculator:
         return nt * time_s * spectrum
 
 
-    def integrated_rate_above_energy(self, ER: NDArray) -> NDArray:
+    def integrated_rate_above_energy(self, ER: NDArray,
+                                     num=1000) -> NDArray:
         """
         Integrated recoil rate above each recoil energy.
 
         Parameters
         ----------
         ER : ndarray
-            Monotonically increasing recoil-energy grid in eV.
+            Strictly increasing recoil-energy grid in eV.
+
+        num : int, optional
+            Number of speed samples used in the
+            numerical integration.
 
         Returns
         -------
@@ -220,6 +225,11 @@ class RateCalculator:
             \\frac{dR}{dE_R}
             \\, dE_R.
 
+        Raises
+        ------
+        ValueError
+            If ``ER`` is not strictly increasing.
+
         Notes
         -----
         The calculation is performed using a cumulative
@@ -232,12 +242,180 @@ class RateCalculator:
         is present;
         - expected counts if a detector is present.
         """
-        rate = self.dRdER(ER)
+        ER = np.asarray(ER)
+
+        if np.any(np.diff(ER) <= 0):
+            raise ValueError("ER must be strictly increasing.")
+
+        rate = self.dRdER(ER=ER, num=num)
 
         integral = cumulative_trapezoid(rate[::-1], -ER[::-1],
                                         initial=0,)[::-1]
 
         return integral
+
+    def normalized_spectrum(self, ER: NDArray, num=1000) -> NDArray:
+        """
+        Normalized recoil-energy probability density.
+
+        Parameters
+        ----------
+        ER : NDArray
+            Strictly increasing recoil-energy grid in eV.
+
+        num : int, optional
+            Number of speed samples used in the velocity
+            integration.
+
+        Returns
+        -------
+        NDArray
+            Probability density evaluated on ``ER``.
+
+        Notes
+        -----
+        The returned quantity is a continuous probability
+        density function (PDF),
+
+        .. math::
+
+        p(E_R) = \frac{1}{N} \frac{dR}{dE_R},
+
+        where
+
+        .. math::
+
+        N = \\int dE_R \\, \\frac{dR}{dE_R}.
+
+        The normalization satisfies
+
+        .. math::
+
+        \\int p(E_R) dE_R = 1.
+
+        Consequently, the values returned by this method are
+        probability densities rather than discrete
+        probabilities. Summing the array elements does not
+        generally yield unity.
+
+        If the total expected rate is zero, an array of zeros
+        is returned.
+        """
+        ER = np.asarray(ER)
+
+        norm = self.integrated_rate_above_energy(ER=ER, num=num)[0]
+
+        if not np.isfinite(norm):
+            raise RuntimeError(f"Non-finite normalization: {norm}")
+
+        if norm < 0:
+            raise RuntimeError(f"Negative normalization: {norm}")
+
+        if norm == 0:
+            return np.zeros_like(ER)
+
+        return self.dRdER(ER=ER, num=num) / norm
+
+    def interpolate_normalized_spectrum(self,
+                                        ER : NDArray,
+                                        num=500) -> NDArray:
+        """
+        Interpolate the normalized recoil spectrum.
+
+        Parameters
+        ----------
+        ER : NDArray
+            Recoil-energy sample points grid in eV.
+
+        num : int, optional
+            Number of recoil-energy samples used to
+            construct the interpolation grid.
+
+        Returns
+        -------
+        NDArray
+            Interpolated differential recoil spectrum,
+            normalized to one, evaluated on ``ER``.
+        """
+        ER_grid = np.linspace(0., self.ER_integration_max, num=num)
+        f_grid = self.normalized_spectrum(ER=ER_grid)
+
+        return np.interp(ER, ER_grid, f_grid, left=0.0, right=0.0)
+
+    def sample_recoil_energies(self, size=1,
+                               seed : int = None) -> NDArray:
+        """
+        Draw recoil-energy samples from the normalized spectrum.
+
+        Parameters
+        ----------
+        size : int, optional
+            Number of recoil energies to generate.
+
+        seed : int or None, optional
+            Seed passed to ``numpy.random.default_rng``.
+            If ``None``, NumPy chooses a
+            non-deterministic seed.
+
+        Returns
+        -------
+        NDArray
+            Sampled recoil energies in eV.
+
+        Raises
+        ------
+        ValueError
+            If the total expected event rate is zero.
+
+        Notes
+        -----
+        Samples are generated using inverse-transform
+        sampling.
+
+        A recoil-energy grid between zero and ``ER_integration_max``
+        is constructed internally. The cumulative distribution
+        function is obtained from the integrated recoil rate,
+
+        .. math::
+
+        F(E_R) = 1 - \frac{R(>E_R)}{R(>0)}.
+
+        Uniform random numbers are then mapped to recoil
+        energies through interpolation of the cumulative
+        distribution.
+
+        The generated samples therefore represent draws from
+        the continuous recoil-energy probability density
+        defined by ``normalized_spectrum``.
+
+        When a detector is attached to the rate calculator,
+        sampling is performed after detector-response effects
+        have been applied. The returned energies therefore
+        correspond to reconstructed detector energies rather
+        than true recoil energies.
+
+        The sampling distribution is approximated using a
+        finite recoil-energy grid and linear interpolation.
+        Increasing the internal grid density improves the
+        accuracy of the approximation.
+        """
+
+        rng = np.random.default_rng(seed=seed)
+        ER = np.linspace(0., self.ER_integration_max, 2000)
+
+        surv = self.integrated_rate_above_energy(ER)
+        total = surv[0]
+
+        if total <= 0:
+            raise ValueError("Cannot sample recoil energies because the"
+                             " expected event rate is zero.")
+
+        surv /= total
+        cdf = 1.0 - surv
+        u = rng.random(size)
+
+        return np.interp(u, cdf, ER)
+    
 
     def expected_counts(self, num=500) -> float:
         """
@@ -284,20 +462,7 @@ class RateCalculator:
         # through the detector-response model and may
         # interact with energy smearing.
 
-        # MINOR-MINOR:ISSUE:
-        # Current detector-response calculations use a 
-        # recoil-energy grid terminating at the kinematic 
-        # endpoint EmaxE​. 
-        # For detectors with finite energy resolution,
-        # a small fraction of events may be reconstructed above 
-        # Emax​ and are therefore lost.
-        # The effect is expected to be negligible 
-        # but could be eliminated in the 
-        # future by introducing separate true-energy and 
-        # reconstructed-energy grids or by extending the 
-        # reconstructed-energy range beyond the kinematic endpoint.
-
-        ER = np.linspace(0., self.ER_max, num=num)
+        ER = np.linspace(0., self.ER_integration_max, num=num)
         integrated_counts = self.integrated_rate_above_energy(ER)
 
         return integrated_counts[0]
@@ -320,7 +485,7 @@ class RateCalculator:
         Returns
         -------
         float
-            Required interection model reference cross section
+            Required interaction model reference cross section
             in cm^2.
 
             Returns ``np.nan`` when the reference model predicts
@@ -369,6 +534,19 @@ class RateCalculator:
         if self.has_detector:
             if self.detector.nucleus != self.interaction.nucleus:
                 raise ValueError("Detector and interaction nuclei are different")
+
+    @property
+    def ER_integration_max(self):
+        """
+        Maximum recoil energy used
+        for automatic numerical integration.
+        """
+        ERmax = self.ER_max
+
+        if not np.isfinite(ERmax) or ERmax <= 0:
+            return 1. #ev
+
+        return 1.1 * ERmax
 
     @property
     def wimp_number_density(self) -> float:

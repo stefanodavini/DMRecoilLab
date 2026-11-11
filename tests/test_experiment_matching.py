@@ -122,8 +122,8 @@ def test_experiment_matching_counts_nan_propagation():
 
 
 def test_experiment_matched_counts_grid_shape():
-    masses = [1e10, 1e11]
-    deltas = [0, 1e5, 2e5]
+    masses = [1e11, 1e12]
+    deltas = [-1e5, 0., 1e5]
 
     grid = matched_counts_grid_si(wimp_masses=masses,
                                   deltas=deltas,
