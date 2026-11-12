@@ -108,6 +108,60 @@ def _deap_acceptance() -> TabulatedData:
         y_name="Total WIMP acceptance",
     )
 
+
+def _ds50_acceptance() -> TabulatedData:
+    """Return a rough digitization of the DS-50 overall NR acceptance.
+
+    The points follow the black ``Overall NR Acceptance`` curve in Fig. 10
+    of arXiv:1802.07198.  The paper presents the acceptance graphically as a
+    function of S1, with the upper axis giving the corresponding NR-energy
+    scale, so the values below are an approximate digitization rather than a
+    numerical table from the publication.
+    """
+    return TabulatedData(
+        x=[0, 20e3, 30e3, 40e3, 50e3, 60e3, 70e3, 80e3,
+           100e3, 120e3, 150e3, 200e3, 1000e3, 1001e3],
+        y=[0.0, 0.0, 0.02, 0.15, 0.45, 0.62, 0.68, 0.725,
+           0.725, 0.725, 0.725, 0.725, 0.725, 0.0],
+        x_name="NR recoil energy [eV] (rough S1 mapping)",
+        y_name="Overall NR acceptance",
+    )
+
+
+def _xenont_acceptance() -> TabulatedData:
+    """Return a rough 1D projection of the XENONnT WIMP acceptance.
+
+    Figure 20 (right) of arXiv:2409.08778 shows the WIMP-search acceptance
+    in the two-dimensional uncorrected-S1/S2 space. ResponseDetector stores a
+    one-dimensional energy curve, so the values below are a rough projection
+    of that panel and not a direct reproduction of the 2D acceptance.
+    """
+    # Approximate ER conversion reported by the paper:
+    # LY = cS1 / E = 5.3325 PE/keV.
+    light_yield_pe_per_kev = 5.3325
+    s1_pe = [
+        0.0,
+        1.0 * light_yield_pe_per_kev,
+        2.0 * light_yield_pe_per_kev,
+        3.0 * light_yield_pe_per_kev,
+        4.0 * light_yield_pe_per_kev,
+        5.0 * light_yield_pe_per_kev,
+        6.0 * light_yield_pe_per_kev,
+        8.0 * light_yield_pe_per_kev,
+        10.0 * light_yield_pe_per_kev,
+        13.0 * light_yield_pe_per_kev,
+        50.0 * light_yield_pe_per_kev,
+        1000.0 * light_yield_pe_per_kev,
+        1001.0 * light_yield_pe_per_kev
+    ]
+
+    return TabulatedData(
+        x=[s1 / light_yield_pe_per_kev * 1e3 for s1 in s1_pe],
+        y=[0.0, 0.10, 0.35, 0.55, 0.70, 0.80, 0.86, 0.90, 0.92, 0.92, 0.92, 0.92, 0],
+        x_name="Reconstructed energy [eV] (S1 / 5.3325 PE/keV)",
+        y_name="WIMP signal acceptance",
+    )
+
 #
 # Xenon
 #
@@ -146,6 +200,19 @@ XENONnT_2024 = IdealDetector(
 # XENON Collaboration
 # Latest SI WIMP search results
 # Benchmark based on fiducial LXe mass and representative threshold.
+
+XENONnT_2024_RESPONSE = ResponseDetector(
+    nucleus=Xe131,
+    mass_kg=5900,
+    exposure_days=278,
+    acceptance_curve=_xenont_acceptance(),
+    resolution_sigma=1e3,
+)
+# XENONnT_2024_RESPONSE
+# XENON Collaboration, XENONnT Analysis: Signal Reconstruction, Calibration
+# and Event Selection, arXiv:2409.08778v1, Fig. 20 (right).
+# The plotted acceptance is a rough 1D projection of the published 2D S1/S2
+# acceptance; it is not a direct numerical reproduction of the figure.
 
 LZ_2024 = IdealDetector(
     nucleus=Xe131,
@@ -207,6 +274,19 @@ DS50_2018 = IdealDetector(
 # DarkSide-50 532-day WIMP search
 # PRD 98, 102006 (2018)
 # arXiv:1802.07198
+
+DS50_2018_RESPONSE = ResponseDetector(
+    nucleus=Ar40,
+    mass_kg=31.3,
+    exposure_days=532.4,
+    acceptance_curve=_ds50_acceptance(),
+    resolution_sigma=3e3,
+)
+# DS50_2018_RESPONSE
+# DarkSide Collaboration, DarkSide-50 532-day Dark Matter Search with
+# Low-Radioactivity Argon, PRD 98, 102006 (2018), arXiv:1802.07198.
+# The acceptance is a rough digitization of Fig. 10. The paper does not
+# provide a single Gaussian NR-resolution parameter; 3 keV is a benchmark.
 
 DEAP3600_2019 = IdealDetector(
     nucleus=Ar40,

@@ -4,8 +4,10 @@ import pytest
 from src.detectors.detectors import IdealDetector, ResponseDetector
 from src.detectors.reference_detectors import (
     DEAP_2026_RESPONSE,
+    DS50_2018_RESPONSE,
     LZ_2024,
     LZ_2026_RESPONSE,
+    XENONnT_2024_RESPONSE,
 )
 
 
@@ -45,4 +47,34 @@ def test_deap_2026_response_configuration_and_acceptance():
     acceptance = DEAP_2026_RESPONSE._apply_acceptance(
         energy, np.ones_like(energy)
     )
-    np.testing.assert_allclose(acceptance, [0.45, 0.61, 0.64])
+    np.testing.assert_allclose(acceptance, [0.18, 0.27, 0.30])
+
+
+def test_ds50_2018_response_configuration_and_acceptance():
+    assert isinstance(DS50_2018_RESPONSE, ResponseDetector)
+    assert DS50_2018_RESPONSE.mass_kg == 31.3
+    assert DS50_2018_RESPONSE.exposure_days == 532.4
+    assert DS50_2018_RESPONSE.has_acceptance
+    assert DS50_2018_RESPONSE.has_resolution
+    assert DS50_2018_RESPONSE.resolution_sigma == 3e3
+
+    energy = np.array([40e3, 60e3, 80e3])
+    acceptance = DS50_2018_RESPONSE._apply_acceptance(
+        energy, np.ones_like(energy)
+    )
+    np.testing.assert_allclose(acceptance, [0.15, 0.62, 0.725])
+
+
+def test_xenont_2024_response_configuration_and_acceptance():
+    assert isinstance(XENONnT_2024_RESPONSE, ResponseDetector)
+    assert XENONnT_2024_RESPONSE.mass_kg == 5900
+    assert XENONnT_2024_RESPONSE.exposure_days == 278
+    assert XENONnT_2024_RESPONSE.has_acceptance
+    assert XENONnT_2024_RESPONSE.has_resolution
+    assert XENONnT_2024_RESPONSE.resolution_sigma == 1e3
+
+    energy = np.array([3e3, 5e3, 10e3, 1000e3, 1001e3])
+    acceptance = XENONnT_2024_RESPONSE._apply_acceptance(
+        energy, np.ones_like(energy)
+    )
+    np.testing.assert_allclose(acceptance, [0.55, 0.80, 0.92, 0.92, 0.0])
