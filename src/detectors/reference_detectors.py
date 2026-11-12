@@ -96,11 +96,11 @@ def _deap_acceptance() -> TabulatedData:
     """
     return TabulatedData(
         # Rough digitization of the black total-acceptance curve in Fig. 8.
-        # x is E_ee [eV] = PE / (6.1 PE/keV). Assumed up to 1 MeV since in the paper
+        # x is E_ee [eV] = PE / (6.1 PE/keV). Assumed up to 25000 PE since in the paper
         # they show the alpha background
         x=[0, 90e3 / 6.1, 110e3 / 6.1, 130e3 / 6.1, 150e3 / 6.1,
            175e3 / 6.1, 200e3 / 6.1, 225e3 / 6.1, 250e3 / 6.1,
-           275e3 / 6.1, 300e3 / 6.1, 6100e3 / 6.1, 6200e3 / 6.1],
+           275e3 / 6.1, 300e3 / 6.1, 25000e3 / 6.1, 25100e3 / 6.1],
         # Rough visual digitization of the black curve in Fig. 8; the paper
         # does not provide these points as a numerical table.
         y=[0, 0.18, 0.22, 0.25, 0.27, 0.29, 0.30, 0.30, 0.30, 0.30, 0.30, 0.30, 0],
