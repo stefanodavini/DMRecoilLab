@@ -100,7 +100,7 @@ def _deap_acceptance() -> TabulatedData:
         # they show the alpha background
         x=[0, 90e3 / 6.1, 110e3 / 6.1, 130e3 / 6.1, 150e3 / 6.1,
            175e3 / 6.1, 200e3 / 6.1, 225e3 / 6.1, 250e3 / 6.1,
-           275e3 / 6.1, 300e3 / 6.1, 1147e3 / 6.1, 1148e3 / 6.1],
+           275e3 / 6.1, 300e3 / 6.1, 6100e3 / 6.1, 6200e3 / 6.1],
         # Rough visual digitization of the black curve in Fig. 8; the paper
         # does not provide these points as a numerical table.
         y=[0, 0.18, 0.22, 0.25, 0.27, 0.29, 0.30, 0.30, 0.30, 0.30, 0.30, 0.30, 0],
