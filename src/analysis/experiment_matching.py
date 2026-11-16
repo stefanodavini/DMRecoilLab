@@ -232,6 +232,16 @@ class MatchedCountGrid:
     counts_b: NDArray
 
     @property
+    def counts_b_cap_1000(self):
+        """
+        Predicted counts in detectorn B
+        capped at 1000.
+        """
+        return np.where(np.isnan(self.counts_b),
+                        np.nan,
+                        np.minimum(self.counts_b, 1000))
+
+    @property
     def meshgrid(self):
         """
         Meshgrid representation of masses and deltas
