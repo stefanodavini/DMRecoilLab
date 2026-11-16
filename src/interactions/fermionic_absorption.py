@@ -1,26 +1,31 @@
 """
-Monochromatic neutral-current fermionic DM absorption in the Dror convention.
+Monochromatic neutral-current fermionic DM absorption.
 
-At leading order in the incident speed and m_chi/m_N, the recoil is fixed at
-E_abs = m_chi**2/(2*m_N). For beta=v/c > 0, the cross section scales as 1/beta.
+This module uses the normalization of the review note FermionicXS.pdf:
+d_sigma/d_ER = sigma_abs * A**2 * (m_n/m_N)**2 * response(q_abs)
+               * delta(E_R-E_abs) / beta.
+Here m_N is the nuclear mass. The proton mass is used for the reference
+nucleon mass m_n, consistently with the proton reference in SIInteraction.
+The recoil is E_abs = m_chi**2/(2*m_N), at leading order in beta and m_chi/m_N.
 
-This module defines sigma_abs = sigma_NC, the target-independent per-nucleon
-coefficient of Dror et al., in cm^2. For coherent isoscalar NC absorption,
-d_sigma/d_ER = A**2 * sigma_abs * response(q_abs) * delta(E_R-E_abs) / beta.
-The interaction applies the A**2 factor internally; callers supply the same
-sigma_abs for different target nuclei at a fixed underlying interaction.
+sigma_abs is the per-nucleon input coefficient defined in the note.
+sigma_reference returns this input, so count inference and target matching
+use the note's convention. The derived property sigma_NC gives
+sigma_abs*(m_n/m_N)**2, the coefficient multiplying A**2 in Dror's expression
+for this target. It is not a second independent input: at fixed sigma_abs,
+sigma_NC depends on the target. A converted single-target benchmark does
+not independently validate the note's relative target scaling.
 
 Units
 -----
 Mass, recoil energy and momentum: eV (c=1). Speed input: beta=v/c.
-Cross section and sigma_abs: cm^2. Differential cross section: cm^2/eV.
-For beta > 0 and point-like responses, beta*sigma_A(beta) = A**2*sigma_abs
-and sigma_A*v = c*A**2*sigma_abs. Thus sigma_abs is a velocity-weighted
-per-nucleon coefficient, not the physical total cross section at finite beta.
+sigma_abs and sigma_NC: cm^2. Differential cross section: cm^2/eV.
+For beta > 0 and point-like responses, beta*sigma_A = A**2*sigma_NC.
 At beta=0, an all-zero row is returned as a numerical convention.
 
 References
 ----------
+FermionicXS.pdf, review note, final differential-cross-section expression.
 Dror, Elor and McGehee, arXiv:1908.10861v2, Eqs. (3.4)-(3.8).
 """
 
@@ -33,6 +38,7 @@ from src.interactions.propagators import Propagator
 from src.kinematics.absorption_kinematics import AbsorptionKinematics
 from src.nuclei.base_nuclear_response import NuclearResponse
 from src.nuclei.nucleus import Nucleus
+from src.utils.constants import PROTON_MASS_MeV
 
 
 class FermionicAbsorptionInteraction(InteractionModel):
@@ -48,9 +54,10 @@ class FermionicAbsorptionInteraction(InteractionModel):
     kinematics : AbsorptionKinematics
         Leading-order absorption kinematics, with matching particle masses.
     sigma_abs : float, optional
-        Finite, non-negative target-independent per-nucleon coefficient
-        sigma_NC in cm^2, before momentum-transfer responses.
-        Default is 1e-40 cm^2. The coherent A**2 factor is applied internally.
+        Finite, non-negative per-nucleon coefficient defined in the review
+        note, in cm^2. Default is 1e-40 cm^2. The interaction applies both
+        A**2 and (m_n/m_N)**2 internally. This input is not Dror's sigma_NC;
+        use the sigma_NC property to obtain the converted coefficient.
     nuclear_response : NuclearResponse, optional
         Dimensionless cross-section response. Defaults to point-like.
         FormFactor instances already return F(q)^2 through response(q).
@@ -164,8 +171,10 @@ class FermionicAbsorptionInteraction(InteractionModel):
         The single non-zero entry for each positive speed is divided by its
         trapezoidal weight: half the adjacent spacing at an endpoint, or half
         the distance between neighboring points in the interior. For beta > 0,
-        integration over a grid containing the line returns A**2*sigma_abs/beta
-        times the momentum-transfer response, including for non-uniform grids.
+        integration over a grid containing the line returns
+        A**2*sigma_abs*(m_n/m_N)**2/beta times the momentum-transfer response,
+        including for non-uniform grids. This is A**2*sigma_NC/beta using
+        the converted coefficient exposed by the sigma_NC property.
         """
         v, ER = self._check_input_v_ER(v, ER)
         if ER.size < 2:
@@ -186,11 +195,25 @@ class FermionicAbsorptionInteraction(InteractionModel):
 
         response = self.momentum_transfer_response(ER=np.array([ER_abs]))[0]
         safe_v = np.where(v > 0, v, np.inf)
-        dsigma[:, idx] = self.nucleus.A**2 * self.sigma_abs * response / (safe_v * dER)
+        dsigma[:, idx] = self.nucleus.A**2 * self.sigma_NC * response / (safe_v * dER)
         return dsigma
 
     @property
     def sigma_reference(self) -> float:
-        """Return the target-independent per-nucleon coefficient sigma_NC in cm^2."""
+        """Return the note's input coefficient sigma_abs, in cm^2."""
         return self.sigma_abs
+
+    @property
+    def sigma_NC(self) -> float:
+        """
+        Return the coefficient in Dror's normalization for this target.
+
+        The conversion is sigma_NC = sigma_abs*(m_n/m_N)**2, in cm^2,
+        where m_n is the reference proton mass and m_N the nuclear mass.
+        At fixed sigma_abs this property is target dependent. It does not
+        include A**2, the nuclear response or the propagator response.
+        """
+        m_n = 1e6 * PROTON_MASS_MeV
+        return self.sigma_abs * (m_n / self.nucleus.mass)**2
+
 

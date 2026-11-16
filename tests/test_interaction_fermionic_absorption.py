@@ -1,9 +1,10 @@
 """Unit and analytic-rate tests for monochromatic NC absorption.
 
-The input sigma_abs is Dror's target-independent per-nucleon sigma_NC.
-Consequently beta * integral(d_sigma/d_ER) recovers A**2*sigma_abs for
-point-like responses and beta > 0. At beta=0, dsigma is set to zero
-as a numerical convention.
+sigma_abs and sigma_reference use the review note's normalization.
+For beta > 0, beta*integral(d_sigma/d_ER) is
+A**2*sigma_abs*(m_n/m_N)**2 = A**2*sigma_NC for point-like responses.
+Dror comparisons explicitly convert the note's coefficient to sigma_NC.
+Zero-speed rows are set to zero as a numerical convention.
 """
 
 import numpy as np
@@ -13,7 +14,8 @@ from src.detectors.detectors import IdealDetector
 from src.halo.base_halo_distribution import IsotropicSpeedDistribution
 from src.halo.shm import StandardHaloModel
 from src.rates import RateCalculator
-from src.utils.constants import C_kmps, KM_TO_M, CM_TO_M
+from src.utils.constants import C_kmps, KM_TO_M, CM_TO_M, PROTON_MASS_MeV
+from src.analysis.experiment_matching import predict_counts_from_counts_match
 from src.interactions.fermionic_absorption import FermionicAbsorptionInteraction
 from src.interactions.particles import WIMP
 from src.interactions.propagators import MassiveMediatorPropagator, PointLikePropagator
@@ -80,7 +82,7 @@ def test_fermionic_absorption_integrated_sigma_times_beta_recovers_coherent_coef
     # ER_max defaults to E_abs: this explicitly tests the upper endpoint.
     np.testing.assert_allclose(
         v * interaction.integrate_sigma(v=v, num=num),
-        nucleus.A**2 * interaction.sigma_abs, rtol=1e-13, atol=0.0,
+        nucleus.A**2 * interaction.sigma_NC, rtol=1e-13, atol=0.0,
     )
 
 
@@ -95,7 +97,7 @@ def test_fermionic_absorption_delta_normalization_on_arbitrary_grids(relative_gr
     dsigma = interaction.dsigma_dER(v=np.array([1e-3]), ER=ER)
     np.testing.assert_allclose(
         1e-3 * np.trapezoid(dsigma, ER, axis=1),
-        interaction.nucleus.A**2 * interaction.sigma_abs,
+        interaction.nucleus.A**2 * interaction.sigma_NC,
         rtol=1e-13, atol=0.0,
     )
 
@@ -115,7 +117,7 @@ def test_fermionic_absorption_nuclear_response_applied():
     interaction = make_interaction(nuclear_response=ff)
     np.testing.assert_allclose(
         1e-3 * interaction.integrate_sigma(v=np.array([1e-3])),
-        interaction.nucleus.A**2 * interaction.sigma_abs / 4.0,
+        interaction.nucleus.A**2 * interaction.sigma_NC / 4.0,
         rtol=1e-13, atol=0.0,
     )
 
@@ -128,7 +130,7 @@ def test_fermionic_absorption_arbitrary_nuclear_response_supported():
     interaction = make_interaction(nuclear_response=ConstantResponse())
     np.testing.assert_allclose(
         1e-3 * interaction.integrate_sigma(v=np.array([1e-3])),
-        0.3 * interaction.nucleus.A**2 * interaction.sigma_abs,
+        0.3 * interaction.nucleus.A**2 * interaction.sigma_NC,
         rtol=1e-13, atol=0.0,
     )
 
@@ -142,7 +144,7 @@ def test_fermionic_absorption_propagator_applied_at_true_line():
     dsigma = interaction.dsigma_dER(v=np.array([1e-3]), ER=ER)
     np.testing.assert_allclose(
         1e-3 * np.trapezoid(dsigma, ER, axis=1),
-        interaction.nucleus.A**2 * interaction.sigma_abs / 4.0,
+        interaction.nucleus.A**2 * interaction.sigma_NC / 4.0,
         rtol=1e-13, atol=0.0,
     )
 
@@ -196,7 +198,7 @@ def test_fermionic_absorption_zero_speed_returns_zero_without_warnings(v):
     if np.any(positive):
         np.testing.assert_allclose(
             v[positive] * np.trapezoid(dsigma[positive], ER, axis=1),
-            interaction.nucleus.A**2 * interaction.sigma_abs,
+            interaction.nucleus.A**2 * interaction.sigma_NC,
             rtol=1e-13,
             atol=0.0,
         )
@@ -230,7 +232,10 @@ class TriangularSpeedHalo(IsotropicSpeedDistribution):
 @pytest.mark.parametrize("maximum_speed", [300.0, 600.0])
 def test_fermionic_absorption_counts_recover_dror_rate(nucleus, maximum_speed):
     sigma_NC = 2e-48  # Per-nucleon coefficient of Dror Eq. (3.7), in cm^2.
-    interaction = make_interaction(nucleus=nucleus, sigma_abs=sigma_NC)
+    # Convert the fixed Dror coefficient to the note's input convention.
+    m_n = 1e6 * PROTON_MASS_MeV
+    sigma_abs = sigma_NC * (nucleus.mass / m_n)**2
+    interaction = make_interaction(nucleus=nucleus, sigma_abs=sigma_abs)
     detector = IdealDetector(nucleus=nucleus, mass_kg=2.0, exposure_days=3.0)
     rate = RateCalculator(
         halo=TriangularSpeedHalo(maximum_speed), interaction=interaction,
@@ -261,7 +266,9 @@ def test_fermionic_absorption_dror_darkside_sigma_nc_at_40_mev():
 
     Dror, Elor and McGehee, arXiv:1908.10861v2:
     Eq. (3.7), Fig. 4, and Table 3. The curve uses a ten-event criterion;
-    it is not an experimental confidence-level limit.
+    it is not an experimental confidence-level limit. The inferred sigma_abs
+    is converted through sigma_NC before comparison with the figure. This
+    single-target conversion does not validate relative target scaling.
     """
     wimp = WIMP(mass=40.0e6, spin=0.5)  # eV
     kin = AbsorptionKinematics(mX=wimp.mass, mT=Ar40.mass)
@@ -276,13 +283,13 @@ def test_fermionic_absorption_dror_darkside_sigma_nc_at_40_mev():
     )
     assert kin.ER > detector.threshold_energy
 
-    # Arbitrary reference normalization, not the answer from the graph.
-    sigma_nc_reference_cm2 = 1.0e-48
+    # Reference input in the note's convention, in cm^2.
+    sigma_abs_reference_cm2 = 1.0e-45
     interaction = FermionicAbsorptionInteraction(
         wimp=wimp,
         nucleus=Ar40,
         kinematics=kin,
-        sigma_abs=sigma_nc_reference_cm2,
+        sigma_abs=sigma_abs_reference_cm2,
         nuclear_response=HelmFormFactor(Ar40),
     )
     halo = StandardHaloModel(v0=220.0, vesc=550.0).boost(vboost=240.0)
@@ -293,10 +300,14 @@ def test_fermionic_absorption_dror_darkside_sigma_nc_at_40_mev():
         rho_dm=0.4e9,  # eV/cm^3 = 0.4 GeV/cm^3
     )
 
-    # The paper's boundary is N=10. The inferred reference cross section
-    # is already the per-nucleon sigma_NC shown on the Fig. 4 axis.
-    sigma_nc_for_ten_events = calculator.expected_cross_section_from_counts(
+    # Count inference returns sigma_abs in the note's convention.
+    sigma_abs_for_ten_events = calculator.expected_cross_section_from_counts(
         counts=10.0, num=1000,
+    )
+    # Convert the inferred coefficient using the model's sigma_NC property.
+    sigma_nc_for_ten_events = (
+        interaction.sigma_NC
+        * sigma_abs_for_ten_events / interaction.sigma_reference
     )
 
     # Approximate, independently read graph ordinate; not an exact datum.
