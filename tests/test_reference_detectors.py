@@ -35,6 +35,12 @@ def test_lz_2026_response_configuration_and_acceptance():
         acceptance, [0.944187, 0.955805, 0.498860], rtol=1e-4
     )
 
+    he_sb_energy = np.array([302e3, 700e3, 701e3])
+    he_sb_acceptance = LZ_2026_RESPONSE._apply_acceptance(
+        he_sb_energy, np.ones_like(he_sb_energy)
+    )
+    np.testing.assert_allclose(he_sb_acceptance, [1.0, 1.0, 0.0])
+
 
 def test_deap_2026_response_configuration_and_acceptance():
     assert isinstance(DEAP_2026_RESPONSE, ResponseDetector)

@@ -70,7 +70,9 @@ def _lz_acceptance() -> TabulatedData:
             0, 1e3, 2e3, 3e3, 4e3, 5.4e3, 6e3, 7e3, 8e3,
             10e3, 12e3, 14e3, 20e3, 50e3, 100e3, 150e3, 200e3,
             225e3, 240e3, 250e3, 255e3, 260e3, 265e3, 269.9e3,
-            275e3, 280e3, 285e3, 290e3, 295e3, 300e3, 301e3, 302e3,700e3,701e3
+            275e3, 280e3, 285e3, 290e3, 295e3, 300e3,
+            # HE SB: unit-efficiency segment, followed by the upper boundary.
+            301e3, 302e3, 700e3, 701e3,
         ],
         y=[
             0.0, 0.0, 0.001000, 0.045376, 0.240994, 0.572080,
@@ -78,28 +80,11 @@ def _lz_acceptance() -> TabulatedData:
             0.944187, 0.942740, 0.955819, 0.955805, 0.955750,
             0.955799, 0.955605, 0.954773, 0.937306, 0.897118,
             0.815262, 0.670568, 0.498860, 0.312901, 0.161969,
-            0.073781, 0.025910, 0.007525, 0.001609, 0.001609,
-            1, 1, 0
+            0.073781, 0.025910, 0.007525, 0.001609,
+            0.001609, 1.0, 1.0, 0.0,
         ],
         x_name="NR recoil energy [eV]",
         y_name="Signal efficiency",
-    )
-
-
-def _lz_he_sb_acceptance() -> TabulatedData:
-    """Return the unit-efficiency approximation for the LZ HE sideband.
-
-    The HE sideband in arXiv:2609.02823 is defined in the observable S1c/S2c
-    plane and is used to validate the MSSI background model.  The paper does
-    not publish a one-dimensional recoil-energy acceptance for this sideband;
-    this tabulation therefore represents the requested efficiency = 1 model,
-    rather than a digitization of a published efficiency curve.
-    """
-    return TabulatedData(
-        x=[0.0, 300e3],
-        y=[1.0, 1.0],
-        x_name="NR recoil energy [eV]",
-        y_name="HE SB efficiency",
     )
 
 
@@ -273,20 +258,8 @@ LZ_2026_RESPONSE = ResponseDetector(
 # LZ Collaboration, Search for dark matter particle interactions in an extended
 # nuclear recoil energy window with the LZ experiment.
 # Fig. S2 WS ROI efficiency, digitized from arXiv:2609.02823v1.
-# Resolution is estimated at the 248 keVnr event
-
-LZ_HE_SB_RESPONSE = ResponseDetector(
-    nucleus=Xe131,
-    mass_kg=4710,
-    exposure_days=220,
-    acceptance_curve=_lz_he_sb_acceptance(),
-    resolution_sigma=1300,
-)
-# LZ_HE_SB_RESPONSE
-# LZ Collaboration, Search for dark matter particle interactions in an extended
-# nuclear recoil energy window with the LZ experiment.
-# HE SB is defined in S1c/S2c, so this is a separate unit-efficiency response
-# for sideband studies, not a published recoil-energy efficiency curve.
+# Resolution is estimated at the 248 keVnr event. The HE SB segment is included
+# in the same acceptance table with the requested unit efficiency.
 
 LZ_1000DAYS = IdealDetector(
     nucleus=Xe131,
