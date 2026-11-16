@@ -4,6 +4,7 @@ import pytest
 from src.detectors.detectors import IdealDetector, ResponseDetector
 from src.detectors.reference_detectors import (
     DEAP_2026_RESPONSE,
+    DS20K_10YEAR_RESPONSE,
     DS50_2018_RESPONSE,
     LZ_2024,
     LZ_2026_RESPONSE,
@@ -63,6 +64,21 @@ def test_ds50_2018_response_configuration_and_acceptance():
         energy, np.ones_like(energy)
     )
     np.testing.assert_allclose(acceptance, [0.15, 0.62, 0.725])
+
+
+def test_ds20k_10year_response_configuration_and_acceptance():
+    assert isinstance(DS20K_10YEAR_RESPONSE, ResponseDetector)
+    assert DS20K_10YEAR_RESPONSE.mass_kg == 20000
+    assert DS20K_10YEAR_RESPONSE.exposure_days == 3650
+    assert DS20K_10YEAR_RESPONSE.has_acceptance
+    assert DS20K_10YEAR_RESPONSE.has_resolution
+    assert DS20K_10YEAR_RESPONSE.resolution_sigma == 3e3
+
+    energy = np.array([30e3, 40e3, 50e3])
+    acceptance = DS20K_10YEAR_RESPONSE._apply_acceptance(
+        energy, np.ones_like(energy)
+    )
+    np.testing.assert_allclose(acceptance, [0.30, 0.72, 0.90])
 
 
 def test_xenont_2024_response_configuration_and_acceptance():

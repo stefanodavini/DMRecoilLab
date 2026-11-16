@@ -100,7 +100,7 @@ def _deap_acceptance() -> TabulatedData:
         # they show the alpha background
         x=[0, 90e3 / 6.1, 110e3 / 6.1, 130e3 / 6.1, 150e3 / 6.1,
            175e3 / 6.1, 200e3 / 6.1, 225e3 / 6.1, 250e3 / 6.1,
-           275e3 / 6.1, 300e3 / 6.1, 25000e3 / 6.1, 25100e3 / 6.1],
+           275e3 / 6.1, 300e3 / 6.1, 1147e3 / 6.1, 1148e3 / 6.1],
         # Rough visual digitization of the black curve in Fig. 8; the paper
         # does not provide these points as a numerical table.
         y=[0, 0.18, 0.22, 0.25, 0.27, 0.29, 0.30, 0.30, 0.30, 0.30, 0.30, 0.30, 0],
@@ -125,6 +125,24 @@ def _ds50_acceptance() -> TabulatedData:
            0.725, 0.725, 0.725, 0.725, 0.725, 0.0],
         x_name="NR recoil energy [eV] (rough S1 mapping)",
         y_name="Overall NR acceptance",
+    )
+
+
+def _ds20k_acceptance() -> TabulatedData:
+    """Return a rough digitization of the DarkSide-20k f200 NR acceptance.
+
+    The curve follows the f200 band in Fig. 92 of the extended DarkSide-20k
+    design report. Older manuscript versions label the analogous plot Fig. 97.
+    The report presents the curve graphically, so these points are an
+    approximate benchmark rather than a numerical table.
+    """
+    return TabulatedData(
+        x=[0, 10e3, 20e3, 25e3, 30e3, 35e3, 40e3, 45e3,
+           50e3, 60e3, 80e3, 1000e3, 1001e3],
+        y=[0.0, 0.0, 0.01, 0.10, 0.30, 0.55, 0.72, 0.84,
+           0.90, 0.90, 0.90, 0.90, 0.0],
+        x_name="NR recoil energy [eV] (rough f200 digitization)",
+        y_name="NR signal acceptance",
     )
 
 
@@ -325,6 +343,19 @@ DS20K_10YEAR = IdealDetector(
 # Sensitivity benchmark
 # Based on DarkSide-20k design report
 # Not tied to a single publication.
+
+DS20K_10YEAR_RESPONSE = ResponseDetector(
+    nucleus=Ar40,
+    mass_kg=20000,
+    exposure_days=3650,
+    acceptance_curve=_ds20k_acceptance(),
+    resolution_sigma=3e3,
+)
+# DS20K_10YEAR_RESPONSE
+# DarkSide Collaboration, DarkSide-20k design report, Fig. 92
+# (older manuscript version: Fig. 97); related publication arXiv:1707.08145.
+# Acceptance is a rough digitization of the f200 curve; 3 keV is used as a
+# simple response-resolution benchmark.
 
 DEAP3600_5YEAR = IdealDetector(
     nucleus=Ar40,
