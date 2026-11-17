@@ -447,6 +447,9 @@ def likelihood_grid_si_mass_delta(
 
     result = np.empty((len(wimp_masses), len(deltas)), dtype=float)
 
+    if result.size == 0:
+        raise ValueError("Likelihood grid with zero size.")
+
     logLmax = -np.inf
 
     for i, mX in enumerate(wimp_masses):
@@ -470,7 +473,13 @@ def likelihood_grid_si_mass_delta(
             result[i, j] = logL
             logLmax = max(logLmax, logL)
 
+    if np.isposinf(logLmax):
+        raise RuntimeError("Likelihood maximum is infinity.")
+
     result -= logLmax
+
+    if not np.any(np.isfinite(result)):
+        RuntimeWarning("No scanned model has a finite likelihood.")
 
     return LikelihoodGridVSMassDelta(
         masses=np.asarray(wimp_masses),

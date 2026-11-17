@@ -57,6 +57,19 @@ def test_likelihood_dm_one_event_with_pdf():
     assert np.isfinite(logL_tot)
     assert logL_pdf < 0.
 
+def test_likelihood_grid_si_mass_delta_zero_grid():
+
+    masses = []
+    deltas = []
+
+    with pytest.raises(ValueError, match="size"):
+        likelihood_grid_si_mass_delta(
+            wimp_masses=masses,
+            deltas=deltas,
+            detector=XENON100_2012,
+            energies=[250e3],
+    )
+
 def test_likelihood_grid_si_mass_delta():
 
     masses = [5e11, 1e12]
