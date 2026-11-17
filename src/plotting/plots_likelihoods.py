@@ -57,7 +57,9 @@ def plot_q_grid_mass_delta(
 
     pcm = ax.pcolormesh(M, D, grid.q_cap_25,
                         shading="auto",
-                        cmap=cmap)
+                        cmap=cmap,
+                        vmin=0,
+                        vmax=25)
 
     if logx:
         ax.set_xscale("log")
@@ -114,8 +116,10 @@ def plot_q_contour_mass_delta(
     95.4% : q = 6.18
     99.7% : q = 11.83
     when the likelihood-ratio statistic follows
-    a chi-square distribution with two degrees
-    of freedom.
+    a chi-square distribution with two degrees of freedom.
+
+    This is an asymptotic behavior since coverage 
+    it is not calculated with dedicated simulations.
     """
 
     if ax is None:
