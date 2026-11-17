@@ -15,11 +15,6 @@ DMRecoilExtendedLikelihood
     Extended likelihood for recoil-energy data using
     predictions from a RateCalculator.
 
-SpectralLikelihood
-    Legacy likelihood using only the normalized recoil
-    spectrum shape and ignoring the total expected event
-    count.
-
 Notes
 -----
 The extended likelihood is
@@ -248,48 +243,6 @@ class DMRecoilExtendedLikelihood(ExtendedUnbinnedLikelihood):
         f = rate_calculator.interpolate_normalized_spectrum
 
         super().__init__(mu, f)
-        
-
-# Not using class hierarchy, here for reference
-# only shape term
-class SpectralLikelihood:
-    """
-    Shape-only likelihood for recoil-energy spectra.
-
-    This likelihood uses only the normalized recoil-energy
-    probability density and ignores information contained
-    in the total event count.
-
-    Parameters
-    ----------
-    rate_calculator : RateCalculator
-        Rate calculator providing the normalized spectrum.
-
-    Notes
-    -----
-    The likelihood is
-
-        log L = sum_i log f(E_i)
-
-    and is therefore insensitive to the overall signal
-    normalization.
-    """
-    def __init__(self,
-                 rate_calculator: RateCalculator):
-
-        self.rc = rate_calculator
-
-
-    def logL(self, energies: ArrayLike) -> float:
-
-        pdf = self.rc.interpolate_normalized_spectrum(
-            ER=np.asarray(energies)
-        )
-
-        if np.any(pdf <= 0):
-            return -np.inf
-
-        return np.sum(np.log(pdf))
 
 #------------
 # SI specific
