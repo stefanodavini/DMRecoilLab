@@ -434,10 +434,6 @@ def likelihood_grid_si_mass_delta(
     - ``deltas[j]``
     """
 
-    interaction_kwargs = (
-        {} if interaction_kwargs is None
-        else interaction_kwargs)
-
     if halo is None:
         halo = StandardHaloModel().boost()
 

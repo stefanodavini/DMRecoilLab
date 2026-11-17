@@ -75,7 +75,6 @@ def test_logL_poisson_negative_N():
     with pytest.raises(ValueError):
         llh.logL_poisson(-1)
 
-
 def test_logL_poisson_max():
     llh = ExtendedUnbinnedLikelihood(mu=5.0, f=None)
 
@@ -89,7 +88,6 @@ def test_logL_poisson_max():
         llh.logL_poisson_max(N=n),
         expected
     )
-
 
 def test_logL_poisson_max_N0():
     llh = ExtendedUnbinnedLikelihood(mu=5.0, f=None)
@@ -105,7 +103,6 @@ def test_logL_poisson_max_is_really_the_max():
 
     assert np.isclose(maxL, llh.logL_poisson_max(N=N), atol=1e-6, rtol=1e-6)
 
-
 # -------------------------
 # pdf term
 # -------------------------
@@ -119,7 +116,6 @@ def test_logL_pdf_constant():
     x = np.array([1, 2, 3])
 
     assert llh.logL_pdf(x=x) == 0.0
-
 
 def test_logL_pdf_gaussian():
     llh = ExtendedUnbinnedLikelihood(
@@ -138,7 +134,6 @@ def test_logL_pdf_gaussian():
         expected
     )
 
-
 def test_logL_pdf_negative_returns_minus_inf():
     llh = ExtendedUnbinnedLikelihood(
         mu=1.0,
@@ -147,7 +142,6 @@ def test_logL_pdf_negative_returns_minus_inf():
 
     assert llh.logL_pdf([1]) == -np.inf
 
-
 def test_logL_pdf_zero_returns_minus_inf():
     llh = ExtendedUnbinnedLikelihood(
         mu=1.0,
@@ -155,7 +149,6 @@ def test_logL_pdf_zero_returns_minus_inf():
     )
 
     assert llh.logL_pdf([1]) == -np.inf
-
 
 def test_logL_pdf_none_returns_zero():
     llh = ExtendedUnbinnedLikelihood(
@@ -225,7 +218,6 @@ def test_logL_equals_sum_of_components():
         expected
     )
 
-
 def test_logL_muhat_equals_sum_of_components():
     llh = ExtendedUnbinnedLikelihood(
         mu=5.0,
@@ -243,7 +235,6 @@ def test_logL_muhat_equals_sum_of_components():
         llh.logL_muhat(x),
         expected
     )
-
 
 # -------------------------
 # edge cases

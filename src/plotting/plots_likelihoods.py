@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from src.analysis.likelihoods import LikelihoodGridVSMassDelta
+from matplotlib.lines import Line2D
 
 def plot_q_grid_mass_delta(
     grid: LikelihoodGridVSMassDelta,
@@ -109,7 +110,7 @@ def plot_q_contour_mass_delta(
     Notes
     -----
     Contours are drawn at
-    q = -2 ΔlogL
+    q = -2 delta logL
     corresponding to the standard two-parameter
     confidence regions
     68.3% : q = 2.30
@@ -136,25 +137,39 @@ def plot_q_contour_mass_delta(
 
     M, D = grid.meshgrid
 
-    cs = ax.contour(M, D, grid.q,
+    colors = ["#009E73", "#0072B2", "#CC79A7"]
+    linestyles = ["-", "--", ":"]
+
+    ax.contour(M, D, grid.q,
         levels=valid_levels,
-        colors=["green","orange","red"],
+        colors=colors,
+        linestyles = linestyles,
         linewidths=2)
 
-    fmt = {
-        2.30: "68.3%",
-        6.18: "95.4%",
-        11.83: "99.7%",
-        }
+    legend_lines = [
+        Line2D([0], [0], color=colors[0], linestyle=linestyles[0],
+               lw=2, label="68%"),
+        Line2D([0], [0], color=colors[1], lw=2, linestyle=linestyles[1],
+               label="95%"),
+        Line2D([0], [0], color=colors[2], lw=2, linestyle=linestyles[2],
+               label="99.7%"),
+        ]
 
-    ax.clabel(cs, fmt=fmt)
+    bestfit = Line2D([0], [0],
+                     marker="*",
+                     color="magenta",
+                     markeredgecolor="white",
+                     linestyle="None",
+                     markersize=12,
+                     label="Best fit",
+                     )
 
     ax.plot(
         grid.best_fit_mass,
         grid.best_fit_delta,
         marker="*",
         markersize=16,
-        color="red",
+        color="magenta",
         markeredgecolor="white",
         label="Best fit"
     )
@@ -162,6 +177,11 @@ def plot_q_contour_mass_delta(
     ax.set_xscale("log")
     ax.set_xlabel(r"$m_\chi$ [eV]")
     ax.set_ylabel(r"$\delta$ [eV]")
-    ax.legend()
+    ax.legend(handles=[bestfit, *legend_lines],
+               loc="upper left",
+               frameon=True,
+               facecolor="white",
+               framealpha=0.9
+               )
 
     return fig, ax
