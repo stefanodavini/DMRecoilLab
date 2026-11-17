@@ -156,7 +156,16 @@ class ExtendedUnbinnedLikelihood:
 
         xi = np.asarray(x)
 
-        pdf_xi = self.f(xi)
+        if xi.ndim != 1:
+            raise ValueError("Observations must be a one-dimensional array.")
+
+        if not np.all(np.isfinite(xi)):
+            raise ValueError("Observations must contain only finite values.")
+
+        pdf_xi = np.asarray(self.f(xi), dtype=float)
+
+        if pdf_xi.shape != xi.shape:
+            raise ValueError("PDF must return one value per observation.")
 
         if not np.all(np.isfinite(pdf_xi)):
             return -np.inf

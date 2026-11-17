@@ -234,7 +234,7 @@ class MatchedCountGrid:
     @property
     def counts_b_cap_1000(self):
         """
-        Predicted counts in detectorn B
+        Predicted counts in detector B
         capped at 1000.
         """
         return np.where(np.isnan(self.counts_b),

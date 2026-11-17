@@ -151,6 +151,35 @@ def test_logL_pdf_none_returns_zero():
 
     assert llh.logL_pdf([1, 2, 3]) == 0.0
 
+def test_logL_pdf_2Darray_raises():
+    llh = ExtendedUnbinnedLikelihood(
+        mu=1.0,
+        f=gaussian_pdf
+    )
+
+    x = np.array([[1,2],[3,4]])
+    with pytest.raises(ValueError, match="one-dimensional"):
+        llh.logL_pdf(x=x)
+
+def test_logL_pdf_notfinite_raises():
+    llh = ExtendedUnbinnedLikelihood(
+        mu=1.0,
+        f=gaussian_pdf
+    )
+
+    for u in [np.nan, np.inf, -np.inf]:
+        x = np.array([u])
+        with pytest.raises(ValueError, match="finite"):
+            llh.logL_pdf(x=x)
+
+def test_logL_pdf_return_shape_raises():
+    llh = ExtendedUnbinnedLikelihood(
+        mu=1.0,
+        f=lambda x: 0.
+    )
+
+    with pytest.raises(ValueError, match="one value"):
+        llh.logL_pdf([1, 2, 3])
 
 # -------------------------
 # full likelihood
