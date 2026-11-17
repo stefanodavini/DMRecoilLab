@@ -63,6 +63,11 @@ def test_logL_poisson():
 
     assert np.isclose(llh.logL_poisson(N=n), expected)
 
+def test_logL_poission_mu_zero():
+    llh = ExtendedUnbinnedLikelihood(mu=0.0, f=None)
+
+    assert llh.logL_poisson(0) == 0.0
+    assert llh.logL_poisson(1) == -np.inf
 
 def test_logL_poisson_negative_N():
     llh = ExtendedUnbinnedLikelihood(mu=1.0, f=None)
@@ -90,6 +95,15 @@ def test_logL_poisson_max_N0():
     llh = ExtendedUnbinnedLikelihood(mu=5.0, f=None)
 
     assert llh.logL_poisson_max(0) == 0.0
+
+def test_logL_poisson_max_is_really_the_max():
+    N = 4
+    maxL = -np.inf
+    for mu in range(10):
+        llh = ExtendedUnbinnedLikelihood(mu=mu, f=None)
+        maxL = max(maxL, llh.logL_poisson(N=N))
+
+    assert np.isclose(maxL, llh.logL_poisson_max(N=N), atol=1e-6, rtol=1e-6)
 
 
 # -------------------------
@@ -149,6 +163,7 @@ def test_logL_pdf_none_returns_zero():
         f=None
     )
 
+    assert llh.logL_pdf(0) == 0.0
     assert llh.logL_pdf([1, 2, 3]) == 0.0
 
 def test_logL_pdf_2Darray_raises():
@@ -160,6 +175,13 @@ def test_logL_pdf_2Darray_raises():
     x = np.array([[1,2],[3,4]])
     with pytest.raises(ValueError, match="one-dimensional"):
         llh.logL_pdf(x=x)
+
+def test_logL_pdf_nan_raises():
+    llh = ExtendedUnbinnedLikelihood(
+        mu=1.0,
+        f=BadPDFNan()
+    )
+    assert llh.logL_pdf([1, 2, 3]) == -np.inf
 
 def test_logL_pdf_notfinite_raises():
     llh = ExtendedUnbinnedLikelihood(
@@ -234,7 +256,9 @@ def test_empty_dataset():
     )
 
     assert np.isfinite(llh.logL([]))
-
+    assert np.isclose(llh.logL([]), -1.0)
+    assert llh.logL_pdf([]) == 0.0
+    assert llh.logL_muhat([]) == 0.0
 
 def test_single_event_dataset():
     llh = ExtendedUnbinnedLikelihood(

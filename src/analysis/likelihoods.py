@@ -55,6 +55,7 @@ class ExtendedUnbinnedLikelihood:
         Normalized probability-density function evaluated
         as f(x). Must return strictly positive values
         inside the support of the model.
+        If None, the PDF contribution is ignored.
 
     Notes
     -----

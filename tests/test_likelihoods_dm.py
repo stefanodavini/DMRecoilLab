@@ -55,7 +55,8 @@ def test_likelihood_dm_one_event_with_pdf():
 
     logL_tot = llh.logL_muhat(x=Ei)
     assert np.isfinite(logL_tot)
-    assert logL_pdf < 0.
+    assert logL_tot < logL_pdf
+    assert np.isclose(logL_tot, logL_pdf - 1.0)
 
 def test_likelihood_grid_si_mass_delta_zero_grid():
 
