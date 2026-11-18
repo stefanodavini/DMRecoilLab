@@ -50,32 +50,30 @@ calculation and makes it straightforward to extend individual components.
 
 ## Example
 
-Compute the recoil spectrum for a xenon detector:
+Compute the SI recoil spectrum for a xenon ideal detector:
 
 ```python
 import numpy as np
-from src.nuclei.isotopes import Xe131
 from src.halo.shm import StandardHaloModel
-from src.utils.factory import create_kinematics
-from src.interactions.si import SIInteraction
 from src.interactions.particles import WIMP
+from src.nuclei.isotopes import Xe131
 from src.nuclei.form_factors import HelmFormFactor
+from src.utils.factory import create_interaction_si
 from src.detectors.detectors import IdealDetector
 from src.rates import RateCalculator
 
-shm = StandardHaloModel(v0=220, vesc=544).boost(vboost=230)
-wimp = WIMP(mass=100e9, spin=0)
+shm = StandardHaloModel(v0=238, vesc=544).boost(vboost=253.7)
+wimp = WIMP(mass=100e9)
 target = Xe131
 
 helm = HelmFormFactor(nucleus=target)
-kinematics = create_kinematics(wimp=wimp, nucleus=target,
-                               delta=0)
 
-si = SIInteraction(wimp=wimp, nucleus=target,
-                   kinematics=kinematics,
-                   form_factor=helm,
-                   sigma_p=1e-48,
-                   fn_over_fp=1)
+si = create_interaction_si(wimp=wimp,
+                           nucleus=target,
+                           delta=0.,
+                           form_factor=helm,
+                           sigma_p=1e-48,
+                           fn_over_fp=1.)
 
 detector = IdealDetector(nucleus=target, mass_kg=20e3,
                          exposure_days=3650,
@@ -84,7 +82,7 @@ detector = IdealDetector(nucleus=target, mass_kg=20e3,
 rate_calc = RateCalculator(halo=shm,
                            interaction=si, detector=detector)
 
-ER = np.linspace(0, 1e5, 100)
+ER = np.linspace(0., 1e5, 100)
 # get dRdE spectrum
 dRdE = rate_calc.dRdER(ER)
 # get expected counts in the detector
@@ -247,7 +245,7 @@ Planned extensions include:
 - Additional halo models
 - Additional nuclear response models
 - EFT models
-- Detector response functions
+- Realistic detector response functions
 - Improved sensitivity and exclusion-curve calculations
 
 ---
