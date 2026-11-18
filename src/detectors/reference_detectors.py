@@ -127,6 +127,7 @@ XENONnT_2024_RESPONSE = ResponseDetector(
 # Since the acceptance is a 2D projection, the resolution_sigma is a simple
 # benchmark value; the paper does not provide a single Gaussian NR-resolution
 # parameter.
+
 LZ_2024 = IdealDetector(
     nucleus=Xe131,
     mass_kg=5800,
@@ -217,10 +218,6 @@ DEAP3600_2019 = IdealDetector(
 # arXiv:1902.04048
 
 DEAP3600_2026_RESPONSE = ResponseDetector(
-    nucleus=Ar40,
-    mass_kg=1266,
-    exposure_days=790.8,
-    acceptance_curve=_deap_acceptance(),
     resolution_sigma=10e3,
 )
 # DEAP3600_2026_RESPONSE
