@@ -61,7 +61,7 @@ def plot_matched_counts(
     pcm = ax.pcolormesh(
         M,
         D,
-        grid.counts_b,
+        grid.counts_b_cap_1000,
         shading="auto",
         cmap=cmap,
     )
@@ -81,7 +81,7 @@ def plot_matched_counts(
     plt.colorbar(
         pcm,
         ax=ax,
-        label="Matched counts"
+        label="Matched counts in detector B (cap to 1000)"
     )
 
     return fig, ax
