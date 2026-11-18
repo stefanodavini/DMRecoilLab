@@ -61,7 +61,6 @@ def _deap_acceptance() -> TabulatedData:
     pe_values = np.array([
         0, 90, 110, 130, 150, 175, 200, 225, 250, 275, 300,
     ])
-    # E_nr [eV] = PE / (LY [PE/keVee] * Q [keVee/keVnr]) * 1000.
     energy_nr_ev = pe_values / (light_yield_pe_per_kev * nr_quenching_factor) * 1e3
     # Extend the plateau to 1 MeVnr and cut off at 1.001 MeVnr.
     # These energy-space boundaries are benchmark assumptions, not PE data.

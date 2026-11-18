@@ -50,7 +50,7 @@ while others use ResponseDetector with finite energy resolution
 and energy-dependent acceptance.
 
 Acceptance tables are implemented in the private _reference_acceptance module
-and re-exported here for existing notebook imports.
+and imported here for existing notebook imports.
 
 References
 ----------
@@ -145,15 +145,15 @@ LZ_2026_RESPONSE = ResponseDetector(
     mass_kg=4710,
     exposure_days=220,
     acceptance_curve=_lz_acceptance(),
-    resolution_sigma=1300,
+    resolution_sigma=32500,
     )
 # LZ_2026_RESPONSE
 # LZ Collaboration, Search for dark matter particle interactions in an extended
 # nuclear recoil energy window with the LZ experiment.
 # Fig. S2 WS ROI efficiency, digitized from arXiv:2609.02823v1.
 # DOI: https://doi.org/10.48550/arXiv.2609.02823
-# Resolution is estimated at the 248 keVnr event. The HE SB segment is included
-# in the same acceptance table with the requested unit efficiency.
+# Resolution is estimated at the 248 keVnr event summing in quadrature statistic and systematic error reported in the paper. 
+# The HE SB segment is included in the same acceptance table assuming unit efficiency. It can be removed by properly setting a boolean flag.
 
 LZ_1000DAYS = IdealDetector(
     nucleus=Xe131,
