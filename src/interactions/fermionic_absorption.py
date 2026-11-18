@@ -9,7 +9,7 @@ For chi + A -> nu + A, this module implements
 
 The input sigma_NC is Dror's target-independent per-nucleon coefficient
 sigma_NC = m_chi**2 / (4*pi*Lambda**4), converted to cm^2. It is the
-velocity-weighted coefficient beta*sigma_n for a point-like nucleon,
+velocity-weighted coefficient beta*sigma_NC for a point-like nucleon,
 not a velocity-independent physical cross section. The sigma_reference
 property returns sigma_NC. The coherent factor A**2 is applied once,
 inside this class; there is no additional nuclear-mass rescaling.
@@ -30,7 +30,11 @@ sigma_NC: cm^2. Differential cross section: cm^2/eV.
 
 References
 ----------
-Dror, Elor and McGehee, arXiv:1908.10861v2, Eqs. (3.4)-(3.8).
+J. A. Dror, G. Elor and R. McGehee,
+"Absorption of Fermionic Dark Matter by Nuclear Targets",
+Journal of High Energy Physics, JHEP 02 (2020) 134.
+DOI: 10.1007/JHEP02(2020)134.
+arXiv:1908.10861v2 [hep-ph], Eqs. (3.4)-(3.8).
 The implementation retains only the leading monochromatic, coherent
 isoscalar contribution for non-relativistic DM, a massless neutrino and
 m_chi << m_A. Velocity broadening and incoherent absorption are excluded.
@@ -95,7 +99,7 @@ class FermionicAbsorptionInteraction(InteractionModel):
     ) -> None:
         if (not isinstance(kinematics, AbsorptionKinematics)
                 or kinematics.supports_scattering_interactions):
-            raise ValueError(
+            raise TypeError(
                 "FermionicAbsorptionInteraction requires AbsorptionKinematics "
                 "that does not support scattering interactions."
             )
@@ -202,11 +206,21 @@ class FermionicAbsorptionInteraction(InteractionModel):
 
         response = self.momentum_transfer_response(ER=np.array([ER_abs]))[0]
         safe_v = np.where(v > 0, v, np.inf)
-        dsigma[:, idx] = self.nucleus.A**2 * self.sigma_NC * response / (safe_v * dER)
+        dsigma[:, idx] = self.sigma_A * response / (safe_v * dER)
         return dsigma
 
     @property
     def sigma_reference(self) -> float:
         """Return the target-independent per-nucleon coefficient, in cm^2."""
         return self.sigma_NC
+
+    @property
+    def sigma_A(self) -> float:
+        """
+        Return the coherent nuclear coefficient A**2*sigma_NC, in cm^2.
+
+        Excludes nuclear and propagator responses and the 1/beta factor
+        of the physical absorption cross section.
+        """
+        return self.nucleus.A**2 * self.sigma_NC
 

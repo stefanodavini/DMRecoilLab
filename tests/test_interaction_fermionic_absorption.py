@@ -41,7 +41,7 @@ def test_fermionic_absorption_scattering_kinematics_raises(inelastic):
         kin = InelasticKinematics(mX=wimp.mass, mT=Ar40.mass, delta=1e3)
     else:
         kin = ElasticKinematics(mX=wimp.mass, mT=Ar40.mass)
-    with pytest.raises(ValueError, match="AbsorptionKinematics"):
+    with pytest.raises(TypeError, match="AbsorptionKinematics"):
         FermionicAbsorptionInteraction(wimp=wimp, nucleus=Ar40, kinematics=kin)
 
 
