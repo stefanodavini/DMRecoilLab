@@ -25,9 +25,10 @@ class WIMP:
     mass : float
         WIMP mass in eV.
 
-    spin : float
+    spin : float, optional
         WIMP spin J.
+        Default value 0.
     """
 
     mass: float
-    spin: float
+    spin: float = 0.
