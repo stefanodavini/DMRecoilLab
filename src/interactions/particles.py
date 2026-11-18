@@ -31,4 +31,4 @@ class WIMP:
     """
 
     mass: float
-    spin: float = 0
+    spin: float = 0.
