@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from src.kinematics.scattering_kinematics import ScatteringKinematics
+from src.kinematics.scattering_kinematics import NuclearRecoilKinematics
 from src.kinematics.absorption_kinematics import AbsorptionKinematics
 
 def test_absorption_kinematics_not_supported_by_scattering_interactions():
@@ -20,7 +20,7 @@ def test_absorption_kinematics_mass_validation(mX, mT):
 
 def test_absorption_kinematics_inheritance():
     kin = AbsorptionKinematics(mX=1e6, mT=1e12)
-    assert isinstance(kin, ScatteringKinematics)
+    assert isinstance(kin, NuclearRecoilKinematics)
 
 @pytest.mark.parametrize("mX, mT, expected_eV", [
     (10e6, 40e9, 1250.0),
@@ -56,37 +56,16 @@ def test_absorption_kinematics_ER_bounds_are_identical(v):
     [0.0, 1e-4, 1e-3],
     np.zeros(3, dtype=int),
 ])
-@pytest.mark.parametrize("method", ["ER_min", "ER_max", "vmin_from_ER"])
+@pytest.mark.parametrize("method", ["ER_min", "ER_max"])
 def test_absorption_kinematics_array_inputs(values, method):
     kin = AbsorptionKinematics(mX=7e6, mT=122e9)
 
     result = getattr(kin, method)(values)
-    expected = 0.0 if method == "vmin_from_ER" else kin.ER
+    expected = kin.ER
 
     assert np.shape(result) == np.shape(values)
     assert np.asarray(result).dtype.kind == "f"
     np.testing.assert_allclose(result, expected)
-
-
-@pytest.mark.parametrize("v", [
-    0.0,
-    np.array(0.0),
-    [0.0, 1e-4, 1e-3],
-    np.zeros(3, dtype=int),
-])
-def test_absorption_kinematics_speed_mask_all_true(v):
-    kin = AbsorptionKinematics(mX=40e6, mT=40e9)
-    mask = kin.speed_mask(v)
-
-    assert np.shape(mask) == np.shape(v)
-    assert np.asarray(mask).dtype.kind == "b"
-    assert np.all(mask)
-    assert kin.threshold_speed == 0.0
-
-def test_absorption_kinematics_angular_not_implemented():
-    kin = AbsorptionKinematics(mX=40e6, mT=40e9)
-    with pytest.raises(NotImplementedError):
-        kin.q_from_v_theta(1e-3, 0.0)
 
 def test_absorption_recoil_independent_of_speed():
     kin = AbsorptionKinematics(40e6, 40e9)
