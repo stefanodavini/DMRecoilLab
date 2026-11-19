@@ -591,23 +591,14 @@ class InelasticKinematics(NonRelativisticKinematics):
         Notes
         -----
         For inelastic scattering,
-        vmin = q/(2μ) + δ/q
+        vmin = | q/(2μ) + δ/q |
         where
         q = sqrt(2 mT ER).
-
-        For exothermic scattering (δ < 0), the analytic
-        expression can become negative at low recoil
-        energies. Since negative speeds are unphysical,
-        the returned value is clipped to zero.
-
-        Consequently, a returned value of zero indicates
-        that the recoil can be produced by arbitrarily
-        small incoming WIMP speeds.
         """
         ER = np.asarray(ER)
         qmax = self.q_from_ER(ER)
-        vmin = qmax / (2 * self.mu) + self.delta / qmax
-        return np.maximum(vmin, 0.0)
+        return np.abs(qmax / (2 * self.mu) + self.delta / qmax)
+
 
     def ER_min(self, v: ArrayLike) -> NDArray:
         """

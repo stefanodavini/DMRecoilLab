@@ -154,6 +154,13 @@ def test_inelastic_vmin_delta_zero():
     ER = np.linspace(1e3, 1e5, 100)
     assert np.array_equiv(kin_i.vmin_from_ER(ER), kin_e.vmin_from_ER(ER))
 
+def test_exothermic_vmin_has_zero_at_expected_recoil():
+    delta = -2e5
+    kin = InelasticKinematics(mX=1e11, mT=40e9, delta=delta)
+    ER0 = kin.mu * abs(delta) / kin.mT
+
+    assert np.isclose(kin.vmin_from_ER(ER0), 0.0, atol=1e-12)
+
 def test_inelastic_vmin_at_ERthr():
     delta = 2e5
     mT = 40e9
