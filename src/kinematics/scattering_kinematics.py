@@ -282,7 +282,6 @@ class ScatteringKinematics(NuclearRecoilKinematics):
         pass
 
     @property
-    @abstractmethod
     def supports_scattering_interactions(self) -> bool:
         return True
 
@@ -290,7 +289,7 @@ class ScatteringKinematics(NuclearRecoilKinematics):
 class NonRelativisticKinematics(ScatteringKinematics):
     """
     Abstract class for WIMP-target
-    non relativisticscattering kinematics.
+    non-relativistic scattering kinematics.
 
     Defines the kinematic relations connecting
     - recoil energy ER

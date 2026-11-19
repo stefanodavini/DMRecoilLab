@@ -78,5 +78,11 @@ def test_absorption_recoil_independent_of_speed():
     )
 
 def test_absorption_kinematics_threshold_speed():
-    kin = AbsorptionKinematics(40e6, 40e9)
+    kin = AbsorptionKinematics(mX=40e6, mT=40e9)
     assert kin.threshold_speed == 0.0
+
+def test_absorption_q_from_ER_inverse_relation():
+    kin = AbsorptionKinematics(mX=40e6, mT=40e9)
+    q = kin.q_from_ER(kin.ER)
+
+    assert np.isclose(q**2/(2*kin.mT), kin.ER)

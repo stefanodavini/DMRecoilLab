@@ -1,6 +1,34 @@
-from src.kinematics.scattering_kinematics import ElasticKinematics, InelasticKinematics
+from src.kinematics.scattering_kinematics import (
+    NuclearRecoilKinematics,
+    ScatteringKinematics,
+    NonRelativisticKinematics,
+    ElasticKinematics,
+    InelasticKinematics
+)
 import numpy as np
 import pytest
+
+def test_nuclear_recoil_kinematics_is_abstract():
+    with pytest.raises(TypeError):
+        NuclearRecoilKinematics(1e6, 1e9)
+
+def test_scattering_kinematics_is_abstract():
+    with pytest.raises(TypeError):
+        ScatteringKinematics(1e6, 1e9)
+
+def test_elastic_inheritance():
+    kin = ElasticKinematics(1e10, 40e9)
+
+    assert isinstance(kin, NuclearRecoilKinematics)
+    assert isinstance(kin, ScatteringKinematics)
+    assert isinstance(kin, NonRelativisticKinematics)
+
+def test_inelastic_inheritance():
+    kin = InelasticKinematics(1e10, 40e9, 1e5)
+
+    assert isinstance(kin, NuclearRecoilKinematics)
+    assert isinstance(kin, ScatteringKinematics)
+    assert isinstance(kin, NonRelativisticKinematics)
 
 def test_mX_zero():
     with pytest.raises(ValueError, match="Unphysical dark-matter mass"):
@@ -29,6 +57,18 @@ def test_mT_not_finite():
     for m in mTs:
         with pytest.raises(ValueError, match="Unphysical target mass"):
             ElasticKinematics(mX=1e12, mT=m)
+
+def test_mass_aliases():
+    kin = ElasticKinematics(7e6, 122e9)
+    assert kin.mass_wimp == 7e6
+    assert kin.mass_target == 122e9
+
+def test_scattering_classes_support_interactions():
+    mN = 122e9
+    mX = 1e10
+    assert ElasticKinematics(mX=mX, mT=mN).supports_scattering_interactions
+    assert InelasticKinematics(mX=mX, mT=mN,
+                               delta=1e3).supports_scattering_interactions
 
 def test_mu_limit():
     m_low = 1e3
