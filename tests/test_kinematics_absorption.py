@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from src.kinematics.scattering_kinematics import NuclearRecoilKinematics
+from src.kinematics.base_kinematics import NuclearRecoilKinematics
 from src.kinematics.absorption_kinematics import AbsorptionKinematics
 from src.kinematics.scattering_kinematics import ScatteringKinematics
 

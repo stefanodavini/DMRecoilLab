@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
-from src.kinematics.scattering_kinematics import NuclearRecoilKinematics
+from src.kinematics.base_kinematics import NuclearRecoilKinematics
 
 
 class AbsorptionKinematics(NuclearRecoilKinematics):

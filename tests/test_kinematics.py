@@ -1,5 +1,7 @@
-from src.kinematics.scattering_kinematics import (
+from src.kinematics.base_kinematics import (
     NuclearRecoilKinematics,
+)
+from src.kinematics.scattering_kinematics import (
     ScatteringKinematics,
     NonRelativisticKinematics,
     ElasticKinematics,
