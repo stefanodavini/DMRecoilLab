@@ -164,7 +164,7 @@ def test_si_sigma_p_input_check_raises():
 
     sigma_ps = [np.nan, np.inf, -1.e-40]
     for s in sigma_ps:
-        with pytest.raises(ValueError, match="sigma_p"):
+        with pytest.raises(ValueError, match="Reference cross section"):
             SIInteraction(wimp=wimp, nucleus=target,kinematics=kin,
                           sigma_p=s)
 

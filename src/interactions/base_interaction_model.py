@@ -332,8 +332,14 @@ class InteractionModel(ABC):
         ----------
         v : ndarray, shape (Nv,)
             Non-empty, finite, non-negative speed grid in units beta=v/c.
+            For grids containing more than one point,
+            values must be strictly increasing.
+        
         ER : ndarray, shape (NER,)
-            Non-empty, finite, non-negative, strictly increasing energy grid.
+            Non-empty, finite, non-negative, energy recoil grid.
+            For grids containing more than one point,
+            values must be strictly increasing.
+        
         relativistic: bool, optional
             Optionally check that v < 1.
             Default false.
@@ -437,3 +443,15 @@ class InteractionModel(ABC):
         cross section normalization.
         """
         pass
+
+    def _validate_sigma_reference(self) -> None:
+        """
+        Validates the reference cross section.
+        """
+        sigma = float(self.sigma_reference)
+
+        if not np.isfinite(sigma):
+            raise ValueError("Reference cross section must be finite.")
+
+        if sigma < 0:
+            raise ValueError("Reference cross section must be non-negative.")

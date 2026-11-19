@@ -183,10 +183,9 @@ class SDInteraction(InteractionModel):
             nuclear_response=form_factor,
             propagator=propagator)
 
-        if not np.isfinite(sigma_reference) or sigma_reference < 0:
-            raise ValueError("sigma_reference must be finite and non-negative.")
+        self.sigma_ref = float(sigma_reference)
+        self._validate_sigma_reference()
 
-        self.sigma_ref = sigma_reference
         self.an_over_ap = an_over_ap
 
     @property

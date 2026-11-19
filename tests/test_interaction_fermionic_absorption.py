@@ -47,7 +47,7 @@ def test_fermionic_absorption_scattering_kinematics_raises(inelastic):
 
 @pytest.mark.parametrize("sigma", [-1e-40, np.nan, np.inf, -np.inf])
 def test_fermionic_absorption_invalid_sigma_nc_raises(sigma):
-    with pytest.raises(ValueError, match="sigma_NC"):
+    with pytest.raises(ValueError, match="Reference cross section"):
         make_interaction(sigma_NC=sigma)
 
 

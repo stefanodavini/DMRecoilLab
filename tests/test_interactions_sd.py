@@ -71,7 +71,7 @@ def test_sd_sigma_reference_input_check_raises():
 
     sigmas = [np.nan, np.inf, -1.e-40]
     for s in sigmas:
-        with pytest.raises(ValueError, match="sigma_reference"):
+        with pytest.raises(ValueError, match="Reference cross section"):
             SDInteraction(wimp=wimp, nucleus=target,kinematics=kin,
                           sigma_reference=s)
 

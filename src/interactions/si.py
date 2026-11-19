@@ -162,10 +162,8 @@ class SIInteraction(InteractionModel):
             nuclear_response=form_factor,
             propagator=propagator)
 
-        if not np.isfinite(sigma_p) or sigma_p < 0:
-            raise ValueError("sigma_p must be finite and non-negative.")
-
-        self.sigma_p = sigma_p
+        self.sigma_p = float(sigma_p)
+        self._validate_sigma_reference()
 
         if not np.isfinite(fn_over_fp):
             raise ValueError("fn_over_fp must be finite.")

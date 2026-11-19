@@ -97,14 +97,12 @@ class FermionicAbsorptionInteraction(InteractionModel):
         nuclear_response: NuclearResponse | None = None,
         propagator: Propagator | None = None,
     ) -> None:
-        if (not isinstance(kinematics, AbsorptionKinematics)
-                or kinematics.supports_scattering_interactions):
-            raise TypeError(
-                "FermionicAbsorptionInteraction requires AbsorptionKinematics "
-                "that does not support scattering interactions."
-            )
-        if not np.isfinite(sigma_NC) or sigma_NC < 0:
-            raise ValueError("sigma_NC must be finite and non-negative.")
+        
+        if not isinstance(kinematics, AbsorptionKinematics):
+            raise TypeError("Fermionic Absorption requires AbsorptionKinematics.")
+
+        if not np.isfinite(kinematics.ER) or kinematics.ER <= 0:
+            raise ValueError("The absorption recoil energy must be finite and positive.")
 
         super().__init__(
             wimp=wimp,
@@ -113,9 +111,9 @@ class FermionicAbsorptionInteraction(InteractionModel):
             nuclear_response=nuclear_response,
             propagator=propagator,
         )
-        if not np.isfinite(self.kin.ER) or self.kin.ER <= 0:
-            raise ValueError("The absorption recoil energy must be finite and positive.")
+    
         self.sigma_NC = float(sigma_NC)
+        self._validate_sigma_reference()
 
 
     def dsigma_dER(self, v: NDArray, ER: NDArray) -> NDArray:
