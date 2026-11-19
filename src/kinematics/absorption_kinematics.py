@@ -1,14 +1,13 @@
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
-from src.kinematics.scattering_kinematics import ScatteringKinematics
+from src.kinematics.base_kinematics import NuclearRecoilKinematics
 
 
-class AbsorptionKinematics(ScatteringKinematics):
+class AbsorptionKinematics(NuclearRecoilKinematics):
     """
-    Leading-order monochromatic fermionic DM absorption
-    chi + N -> nu + N
-    for  mX << mT.
+    Leading-order monochromatic chi + N -> nu + N,
+    for mX << mT, neglecting incident velocity broadening.
 
     Parameters
     ----------
@@ -22,10 +21,13 @@ class AbsorptionKinematics(ScatteringKinematics):
     Assumes a massless neutrino and neglects velocity broadening.
     The recoil energy is ER = mX**2 / (2*mT).
 
-    vmin_from_ER returns zero only as the interface placeholder requested
-    for this first implementation; it does not determine recoil support.
-
-    Reference: Dror, Elor and McGehee, arXiv:1908.10861, Eq. (3.4).
+    Reference
+    _________
+    J. A. Dror, G. Elor and R. McGehee,
+    "Absorption of Fermionic Dark Matter by Nuclear Targets",
+    Journal of High Energy Physics, JHEP 02 (2020) 134.
+    DOI: 10.1007/JHEP02(2020)134.
+    arXiv:1908.10861v2 [hep-ph], Eq. (3.4).
     """
 
     def __init__(self, mX: float, mT: float):
@@ -38,40 +40,34 @@ class AbsorptionKinematics(ScatteringKinematics):
         """
         return self.mX**2 / (2.0 * self.mT)
 
-    def vmin_from_ER(self, ER: ArrayLike) -> NDArray:
+    def q_from_ER(self, ER: ArrayLike) -> NDArray:
         """
-        Return the zero-speed placeholder, preserving the input shape.
+        Absorbed DM momentum scale inferred from the monochromatic recoil.
+
+        Nonrelativistic target-recoil approximation.
         """
-        ER = np.asarray(ER)
-        if ER.ndim == 0:
-            return 0.0
-        return np.zeros_like(ER, dtype=float)
+        ER = np.asarray(ER, dtype=float)
+        with np.errstate(invalid="ignore"):
+            return np.sqrt(2 * self.mT * ER)
 
     def ER_min(self, v: ArrayLike) -> NDArray:
         """
         Return the monochromatic recoil in eV with the shape of v.
         """
-        v = np.asarray(v)
-        if v.ndim == 0:
-            return self.ER
-        return np.full_like(v, self.ER, dtype=float)
+        return np.full_like(np.asarray(v, dtype=float), self.ER)
 
     def ER_max(self, v: ArrayLike) -> NDArray:
         """
         Return the monochromatic recoil in eV with the shape of v.
         """
-        v = np.asarray(v)
-        if v.ndim == 0:
-            return self.ER
-        return np.full_like(v, self.ER, dtype=float)
+        return np.full_like(np.asarray(v, dtype=float), self.ER)
 
-    def q_from_v_theta(self, v: ArrayLike,
-                       theta: ArrayLike) -> tuple[NDArray, NDArray]:
+    @property
+    def threshold_speed(self) -> float:
         """
-        Angular kinematics - Not implemented.
+        Minimum physically allowed incoming WIMP speed.
         """
-        raise NotImplementedError(
-            "Angular kinematics are not defined for absorption.")
+        return 0.0
 
     @property
     def supports_scattering_interactions(self) -> bool:
