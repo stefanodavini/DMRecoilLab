@@ -293,6 +293,8 @@ class SDInteraction(InteractionModel):
         WIMP-nucleus total cross section sigma_A.
         """
 
+        v, ER = self._convert_validate_v_ER(v=v, ER=ER)
+
         ER_grid, v_grid = self._broadcast_grids(ER=ER, v=v)
 
         if self.nucleus.spin == 0.:

@@ -319,6 +319,59 @@ class InteractionModel(ABC):
             * self.propagator.response(q)
         )
 
+    @staticmethod
+    def _convert_validate_v_ER(v: NDArray,
+                               ER: NDArray,
+                               relativistic=False,
+                               ) -> tuple[NDArray, NDArray]:
+        """
+        Convert inputs to float NumPy arrays and validate
+        common interaction-model grids.
+
+        Parameters
+        ----------
+        v : ndarray, shape (Nv,)
+            Non-empty, finite, non-negative speed grid in units beta=v/c.
+        ER : ndarray, shape (NER,)
+            Non-empty, finite, non-negative, strictly increasing energy grid.
+        relativistic: bool, optional
+            Optionally check that v < 1.
+            Default false.
+
+        Returns
+        -------
+        tuple of ndarray
+            Validated floating-point arrays (v, ER).
+
+        Raises
+        ------
+        ValueError
+            If either grid is empty, not one-dimensional or invalid.
+        """
+        v = np.asarray(v, dtype=float)
+        ER = np.asarray(ER, dtype=float)
+
+        if v.ndim != 1 or v.size == 0:
+            raise ValueError("Input v must be a non-empty one-dimensional array.")
+        if ER.ndim != 1 or ER.size == 0:
+            raise ValueError("Input ER must be a non-empty one-dimensional array.")
+        
+        if not np.all(np.isfinite(v)) or np.any(v < 0.):
+            raise ValueError("v must be finite and non-negative.")
+        if not np.all(np.isfinite(ER)) or np.any(ER < 0.):
+            raise ValueError("ER must be finite and non-negative.")
+
+        if (len(v) > 1) and np.any(np.diff(v) <= 0.):
+            raise ValueError("v must be strictly increasing.")
+
+        if (len(ER) > 1) and np.any(np.diff(ER) <= 0.):
+            raise ValueError("ER must be strictly increasing.")
+
+        if relativistic and np.any(v > 1.):
+            raise ValueError("v (beta=v/c) must be <= 1.")
+        
+        return v, ER
+
     @property
     def _reduced_mass_nucleus(self) -> float:
         """
