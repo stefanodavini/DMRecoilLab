@@ -35,7 +35,11 @@ class AbsorptionKinematics(NuclearRecoilKinematics):
         return self.mX**2 / (2.0 * self.mT)
 
     def q_from_ER(self, ER: ArrayLike) -> NDArray:
-        # Nonrelativistic target-recoil approximation.
+        """
+        Absorbed DM momentum scale inferred from the monochromatic recoil.
+
+        Nonrelativistic target-recoil approximation.
+        """
         ER = np.asarray(ER, dtype=float)
         with np.errstate(invalid="ignore"):
             return np.sqrt(2 * self.mT * ER)
@@ -44,19 +48,13 @@ class AbsorptionKinematics(NuclearRecoilKinematics):
         """
         Return the monochromatic recoil in eV with the shape of v.
         """
-        v = np.asarray(v)
-        if v.ndim == 0:
-            return self.ER
-        return np.full_like(v, self.ER, dtype=float)
+        return np.full_like(np.asarray(v, dtype=float), self.ER)
 
     def ER_max(self, v: ArrayLike) -> NDArray:
         """
         Return the monochromatic recoil in eV with the shape of v.
         """
-        v = np.asarray(v)
-        if v.ndim == 0:
-            return self.ER
-        return np.full_like(v, self.ER, dtype=float)
+        return np.full_like(np.asarray(v, dtype=float), self.ER)
 
     @property
     def threshold_speed(self) -> float:

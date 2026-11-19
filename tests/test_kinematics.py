@@ -3,17 +3,17 @@ import numpy as np
 import pytest
 
 def test_mX_zero():
-    with pytest.raises(ValueError, match="Unphysical WIMP mass"):
+    with pytest.raises(ValueError, match="Unphysical dark-matter mass"):
         ElasticKinematics(mX=0, mT=40e9)
 
 def test_mX_negative():
-    with pytest.raises(ValueError, match="Unphysical WIMP mass"):
+    with pytest.raises(ValueError, match="Unphysical dark-matter mass"):
         ElasticKinematics(mX=-1e9, mT=40e9)
 
 def test_mX_not_finite():
     mXs = [np.inf, np.nan]
     for m in mXs:
-        with pytest.raises(ValueError, match="Unphysical WIMP mass"):
+        with pytest.raises(ValueError, match="Unphysical dark-matter mass"):
             ElasticKinematics(mX=m, mT=40e9)
 
 def test_mT_zero():

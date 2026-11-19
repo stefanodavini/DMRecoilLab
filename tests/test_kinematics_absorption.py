@@ -3,6 +3,7 @@ import pytest
 
 from src.kinematics.scattering_kinematics import NuclearRecoilKinematics
 from src.kinematics.absorption_kinematics import AbsorptionKinematics
+from src.kinematics.scattering_kinematics import ScatteringKinematics
 
 def test_absorption_kinematics_not_supported_by_scattering_interactions():
     kin = AbsorptionKinematics(mX=40e6, mT=40e9)
@@ -21,6 +22,7 @@ def test_absorption_kinematics_mass_validation(mX, mT):
 def test_absorption_kinematics_inheritance():
     kin = AbsorptionKinematics(mX=1e6, mT=1e12)
     assert isinstance(kin, NuclearRecoilKinematics)
+    assert not isinstance(kin, ScatteringKinematics)
 
 @pytest.mark.parametrize("mX, mT, expected_eV", [
     (10e6, 40e9, 1250.0),
@@ -74,3 +76,7 @@ def test_absorption_recoil_independent_of_speed():
         kin.ER_min(1e-5),
         kin.ER_min(1e-3),
     )
+
+def test_absorption_kinematics_threshold_speed():
+    kin = AbsorptionKinematics(40e6, 40e9)
+    assert kin.threshold_speed == 0.0

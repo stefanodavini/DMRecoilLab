@@ -1,5 +1,5 @@
 """
-Scattering kinematics for WIMP direct detection.
+Nuclear recoil kinematics for dark-matter direct detection.
 
 Units
 -----
@@ -14,38 +14,18 @@ with:
     momentum  : eV
     velocity  : dimensionless
 
-The module provides kinematic relations for
-elastic and inelastic two-body scattering of
-a WIMP on a fixed target.
+The module defines a hierarchy of abstract and concrete
+kinematics classes describing nuclear recoil processes.
 
-Main quantities
----------------
-mu
-    Reduced mass of the WIMP-target system.
+The top-level abstraction, NuclearRecoilKinematics,
+provides a common interface for recoil-energy and
+momentum-transfer relations.
 
-q
-    Momentum transfer.
+ScatteringKinematics extends this interface with
+quantities specific to two-body scattering processes,
+such as minimum incoming speed and angular kinematics.
 
-ER
-    Target recoil energy.
-
-vmin
-    Minimum incoming WIMP speed required
-    to produce a recoil of energy ER.
-
-Classes
--------
-NuclearRecoilKinematics
-    Abstract base class defining
-    the common public API.
-
-ScatteringKinematics
-    Abstract class defining common
-    two-body kinematic relations.
-
-NonRelativisticKinematics
-    Abstract class for WIMP-target
-    non relativistic scattering kinematics.
+Concrete implementations currently include:
 
 ElasticKinematics
     Elastic WIMP-target non-relativistic scattering.
@@ -56,8 +36,7 @@ InelasticKinematics
 
 AbsorptionKinematics
     Absorption processes leading to mono-energetic
-    recoil energy,
-    such as fermionic DM absorption on nuclei.
+    recoil energy, such as DM absorption on nuclei.
 """
 
 from abc import ABC, abstractmethod
@@ -66,6 +45,22 @@ import numpy as np
 
 
 class NuclearRecoilKinematics(ABC):
+    """
+    Abstract base class for nuclear recoil kinematics.
+
+    Defines the minimal interface required by any
+    process producing nuclear recoils, regardless of
+    the underlying interaction mechanism.
+
+    Implementations must provide:
+
+    - recoil-energy bounds
+    - momentum transfer from recoil energy
+    - threshold speed
+
+    Examples include elastic scattering,
+    inelastic scattering, and dark-matter absorption.
+    """
     def __init__(self, mX: float, mT: float):
         self.mX = mX
         self.mT = mT
@@ -73,18 +68,38 @@ class NuclearRecoilKinematics(ABC):
 
     @abstractmethod
     def q_from_ER(self, ER: ArrayLike) -> NDArray:
+        """
+        Return the momentum scale associated with a
+        recoil energy ER.
+
+        The precise interpretation of the returned
+        quantity depends on the physical process.
+
+        For scattering implementations this is
+        typically the momentum transfer.
+
+        Parameters
+        ----------
+        ER : ArrayLike
+            Recoil energy in eV.
+
+        Returns
+        -------
+        ndarray
+            Momentum scale in eV.
+        """
         pass
 
     @abstractmethod
     def ER_min(self, v: ArrayLike) -> NDArray:
         """
         Minumum recoil energy allowed for a
-        WIMP speed v.
+        dark-matter speed v.
         
         Parameters
         ----------
         v : ArrayLike
-            Incoming WIMP speed (c=1).
+            Incoming dark-matter speed (c=1).
         
         Returns
         -------
@@ -108,12 +123,12 @@ class NuclearRecoilKinematics(ABC):
     def ER_max(self, v: ArrayLike) -> NDArray:
         """
         Maximum recoil energy allowed for
-        a WIMP speed v.
+        a dark-matter speed v.
 
         Parameters
         ----------
         v : ArrayLike
-            Incoming WIMP speed (c=1).
+            Incoming dark-matter speed (c=1).
 
         Returns
         -------
@@ -131,7 +146,7 @@ class NuclearRecoilKinematics(ABC):
         Parameters
         ----------
         v : ArrayLike
-            Incoming WIMP speed.
+            Incoming dark-matter speed.
 
         Returns
         -------
@@ -140,17 +155,17 @@ class NuclearRecoilKinematics(ABC):
 
         Notes
         -----
-        Elastic scattering yields
-        ER_min = 0
+        Elastic scattering yields ER_min = 0,
         while inelastic scattering generally
         produces a non-zero speed-dependent lower bound.
         """
         return (self.ER_min(v), self.ER_max(v))
 
     @property
+    @abstractmethod
     def threshold_speed(self) -> float:
         """
-        Minimum physically allowed incoming WIMP speed.
+        Minimum physically allowed incoming dark-matter speed.
         """
         pass
 
@@ -164,12 +179,16 @@ class NuclearRecoilKinematics(ABC):
     @property
     def mass_wimp(self) -> float:
         """
-        WIMP mass
+        Dark matter mass
         """
         return self.mX
 
     @property
     def supports_scattering_interactions(self) -> bool:
+        """
+        Whether the kinematics implementation can be used
+        with scattering interaction models such as SI or SD.
+        """
         return False
 
     def _check_masses(self):
@@ -177,13 +196,28 @@ class NuclearRecoilKinematics(ABC):
         Raise error in case of unphysical masses.
         """
         if not np.isfinite(self.mX) or self.mX <= 0:
-            raise ValueError("Unphysical WIMP mass")
+            raise ValueError("Unphysical dark-matter mass")
         
         if not np.isfinite(self.mT) or self.mT <=0:
             raise ValueError("Unphysical target mass")
 
 
 class ScatteringKinematics(NuclearRecoilKinematics):
+    """
+    Abstract class for dark-matter scattering
+    processes producing nuclear recoils.
+
+    Extends NuclearRecoilKinematics with scattering-
+    specific quantities such as:
+    - minimum speed vmin(ER)
+    - angular kinematics
+    - kinematic speed masks
+    - reduced mass
+
+    Concrete implementations include elastic and
+    inelastic scattering models.
+    """
+
     @property
     def mu(self) -> float:
         """
@@ -250,7 +284,7 @@ class ScatteringKinematics(NuclearRecoilKinematics):
     @property
     @abstractmethod
     def supports_scattering_interactions(self) -> bool:
-        pass
+        return True
 
 
 class NonRelativisticKinematics(ScatteringKinematics):
@@ -291,9 +325,7 @@ class NonRelativisticKinematics(ScatteringKinematics):
     def __init__(self,
                  mX: float,
                  mT: float):
-        self.mX = mX
-        self.mT = mT
-        self._check_masses()
+        super().__init__(mX=mX, mT=mT)
 
     def q_from_ER(self, ER: ArrayLike) -> NDArray:
         """
@@ -353,14 +385,13 @@ class NonRelativisticKinematics(ScatteringKinematics):
         return 0.0
 
     @property
-    @abstractmethod
     def supports_scattering_interactions(self) -> bool:
         """
         Whether the class instance can be used
         in scattering interaction models
         such as SI/SD
         """
-        pass
+        return True
 
 
 
@@ -429,15 +460,6 @@ class ElasticKinematics(NonRelativisticKinematics):
         v = np.asarray(v)
         theta = np.asarray(theta)
         return 0., 2 * self.mu * v * np.cos(theta)
-
-    @property
-    def supports_scattering_interactions(self) -> bool:
-        """
-        The class instance can be used
-        in scattering interaction models
-        such as SI/SD
-        """
-        return True
     
 
 class InelasticKinematics(NonRelativisticKinematics):
@@ -474,6 +496,14 @@ class InelasticKinematics(NonRelativisticKinematics):
 
     @property
     def is_endothermic(self):
+        """
+        Whether the scattering process is endothermic.
+
+        Returns
+        -------
+        bool
+            True when delta > 0.
+        """
         return self.delta > 0
 
     @property
@@ -635,6 +665,27 @@ class InelasticKinematics(NonRelativisticKinematics):
         return q**2 / (2 * self.mT)
 
     def q_from_v_theta(self, v: ArrayLike, theta: ArrayLike):
+        """
+        Momentum-transfer solutions for inelastic scattering.
+
+        Parameters
+        ----------
+        v : ArrayLike
+            Incoming WIMP speed.
+        theta : ArrayLike
+            Scattering angle.
+
+        Returns
+        -------
+        tuple[ndarray, ndarray]
+            Lower and upper momentum-transfer solutions
+            obtained from energy-momentum conservation.
+
+        Notes
+        -----
+        Unphysical configurations return NaN through the
+        underlying square-root operation.
+        """
         v = np.asarray(v)
         theta = np.asarray(theta)
 
@@ -645,12 +696,3 @@ class InelasticKinematics(NonRelativisticKinematics):
         sol_neg = muvcosth - np.sqrt(muvcosth2 - 2 *self.mu * self.delta)
 
         return sol_neg, sol_pos
-
-    @property
-    def supports_scattering_interactions(self) -> bool:
-        """
-        The class instance can be used
-        in scattering interaction models
-        such as SI/SD
-        """
-        return True
