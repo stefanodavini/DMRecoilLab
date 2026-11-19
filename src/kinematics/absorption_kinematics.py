@@ -21,7 +21,13 @@ class AbsorptionKinematics(NuclearRecoilKinematics):
     Assumes a massless neutrino and neglects velocity broadening.
     The recoil energy is ER = mX**2 / (2*mT).
 
-    Reference: Dror, Elor and McGehee, arXiv:1908.10861, Eq. (3.4).
+    Reference
+    _________
+    J. A. Dror, G. Elor and R. McGehee,
+    "Absorption of Fermionic Dark Matter by Nuclear Targets",
+    Journal of High Energy Physics, JHEP 02 (2020) 134.
+    DOI: 10.1007/JHEP02(2020)134.
+    arXiv:1908.10861v2 [hep-ph], Eq. (3.4).
     """
 
     def __init__(self, mX: float, mT: float):

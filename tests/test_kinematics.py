@@ -172,6 +172,35 @@ def test_inelastic_vmin_at_ERthr():
     expected = np.sqrt(2 * delta / mu)
     assert np.isclose(kin.vmin_from_ER(ERthr), expected, rtol=1e-6)
 
+@pytest.mark.parametrize("delta", [2e5, -2e5])
+def test_inelastic_vmin_recovers_speed_at_recoil_bounds(delta):
+    kin = InelasticKinematics(mX=1e11, mT=40e9, delta=delta)
+
+    if delta > 0:
+        v = kin.threshold_speed + 1e-4
+    else:
+        v = 1e-4
+
+    ER_min, ER_max = kin.ER_bounds(v)
+
+    assert np.isclose(kin.vmin_from_ER(ER_min), v, rtol=1e-8)
+    assert np.isclose(kin.vmin_from_ER(ER_max), v, rtol=1e-8)
+
+@pytest.mark.parametrize("delta", [2e5, -2e5])
+def test_inelastic_vmin_recovers_speeds_at_recoil_bounds(delta):
+    kin = InelasticKinematics(mX=1e12, mT=122e9, delta=delta)
+
+    if delta > 0:
+        v = np.linspace(kin.threshold_speed + 1e-5,
+                        kin.threshold_speed + 1e-3, 50)
+    else:
+        v = np.linspace(1e-5, 1e-3, 50)
+
+    ER_min, ER_max = kin.ER_bounds(v)
+
+    assert np.allclose(kin.vmin_from_ER(ER_min), v, rtol=1e-8)
+    assert np.allclose(kin.vmin_from_ER(ER_max), v, rtol=1e-8)
+
 def test_inelastic_ER_bound_sorting():
     kin = InelasticKinematics(mX=1e11, mT=40e9, delta=1e5)
     vthr = kin.threshold_speed
