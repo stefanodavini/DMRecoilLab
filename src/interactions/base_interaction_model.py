@@ -319,8 +319,8 @@ class InteractionModel(ABC):
             * self.propagator.response(q)
         )
 
-    @staticmethod
-    def _convert_validate_v_ER(v: NDArray,
+    def _convert_validate_v_ER(self,
+                               v: NDArray,
                                ER: NDArray,
                                relativistic=False,
                                ) -> tuple[NDArray, NDArray]:
@@ -336,7 +336,7 @@ class InteractionModel(ABC):
             values must be strictly increasing.
         
         ER : ndarray, shape (NER,)
-            Non-empty, finite, non-negative, energy recoil grid.
+            Non-empty, finite, non-negative, energy recoil grid in eV.
             For grids containing more than one point,
             values must be strictly increasing.
         
@@ -354,18 +354,8 @@ class InteractionModel(ABC):
         ValueError
             If either grid is empty, not one-dimensional or invalid.
         """
-        v = np.asarray(v, dtype=float)
-        ER = np.asarray(ER, dtype=float)
-
-        if v.ndim != 1 or v.size == 0:
-            raise ValueError("Input v must be a non-empty one-dimensional array.")
-        if ER.ndim != 1 or ER.size == 0:
-            raise ValueError("Input ER must be a non-empty one-dimensional array.")
-        
-        if not np.all(np.isfinite(v)) or np.any(v < 0.):
-            raise ValueError("v must be finite and non-negative.")
-        if not np.all(np.isfinite(ER)) or np.any(ER < 0.):
-            raise ValueError("ER must be finite and non-negative.")
+        v = self.scattering_kinematics._validate_speed(v=v)
+        ER = self.scattering_kinematics._validate_recoil_energy(ER=ER)
 
         if (len(v) > 1) and np.any(np.diff(v) <= 0.):
             raise ValueError("v must be strictly increasing.")

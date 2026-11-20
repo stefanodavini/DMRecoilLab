@@ -181,3 +181,45 @@ class NuclearRecoilKinematics(ABC):
         
         if not np.isfinite(self.mT) or self.mT <=0:
             raise ValueError("Unphysical target mass")
+
+    @staticmethod
+    def _validate_speed(v: ArrayLike) -> NDArray:
+        """
+        Convert speed to float NumPy arrays and validate
+        common interaction-model grids.
+
+        Parameters
+        ----------
+        v : ArrayLike
+            Speed in units beta=v/c.
+        """
+        v = np.asarray(v, dtype=float)
+
+        if v.ndim != 1 or v.size == 0:
+            raise ValueError("Input v must be a non-empty one-dimensional array.")
+        
+        if np.any(~np.isfinite(v) | (v < 0)):
+            raise ValueError("Speed inputs must be finite and non-negative.")
+        return v
+
+    @staticmethod
+    def _validate_recoil_energy(ER: ArrayLike) -> NDArray:
+        """
+        Convert recoil energies to float NumPy arrays and validate
+        common interaction-model grids.
+
+        Parameters
+        ----------
+        v : ArrayLike
+            Recoil Energies in eV.
+        """
+        ER = np.asarray(ER, dtype=float)
+
+        if ER.ndim != 1 or ER.size == 0:
+            raise ValueError("Input ER must be a non-empty one-dimensional array.")
+        
+        if np.any(~np.isfinite(ER) | (ER < 0)):
+            raise ValueError(
+                "Input recoil energies must be finite and non-negative."
+            )
+        return ER
