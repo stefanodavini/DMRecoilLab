@@ -109,10 +109,6 @@ class ScatteringKinematics(NuclearRecoilKinematics):
         """
         pass
 
-    @property
-    def supports_scattering_interactions(self) -> bool:
-        return True
-
 
 class NonRelativisticKinematics(ScatteringKinematics):
     """

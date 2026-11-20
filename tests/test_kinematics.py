@@ -65,13 +65,6 @@ def test_mass_aliases():
     assert kin.mass_wimp == 7e6
     assert kin.mass_target == 122e9
 
-def test_scattering_classes_support_interactions():
-    mN = 122e9
-    mX = 1e10
-    assert ElasticKinematics(mX=mX, mT=mN).supports_scattering_interactions
-    assert InelasticKinematics(mX=mX, mT=mN,
-                               delta=1e3).supports_scattering_interactions
-
 def test_mu_limit():
     m_low = 1e3
     m_hig = 1e9
@@ -237,10 +230,3 @@ def test_inelastic_ER_bounds_nan_mask():
     assert np.isfinite(ERmin[1])
     assert np.isfinite(ERmax[1])
 
-def test_elastic_kinematics_supported_by_scattering_interactions():
-    kin = ElasticKinematics(mX=40e10, mT=40e9)
-    assert kin.supports_scattering_interactions
-
-def test_inelastic_kinematics_supported_by_scattering_interactions():
-    kin = InelasticKinematics(mX=40e10, mT=40e9, delta=1e5)
-    assert kin.supports_scattering_interactions
