@@ -166,14 +166,6 @@ class NuclearRecoilKinematics(ABC):
         """
         return self.mX
 
-    @property
-    def supports_scattering_interactions(self) -> bool:
-        """
-        Whether the kinematics implementation can be used
-        with scattering interaction models such as SI or SD.
-        """
-        return False
-
     def _check_masses(self):
         """
         Raise error in case of unphysical masses.

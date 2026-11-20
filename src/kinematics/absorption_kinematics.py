@@ -68,13 +68,3 @@ class AbsorptionKinematics(NuclearRecoilKinematics):
         Minimum physically allowed incoming WIMP speed.
         """
         return 0.0
-
-    @property
-    def supports_scattering_interactions(self) -> bool:
-        """
-        The class instance can not be used
-        in scattering interaction models
-        such as SI/SD
-        """
-        return False
-

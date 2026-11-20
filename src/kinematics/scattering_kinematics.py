@@ -205,15 +205,6 @@ class NonRelativisticKinematics(ScatteringKinematics):
         """
         return 0.0
 
-    @property
-    def supports_scattering_interactions(self) -> bool:
-        """
-        Whether the class instance can be used
-        in scattering interaction models
-        such as SI/SD
-        """
-        return True
-
 
 
 class ElasticKinematics(NonRelativisticKinematics):
