@@ -183,7 +183,7 @@ class NuclearRecoilKinematics(ABC):
             raise ValueError("Unphysical target mass")
 
     @staticmethod
-    def _validate_speed(v: ArrayLike) -> NDArray:
+    def _validate_domain_speed(v: ArrayLike) -> NDArray:
         """
         Convert speed to float NumPy arrays and validate
         common interaction-model grids.
@@ -203,7 +203,7 @@ class NuclearRecoilKinematics(ABC):
         return v
 
     @staticmethod
-    def _validate_recoil_energy(ER: ArrayLike) -> NDArray:
+    def _validate_domain_ER(ER: ArrayLike) -> NDArray:
         """
         Convert recoil energies to float NumPy arrays and validate
         common interaction-model grids.
@@ -219,7 +219,5 @@ class NuclearRecoilKinematics(ABC):
             raise ValueError("Input ER must be a non-empty one-dimensional array.")
         
         if np.any(~np.isfinite(ER) | (ER < 0)):
-            raise ValueError(
-                "Input recoil energies must be finite and non-negative."
-            )
+            raise ValueError("Input ER must be finite and non-negative.")
         return ER
