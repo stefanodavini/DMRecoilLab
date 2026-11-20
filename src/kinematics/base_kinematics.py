@@ -170,6 +170,12 @@ class NuclearRecoilKinematics(ABC):
         """
         Raise error in case of unphysical masses.
         """
+        if not np.isscalar(self.mX):
+            raise TypeError("Dark-matter mass must be scalar")
+
+        if not np.isscalar(self.mT):
+            raise TypeError("Target mass must be scalar")
+
         if not np.isfinite(self.mX) or self.mX <= 0:
             raise ValueError("Unphysical dark-matter mass")
         
