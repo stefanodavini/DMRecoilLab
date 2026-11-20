@@ -51,7 +51,7 @@ Examples
 from numpy.typing import NDArray
 import numpy as np
 
-from src.kinematics.scattering_kinematics import ScatteringKinematics
+from src.kinematics.scattering_kinematics import NonRelativisticKinematics
 from src.interactions.base_interaction_model import InteractionModel
 from src.interactions.propagators import Propagator
 from src.interactions.particles import WIMP
@@ -108,9 +108,9 @@ class SIInteraction(InteractionModel):
     nucleus : Nucleus
         Target nucleus.
 
-    kinematics : ScatteringKinematics
-        Elastic or inelastic scattering
-        kinematics.
+    kinematics : NonRelativisticKinematics
+        Elastic or inelastic non-relativistic
+        scattering kinematics.
 
     form_factor : FormFactor, optional
         Nuclear form factor.
@@ -139,15 +139,15 @@ class SIInteraction(InteractionModel):
         *,
         wimp: WIMP,
         nucleus: Nucleus,
-        kinematics: ScatteringKinematics,
+        kinematics: NonRelativisticKinematics,
         form_factor: FormFactor | None = None,
         propagator: Propagator | None = None,
         sigma_p: float = 1e-45,
         fn_over_fp: float = 1.):
 
-        if not kinematics.supports_scattering_interactions:
+        if not isinstance(kinematics, NonRelativisticKinematics):
             raise TypeError("" \
-            "SIInteraction requires a kinematics that supports scattering")
+            "SIInteraction requires a non-relativistic scattering kinematics")
 
         if form_factor is None:
             form_factor = PointLikeFormFactor()
