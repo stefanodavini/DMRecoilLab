@@ -183,41 +183,42 @@ class NuclearRecoilKinematics(ABC):
             raise ValueError("Unphysical target mass")
 
     @staticmethod
-    def _validate_domain_speed(v: ArrayLike) -> NDArray:
+    def _validate_domain_nonnegative(
+        values: ArrayLike,
+        name: str,
+        require_grid: bool = False) -> NDArray:
         """
-        Convert speed to float NumPy arrays and validate
-        common interaction-model grids.
+        Convert finite, nonnegative input; optionally require a 1D grid.
 
-        Parameters
-        ----------
-        v : ArrayLike
-            Speed in units beta=v/c.
+        Domain validation never decides whether a reaction is allowed.
+        Without require_grid, scalar and arbitrary-dimensional inputs
+        (including empty arrays) retain their NumPy shape.
         """
-        v = np.asarray(v, dtype=float)
-
-        if v.ndim != 1 or v.size == 0:
-            raise ValueError("Input v must be a non-empty one-dimensional array.")
-        
-        if np.any(~np.isfinite(v) | (v < 0)):
-            raise ValueError("Speed inputs must be finite and non-negative.")
-        return v
+        values = np.asarray(values, dtype=float)
+        if require_grid and (values.ndim != 1 or values.size == 0):
+            raise ValueError(
+                f"Input {name} must be a non-empty one-dimensional array."
+            )
+        if np.any(~np.isfinite(values) | (values < 0)):
+            raise ValueError(f"Input {name} must be finite and non-negative.")
+        return values
 
     @staticmethod
-    def _validate_domain_ER(ER: ArrayLike) -> NDArray:
+    def _validate_domain_speed(v: ArrayLike,
+                               require_grid: bool = False) -> NDArray:
         """
-        Convert recoil energies to float NumPy arrays and validate
-        common interaction-model grids.
+        Validate finite speed moduli v >= 0, in units beta=v/c.
 
-        Parameters
-        ----------
-        v : ArrayLike
-            Recoil Energies in eV.
+        Relativistic implementations additionally enforce v<1.
         """
-        ER = np.asarray(ER, dtype=float)
+        return NuclearRecoilKinematics._validate_domain_nonnegative(
+            v, "v", require_grid=require_grid)
 
-        if ER.ndim != 1 or ER.size == 0:
-            raise ValueError("Input ER must be a non-empty one-dimensional array.")
-        
-        if np.any(~np.isfinite(ER) | (ER < 0)):
-            raise ValueError("Input ER must be finite and non-negative.")
-        return ER
+    @staticmethod
+    def _validate_domain_ER(ER: ArrayLike,
+                            require_grid: bool = True) -> NDArray:
+        """
+        Validate finite recoil kinetic energies ER >= 0, in eV.
+        """
+        return NuclearRecoilKinematics._validate_domain_nonnegative(
+            ER, "ER", require_grid=require_grid)

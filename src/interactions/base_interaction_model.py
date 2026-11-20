@@ -354,8 +354,12 @@ class InteractionModel(ABC):
         ValueError
             If either grid is empty, not one-dimensional or invalid.
         """
-        v = self.scattering_kinematics._validate_domain_speed(v=v)
-        ER = self.scattering_kinematics._validate_domain_ER(ER=ER)
+        v = self.scattering_kinematics._validate_domain_speed(
+            v=v,
+            require_grid=True)
+        ER = self.scattering_kinematics._validate_domain_ER(
+            ER=ER,
+            require_grid=True)
 
         if (len(v) > 1) and np.any(np.diff(v) <= 0.):
             raise ValueError("v must be strictly increasing.")
