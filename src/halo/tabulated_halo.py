@@ -49,17 +49,25 @@ class TabulatedSpeedDistribution(IsotropicSpeedDistribution):
     f : ArrayLike
         Tabulated values of the speed distribution.
     normalize : bool, optional
-            If True, renormalize the distribution so that
-            ∫ g(v) dv = 1,
-            where g(v) = 4 pi v^2 f(v).
-            If False, require the input distribution to already be
-            normalized within numerical precision.
+        If True, renormalize the distribution so that
+        ∫ g(v) dv = 1,
+        where g(v) = 4 pi v^2 f(v).
+        If False, require the input distribution to already be
+        normalized within numerical precision.
+    trim_trailing_zeros: bool, optional
+        If true, extra trailing zeros in f(v) are not stored.
+
+    Notes
+    -----
+    If trimming is enabled, retain exactly one zero node
+    beyond the last non-zero value.
     """
 
     def __init__(self,
                  v: ArrayLike,
                  f: ArrayLike,
-                 normalize: bool = True):
+                 normalize: bool = True,
+                 trim_trailing_zeros=False):
 
         self._data = TabulatedData(x=v, y=f,
                                   x_name="v",
@@ -72,6 +80,9 @@ class TabulatedSpeedDistribution(IsotropicSpeedDistribution):
         self._f = np.asarray(self._data.y)
 
         self._validate_and_normalize(normalize=normalize)
+
+        if trim_trailing_zeros:
+            self._trim_trailing_zeros()
 
     def velocity_pdf(self, v: ArrayLike) -> NDArray:
         """
@@ -95,19 +106,15 @@ class TabulatedSpeedDistribution(IsotropicSpeedDistribution):
     @property
     def maximum_speed(self) -> float:
         """
-        Largest speed for which the tabulated distribution is nonzero.
+        Largest speed in the tabulated distribution.
         """
-        mask = self._f > 0.0
-
-        if not np.any(mask):
-            return 0.0
-
-        return float(self._v[mask][-1])
+        return float(self._v[-1])
 
     @classmethod
     def from_file(cls,
                   filename: str,
-                  normalize : bool = True) -> Self:
+                  normalize : bool = True,
+                  trim_trailing_zeros: bool = False) -> Self:
         """
         Construct a tabulated distribution from a text file produced
         by to_file().
@@ -127,12 +134,60 @@ class TabulatedSpeedDistribution(IsotropicSpeedDistribution):
             If False, require the input distribution to already be
             normalized within numerical precision.
 
+        trim_trailing_zeros: bool, optional
+            If true, extra trailing zeros in f(v) are not stored.
+
+        Notes
+        -----
+        If trimming is enabled, retain exactly one zero node
+        beyond the last non-zero value.
+
         Returns
         -------
         TabulatedSpeedDistribution
         """
         data = TabulatedData.from_file(filename)
-        return cls(v=data.x, f=data.y, normalize=normalize)
+        return cls(v=data.x, f=data.y,
+                   normalize=normalize,
+                   trim_trailing_zeros=trim_trailing_zeros)
+
+    def integration_grid(self,
+                         vmin: float | None = None,
+                         num: int | None = None,
+                         ) -> NDArray:
+        """
+        Return native speed nodes without resampling.
+
+        Parameters
+        ----------
+        vmin: float, optional
+            Minimum speed (in km/s) in the integration grid.
+            If not provided, return the complete native grid.
+            Otherwise, retain nodes at or above vmin and the
+            immediately preceding node, if present,
+            to preserve the boundary interval.
+
+        Notes
+        -----
+        Return an empty array if vmin exceeds the final native node.
+
+        Input num is accepted for interface compatibility and ignored.
+        The returned grid is a copy.
+        """
+        if vmin is None:
+            return self._v.copy()
+
+        vmin = float(vmin)
+        if not np.isfinite(vmin) or vmin < 0:
+            raise ValueError("vmin must be finite and non-negative")
+
+        if vmin > self._v[-1]:
+            return np.empty(0, dtype=float)
+
+        start = max(0,
+                    int(np.searchsorted(self._v, vmin, side="left")) - 1)
+
+        return self._v[start:].copy()
 
     def _validate_and_normalize(self, normalize: bool = True) -> None:
         """
@@ -164,3 +219,22 @@ class TabulatedSpeedDistribution(IsotropicSpeedDistribution):
   
         else:
             self._f /= norm
+
+    def _trim_trailing_zeros(self):
+        """
+        Trim trailing zeros.
+
+        Retain exactly one zero node
+        beyond the last non-zero value.
+        """
+        mask = self._f > 0.0
+
+        if np.any(mask):
+            last_nonzero = np.nonzero(mask)[0][-1]
+
+            # retain one trailing node if available
+            stop = min(last_nonzero + 2, len(self._v))
+
+            self._v = self._v[0:stop]
+            self._f = self._f[0:stop]
+

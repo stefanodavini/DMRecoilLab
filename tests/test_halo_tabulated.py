@@ -91,11 +91,37 @@ def test_tabulated_halo_from_file_raises_three_columns():
     with pytest.raises(ValueError):
         TabulatedSpeedDistribution.from_file(filename=err_file)
 
-def test_tabulated_halo_maximum_speed():
+def test_tabulated_halo_default_no_trim_trailing_zeros():
+    v = [0, 200, 400, 500, 600]
+    f = [1, 1, 0, 0, 0]
+
+    halo = TabulatedSpeedDistribution(v=v, f=f)
+
+    assert np.array_equiv(halo._v, [0, 200, 400, 500, 600])
+    assert len(halo._f) == len(halo._v)
+
+def test_tabulated_halo_trim_trailing_zeros():
+    v = [0, 100, 200, 300, 400, 500, 600]
+    f = [1, 1, 1, 1, 0, 0, 0]
+
+    halo = TabulatedSpeedDistribution(v=v, f=f,
+                                      trim_trailing_zeros=True)
+
+    assert np.array_equiv(halo._v, [0, 100, 200, 300, 400])
+    assert len(halo._f) == len(halo._v)
+
+def test_tabulated_halo_maximum_speed_no_trim():
     v = [0, 100, 200, 300, 400]
     f = [1, 1, 1, 1, 0]
     halo = TabulatedSpeedDistribution(v=v, f=f)
-    assert halo.maximum_speed == 300
+    assert halo.maximum_speed == 400
+
+def test_tabulated_halo_maximum_speed_trim():
+    v = [0, 100, 200, 300, 400, 500]
+    f = [1, 1, 1, 1, 0, 0]
+    halo = TabulatedSpeedDistribution(v=v, f=f,
+                                      trim_trailing_zeros=True)
+    assert halo.maximum_speed == 400
 
 def test_tabulated_halo_interpolation():
     halo = TabulatedSpeedDistribution(v=[0, 1],
@@ -132,3 +158,62 @@ def test_tabulated_halo_zero_norm_raise():
 
     with pytest.raises(ValueError, match="normalization"):
         TabulatedSpeedDistribution(v=v, f=f)
+
+def test_tabulated_halo_integration_grid_default():
+    v = [0, 100, 200, 300, 400, 500, 600]
+    f = [1, 1, 1, 1, 0, 0, 0]
+
+    halo = TabulatedSpeedDistribution(v=v, f=f)
+
+    v_grid = halo.integration_grid()
+    assert np.array_equiv(v_grid, v)
+
+def test_tabulated_halo_integration_grid_trim():
+    v = [0, 100, 200, 300, 400, 500, 600]
+    f = [1, 1, 1, 1, 0, 0, 0]
+
+    halo = TabulatedSpeedDistribution(v=v, f=f,
+                                      trim_trailing_zeros=True)
+
+    v_grid = halo.integration_grid()
+    assert np.array_equiv(v_grid, [0, 100, 200, 300, 400])
+
+def test_tabulated_halo_integration_grid_vmin():
+    v = [0, 100, 200, 300, 400, 500, 600]
+    f = [1, 1, 1, 1, 0, 0, 0]
+
+    halo = TabulatedSpeedDistribution(v=v, f=f)
+
+    v_grid = halo.integration_grid(vmin=100)
+    assert np.array_equiv(v_grid, [0, 100, 200, 300, 400, 500, 600])
+
+    v_grid = halo.integration_grid(vmin=101)
+    assert np.array_equiv(v_grid, [100, 200, 300, 400, 500, 600])
+
+    v_grid = halo.integration_grid(vmin=600)
+    assert np.array_equiv(v_grid, [500, 600])
+
+    v_grid = halo.integration_grid(vmin=601)
+    assert np.array_equiv(v_grid, [])
+
+def test_tabulated_halo_integration_grid_raise():
+    v = [0, 100, 200, 300, 400]
+    f = [1, 1, 1, 1, 0]
+
+    halo = TabulatedSpeedDistribution(v=v, f=f)
+
+    for vmin in [-0.5, np.inf, -np.inf, np.nan]:
+        with pytest.raises(ValueError,
+                           match="finite and non-negative"):
+            halo.integration_grid(vmin=vmin)
+
+def test_tabulated_halo_interpolation_with_trim():
+    v = [0, 100, 200, 300, 400, 500]
+    f = [1, 1, 1, 1, 0, 0]
+
+    halo = TabulatedSpeedDistribution(v=v, f=f,
+                                      trim_trailing_zeros=True)
+
+    assert halo.velocity_pdf(350) > 0.
+    assert halo.velocity_pdf(400) == 0.
+    assert halo.velocity_pdf(450) == 0.
