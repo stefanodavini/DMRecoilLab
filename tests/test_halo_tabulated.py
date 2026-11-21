@@ -217,3 +217,13 @@ def test_tabulated_halo_interpolation_with_trim():
     assert halo.velocity_pdf(350) > 0.
     assert halo.velocity_pdf(400) == 0.
     assert halo.velocity_pdf(450) == 0.
+
+def test_tabulated_halo_trim_preserves_normalization():
+    v = [0, 100, 200, 300, 400, 500]
+    f = [1, 0.8, 0.6, 0.3, 0, 0]
+
+    halo = TabulatedSpeedDistribution(v=v, f=f,
+                                      trim_trailing_zeros=True)
+
+    norm = halo.normalization(halo.integration_grid())
+    assert np.isclose(norm, 1., rtol=1e-9, atol=1e-9)
