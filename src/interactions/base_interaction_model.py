@@ -112,9 +112,9 @@ class InteractionModel(ABC):
         self.kin = kinematics
 
         if kinematics.mass_wimp != wimp.mass:
-            raise ValueError("Masses in WIMP and ScatteringKinematics are not the same")
+            raise ValueError("Masses in WIMP and Kinematics are not the same")
         if kinematics.mass_target != nucleus.mass:
-            raise ValueError("Masses Nucleus and ScatteringKinematics are not the same")
+            raise ValueError("Masses in Nucleus and Kinematics are not the same")
 
         if nuclear_response is None:
             nuclear_response = PointLikeNuclearResponse()
