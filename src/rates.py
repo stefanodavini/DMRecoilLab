@@ -160,8 +160,11 @@ class RateCalculator:
 
         vmin = self.interaction.scattering_kinematics.threshold_speed
         vmin = max(1e-6, vmin)  # avoids possible division by zero
-        vmax = self.halo.maximum_speed
-        v = np.linspace(vmin, vmax, num=num)
+        v = self.halo.integration_grid(vmin=vmin, num=num)
+
+        if len(v) == 0:
+            Warning("Empty speed integration grid.")
+            return np.zeros_like(ER, dtype=float)
 
         gv = self.halo.speed_pdf(v)
 
@@ -250,7 +253,7 @@ class RateCalculator:
         rate = self.dRdER(ER=ER, num=num)
 
         integral = cumulative_trapezoid(rate[::-1], -ER[::-1],
-                                        initial=0,)[::-1]
+                                        initial=0.)[::-1]
 
         return integral
 
