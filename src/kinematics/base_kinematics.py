@@ -216,7 +216,7 @@ class NuclearRecoilKinematics(ABC):
 
     @staticmethod
     def _validate_domain_ER(ER: ArrayLike,
-                            require_grid: bool = True) -> NDArray:
+                            require_grid: bool = False) -> NDArray:
         """
         Validate finite recoil kinetic energies ER >= 0, in eV.
         """

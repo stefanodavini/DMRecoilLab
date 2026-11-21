@@ -1,6 +1,4 @@
-from src.kinematics.base_kinematics import (
-    NuclearRecoilKinematics,
-)
+from src.kinematics.base_kinematics import NuclearRecoilKinematics
 from src.kinematics.scattering_kinematics import (
     ScatteringKinematics,
     NonRelativisticKinematics,
@@ -75,6 +73,26 @@ def test_mu_equal():
     m = 40e9
     kin = ElasticKinematics(mX=m, mT=m)
     assert np.isclose(kin.mu, m/2, rtol=1e-9)
+
+def test_kinematics_validate_domain_requires_grid_raise():
+    xx = [5, [], [[1],[2]]]
+    for x in xx:
+        with pytest.raises(ValueError,
+                           match="x must be a non-empty one-dimensional array"):
+            NuclearRecoilKinematics._validate_domain_nonnegative(
+                values=x, name="x", require_grid=True)
+
+def test_kinematics_validate_speed_raises_unphysical():
+    vv = [np.nan, np.inf, -np.inf, -0.5]
+    for v in vv:
+        with pytest.raises(ValueError, match="finite and non-negative"):
+            NuclearRecoilKinematics._validate_domain_speed(v=v)
+
+def test_kinematics_validate_ER_raises_unphysical():
+    ER = [np.nan, np.inf, -np.inf, -1e3]
+    for E in ER:
+        with pytest.raises(ValueError, match="finite and non-negative"):
+            NuclearRecoilKinematics._validate_domain_ER(ER=E)
 
 def test_elastic_q_from_ER():
     mT = 40e9
