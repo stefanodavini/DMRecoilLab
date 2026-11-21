@@ -166,20 +166,59 @@ class NuclearRecoilKinematics(ABC):
         """
         return self.mX
 
-    @property
-    def supports_scattering_interactions(self) -> bool:
-        """
-        Whether the kinematics implementation can be used
-        with scattering interaction models such as SI or SD.
-        """
-        return False
-
     def _check_masses(self):
         """
         Raise error in case of unphysical masses.
         """
+        if not np.isscalar(self.mX):
+            raise TypeError("Dark-matter mass must be scalar")
+
+        if not np.isscalar(self.mT):
+            raise TypeError("Target mass must be scalar")
+
         if not np.isfinite(self.mX) or self.mX <= 0:
             raise ValueError("Unphysical dark-matter mass")
         
         if not np.isfinite(self.mT) or self.mT <=0:
             raise ValueError("Unphysical target mass")
+
+    @staticmethod
+    def _validate_domain_nonnegative(
+        values: ArrayLike,
+        name: str,
+        require_grid: bool = False) -> NDArray:
+        """
+        Convert finite, nonnegative input; optionally require a 1D grid.
+
+        Domain validation never decides whether a reaction is allowed.
+        Without require_grid, scalar and arbitrary-dimensional inputs
+        (including empty arrays) retain their NumPy shape.
+        """
+        values = np.asarray(values, dtype=float)
+        if require_grid and (values.ndim != 1 or values.size == 0):
+            raise ValueError(
+                f"Input {name} must be a non-empty one-dimensional array."
+            )
+        if np.any(~np.isfinite(values) | (values < 0)):
+            raise ValueError(f"Input {name} must be finite and non-negative.")
+        return values
+
+    @staticmethod
+    def _validate_domain_speed(v: ArrayLike,
+                               require_grid: bool = False) -> NDArray:
+        """
+        Validate finite speed moduli v >= 0, in units beta=v/c.
+
+        Relativistic implementations additionally enforce v<1.
+        """
+        return NuclearRecoilKinematics._validate_domain_nonnegative(
+            v, "v", require_grid=require_grid)
+
+    @staticmethod
+    def _validate_domain_ER(ER: ArrayLike,
+                            require_grid: bool = False) -> NDArray:
+        """
+        Validate finite recoil kinetic energies ER >= 0, in eV.
+        """
+        return NuclearRecoilKinematics._validate_domain_nonnegative(
+            ER, "ER", require_grid=require_grid)

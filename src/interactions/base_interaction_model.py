@@ -319,6 +319,59 @@ class InteractionModel(ABC):
             * self.propagator.response(q)
         )
 
+    def _convert_validate_v_ER(self,
+                               v: NDArray,
+                               ER: NDArray,
+                               relativistic=False,
+                               ) -> tuple[NDArray, NDArray]:
+        """
+        Convert inputs to float NumPy arrays and validate
+        common interaction-model grids.
+
+        Parameters
+        ----------
+        v : ndarray, shape (Nv,)
+            Non-empty, finite, non-negative speed grid in units beta=v/c.
+            For grids containing more than one point,
+            values must be strictly increasing.
+        
+        ER : ndarray, shape (NER,)
+            Non-empty, finite, non-negative, energy recoil grid in eV.
+            For grids containing more than one point,
+            values must be strictly increasing.
+        
+        relativistic: bool, optional
+            Optionally check that v < 1.
+            Default false.
+
+        Returns
+        -------
+        tuple of ndarray
+            Validated floating-point arrays (v, ER).
+
+        Raises
+        ------
+        ValueError
+            If either grid is empty, not one-dimensional or invalid.
+        """
+        v = self.scattering_kinematics._validate_domain_speed(
+            v=v,
+            require_grid=True)
+        ER = self.scattering_kinematics._validate_domain_ER(
+            ER=ER,
+            require_grid=True)
+
+        if (len(v) > 1) and np.any(np.diff(v) <= 0.):
+            raise ValueError("v must be strictly increasing.")
+
+        if (len(ER) > 1) and np.any(np.diff(ER) <= 0.):
+            raise ValueError("ER must be strictly increasing.")
+
+        if relativistic and np.any(v > 1.):
+            raise ValueError("v (beta=v/c) must be <= 1.")
+        
+        return v, ER
+
     @property
     def _reduced_mass_nucleus(self) -> float:
         """
@@ -384,3 +437,15 @@ class InteractionModel(ABC):
         cross section normalization.
         """
         pass
+
+    def _validate_sigma_reference(self) -> None:
+        """
+        Validates the reference cross section.
+        """
+        sigma = float(self.sigma_reference)
+
+        if not np.isfinite(sigma):
+            raise ValueError("Reference cross section must be finite.")
+
+        if sigma < 0:
+            raise ValueError("Reference cross section must be non-negative.")

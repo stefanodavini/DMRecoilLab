@@ -164,7 +164,7 @@ def test_si_sigma_p_input_check_raises():
 
     sigma_ps = [np.nan, np.inf, -1.e-40]
     for s in sigma_ps:
-        with pytest.raises(ValueError, match="sigma_p"):
+        with pytest.raises(ValueError, match="Reference cross section"):
             SIInteraction(wimp=wimp, nucleus=target,kinematics=kin,
                           sigma_p=s)
 
@@ -332,3 +332,38 @@ def test_si_heavy_mediator_limit_matches_pointlike_interaction():
         rtol=1e-7,
         atol=0.0,
     )
+
+def test_interaction_si_reject_empty_grids():
+    si = _initialize_si_elastic()
+    ER = [0., 1., 2.]
+    v = [1e-3, 2e-3, 3e-3]
+
+    with pytest.raises(ValueError, match="non-empty"):
+        si.dsigma_dER(ER=ER, v=[])
+    with pytest.raises(ValueError, match="non-empty"):
+        si.dsigma_dER(ER=[], v=v)
+
+def test_interaction_si_reject_non_increasing_grids():
+    si = _initialize_si_elastic()
+    ER = [0., 1., 2.]
+    v = [1e-3, 2e-3, 3e-3]
+
+    with pytest.raises(ValueError, match="increasing"):
+        si.dsigma_dER(ER=ER, v=[0, 0, 1e-3])
+    with pytest.raises(ValueError, match="increasing"):
+        si.dsigma_dER(ER=[1e3, 0e3, 2e3], v=v)
+
+def test_interaction_si_reject_unphysical_grids():
+    si = _initialize_si_elastic()
+    ER = [0., 1., 2.]
+    v = [1e-3, 2e-3, 3e-3]
+
+    with pytest.raises(ValueError, match="finite"):
+        si.dsigma_dER(ER=ER, v=[0, np.nan])
+    with pytest.raises(ValueError, match="finite"):
+        si.dsigma_dER(ER=[1e3, 0e3, np.inf], v=v)
+
+    with pytest.raises(ValueError, match="non-negative"):
+        si.dsigma_dER(ER=ER, v=[-0.1, 0., 1.])
+    with pytest.raises(ValueError, match="non-negative"):
+        si.dsigma_dER(ER=[-1e3, 0e3, 1e3], v=v)
