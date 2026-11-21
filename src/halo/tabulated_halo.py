@@ -67,7 +67,7 @@ class TabulatedSpeedDistribution(IsotropicSpeedDistribution):
                  v: ArrayLike,
                  f: ArrayLike,
                  normalize: bool = True,
-                 trim_trailing_zeros=False):
+                 trim_trailing_zeros: bool = False):
 
         self._data = TabulatedData(x=v, y=f,
                                   x_name="v",
