@@ -46,7 +46,7 @@ from src.interactions.particles import WIMP
 from src.interactions.propagators import Propagator, PointLikePropagator
 from src.nuclei.nucleus import Nucleus
 from src.nuclei.base_nuclear_response import NuclearResponse, PointLikeNuclearResponse
-from src.kinematics.scattering_kinematics import ScatteringKinematics
+from src.kinematics.base_kinematics import NuclearRecoilKinematics
 from src.utils.constants import PROTON_MASS_MeV, NEUTRON_MASS_MeV
 
 class InteractionModel(ABC):
@@ -77,7 +77,7 @@ class InteractionModel(ABC):
         self,
         wimp: WIMP,
         nucleus: Nucleus,
-        kinematics: ScatteringKinematics,
+        kinematics: NuclearRecoilKinematics,
         nuclear_response: NuclearResponse | None = None,
         propagator: Propagator | None = None,
     ):
@@ -88,8 +88,8 @@ class InteractionModel(ABC):
             Incident dark matter particle.
         nucleus : Nucleus
             Target nucleus.
-        kinematics : ScatteringKinematics
-            Scattering kinematics model.
+        kinematics : NuclearRecoilKinematics
+            Kinematics model.
         nuclear_response : NuclearResponse, optional
             Momentum-transfer dependent nuclear
             response function.
@@ -354,10 +354,10 @@ class InteractionModel(ABC):
         ValueError
             If either grid is empty, not one-dimensional or invalid.
         """
-        v = self.scattering_kinematics._validate_domain_speed(
+        v = self.kinematics._validate_domain_speed(
             v=v,
             require_grid=True)
-        ER = self.scattering_kinematics._validate_domain_ER(
+        ER = self.kinematics._validate_domain_ER(
             ER=ER,
             require_grid=True)
 
@@ -410,9 +410,18 @@ class InteractionModel(ABC):
         return self.kin.mass_target
 
     @property
-    def scattering_kinematics(self) -> ScatteringKinematics:
+    def scattering_kinematics(self) -> NuclearRecoilKinematics:
         """
-        Returns the ScatteringKinematics instance
+        Returns the kinematics instance
+        """
+        # name is outdated, kept for legacy
+        # it should be removed in a refactoring
+        return self.kin
+
+    @property
+    def kinematics(self) -> NuclearRecoilKinematics:
+        """
+        Returns the kinematics instance
         """
         return self.kin
 
