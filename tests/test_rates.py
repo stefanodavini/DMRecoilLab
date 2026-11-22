@@ -86,14 +86,20 @@ def test_rate_dRdE_Emax_suppression():
     assert dRdER[1] == 0
 
 def test_rate_dRdE_empty_speed_integration():
-    # Halo with escape speed < kinematics threshold
-    halo = StandardHaloModel(v0=20, vesc=50)
     wimp = WIMP(mass=5e10)
     nucleus = Ar40
 
     si_endo = create_interaction_si(wimp=wimp,
                                     nucleus=nucleus,
                                     delta=250e3)
+
+    bth = si_endo.scattering_kinematics.threshold_speed
+    vth = bth * 3.e5
+
+    # Halo with escape speed < kinematics threshold
+    halo = StandardHaloModel(v0=vth/4, vesc=vth/2)
+    assert halo.maximum_speed < vth
+    
     rc = RateCalculator(halo=halo,
                         interaction=si_endo)
 
