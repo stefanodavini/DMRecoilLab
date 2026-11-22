@@ -1,5 +1,5 @@
 from src.halo.shm import StandardHaloModel
-from src.kinematics.scattering_kinematics import ElasticKinematics
+from src.utils.factory import create_interaction_si
 from src.interactions.si import SIInteraction
 from src.interactions.particles import WIMP
 from src.nuclei.nucleus import Nucleus
@@ -14,15 +14,12 @@ def _initialize_si_elastic(wimp: WIMP,
                            target: Nucleus,
                            sigma_p=1e-45) -> SIInteraction:
 
-    kin = ElasticKinematics(mX=wimp.mass, mT=target.mass)
-    si = SIInteraction(wimp=wimp, nucleus=target,
-                       kinematics=kin,
-                       sigma_p=sigma_p)
-    return si
+    return create_interaction_si(wimp=wimp,
+                                 nucleus=target,
+                                 sigma_p=sigma_p)
 
 def _initialize_halo_shm_boost():
-    shm = StandardHaloModel()
-    return shm.boost()
+    return StandardHaloModel().boost()
 
 def _initialize_default_si_elastic_rate(target: Nucleus,
                                         sigma_p=1e-45,
@@ -87,6 +84,27 @@ def test_rate_dRdE_Emax_suppression():
 
     assert dRdER[0] > 0
     assert dRdER[1] == 0
+
+def test_rate_dRdE_empty_speed_integration():
+    # Halo with escape speed < kinematics threshold
+    halo = StandardHaloModel(v0=20, vesc=50)
+    wimp = WIMP(mass=5e10)
+    nucleus = Ar40
+
+    si_endo = create_interaction_si(wimp=wimp,
+                                    nucleus=nucleus,
+                                    delta=250e3)
+    rc = RateCalculator(halo=halo,
+                        interaction=si_endo)
+
+    ER = np.linspace(1e4, 1e5, 10)
+    expected = np.zeros_like(ER)
+
+    with pytest.warns(RuntimeWarning, match="Empty speed"):
+        dsigma = rc.dRdER(ER)
+
+    assert np.array_equiv(dsigma, expected)
+
 
 def test_rate_Emax_physically_valid():
     """
