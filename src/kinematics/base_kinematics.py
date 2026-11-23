@@ -76,7 +76,7 @@ class NuclearRecoilKinematics(ABC):
     @abstractmethod
     def ER_min(self, v: ArrayLike) -> NDArray:
         """
-        Minumum recoil energy allowed for a
+        Minimum recoil energy allowed for a
         dark-matter speed v.
         
         Parameters
