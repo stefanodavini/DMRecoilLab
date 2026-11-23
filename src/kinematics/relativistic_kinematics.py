@@ -18,13 +18,15 @@ with:
 
 Symbols
 --------
-m1 mass of the incoming WIMP chi1
-m2 mass of the outgoing WIMP chi2
-E1 (also called E internally) is the incoming WIMP *total* energy.
-K = E1 - m1 is kinetic energy.
-ER is the target recoil *kinetic* energy.
-q always denotes spatial momentum magnitude,
-Q2 = -t invariant of 4-momentum transfer, not |q|^2.
+m1: mass of the incoming WIMP chi1
+m2: mass of the outgoing WIMP chi2
+E1 (also called E internally): incoming WIMP *total* energy.
+K = E1 - m1: kinetic energy.
+ER: target recoil *kinetic* energy.
+q: magnitude of the spatial momentum transfer in the laboratory frame.
+Q2 = -t: invariant of 4-momentum transfer, not |q|^2.
+s: Mandelstam invariant, invariant of total reaction's 4-momentum.
+t: Mandelstam invariant, invariant of 4-momentum transfer.
 
 Physical formulas and their numerically stable implementations
 ------------------------------------------------------------
@@ -176,12 +178,12 @@ class RelativisticKinematics(ScatteringKinematics):
 
     @property
     def delta(self) -> float:
-        """WIMP mass splitting"""
+        """Mass splitting m2 - m1."""
         return self.m2 - self.m1
 
     @property
     def mass_wimp_final(self) -> float:
-        """Outgoing WIMP mass"""
+        """Final-state WIMP mass m2."""
         return self.m2
 
     @property
@@ -238,13 +240,12 @@ class RelativisticKinematics(ScatteringKinematics):
                   * np.sqrt((2 * self.m1 + k) / (self.m1 + k)))
         # For enormous boosts, rounding speed can move energy noticeably
         # below threshold. Choose the next representable speed if needed.
-        if v < 1 and self._incident_from_v(v)[2] < k * (1 - _ROUNDING_RTOL):
+        if v < 1 and self._incident_from_v(v=v)[2] < k * (1 - _ROUNDING_RTOL):
             v = float(np.nextafter(v, 1.0))
         return v
 
     @staticmethod
     def _validate_domain_speed(v: ArrayLike,
-                               *,
                                require_grid: bool = False
                                ) -> NDArray:
         """
@@ -291,23 +292,26 @@ class RelativisticKinematics(ScatteringKinematics):
         ------
         ValueError in case of domain violations.
         """
-        v = self._validate_domain_speed(v, require_grid=False)
-        K = self._incident_from_v(v)[2]
+        v = self._validate_domain_speed(v=v, require_grid=False)
+        K = self._incident_from_v(v=v)[2]
         return ((v >= self.threshold_speed)
                 & (K >= self.threshold_kinetic_energy * (1 - _ROUNDING_RTOL)))
 
     def energy_mask(self, E1: ArrayLike) -> NDArray:
         """
-        Allowed total energies; E1 < m1 is a domain error.
+        Boolean mask identifying total energies capable
+        of producing the final state.
 
-        m1 <= E1 < threshold_energy is a closed channel and returns False.
+        Returns False for energies below threshold_energy.
+        Values below m1 are domain violations and raise
+        ValueError.
         """
-        E1 = self._validate_domain_energy(E1)
+        E1 = self._validate_domain_energy(E1=E1)
         return E1 >= self.threshold_energy
 
-    def _incident_from_v(self, v: ArrayLike):
+    def _incident_from_v(self, v: ArrayLike) -> tuple[NDArray, NDArray, NDArray]:
         # Fundamental conversion routine used by all speed-based APIs.
-        v = self._validate_domain_speed(v, require_grid=False)
+        v = self._validate_domain_speed(v=v, require_grid=False)
         with np.errstate(invalid="ignore", divide="ignore"):
             w = np.sqrt((1 - v) * (1 + v))
             E = self.m1 / w
@@ -317,14 +321,15 @@ class RelativisticKinematics(ScatteringKinematics):
         return E, p, K
 
     def E1_from_v(self, v: ArrayLike) -> NDArray:
-        """Total incident energy from speed;
+        """
+        Total incident energy from speed;
         
         Invalid speed moduli and v >= 1 raise ValueError.
 
         Near v=1, floating-point speeds cannot resolve arbitrary boosts;
         use ER_bounds_from_E1 when incident energy is known directly.
         """
-        return np.asarray(self._incident_from_v(v)[0])
+        return np.asarray(self._incident_from_v(v=v)[0])
 
     def s_from_E1(self, E1: ArrayLike) -> NDArray:
         """
@@ -332,7 +337,7 @@ class RelativisticKinematics(ScatteringKinematics):
 
         Valid incident energies may be below threshold.
         """
-        E1 = self._validate_domain_energy(E1)
+        E1 = self._validate_domain_energy(E1=E1)
         s = self.m1**2 + self.mT**2 + 2 * self.mT * E1
         return np.asarray(s)
 
@@ -341,7 +346,7 @@ class RelativisticKinematics(ScatteringKinematics):
         Spatial momentum transfer
         |q| = sqrt(ER (ER + 2 mT)).
         """
-        r = self._validate_domain_ER(ER, require_grid=False)
+        r = self._validate_domain_ER(ER=ER, require_grid=False)
         # Stable product form of q = sqrt(ER*(ER+2*mT)).
         return np.asarray(np.sqrt(r) * np.sqrt(r + 2 * self.mT))
 
@@ -349,10 +354,15 @@ class RelativisticKinematics(ScatteringKinematics):
         """
         Invariant transfer Q2 = -t = 2 mT ER, not |q| squared.
         """
-        ER = self._validate_domain_ER(ER, require_grid=False)
+        ER = self._validate_domain_ER(ER=ER, require_grid=False)
         return np.asarray(2 * self.mT * ER)
 
-    def _bounds(self, E, p, K, valid):
+    def _bounds(self,
+                E: NDArray,
+                p: NDArray,
+                K: NDArray,
+                valid: NDArray
+                ) -> tuple[NDArray, NDArray]:
         """
         Compute laboratory recoil-energy endpoints.
 
@@ -365,8 +375,8 @@ class RelativisticKinematics(ScatteringKinematics):
         s = (self.m1 + self.mT)**2 + 2 * self.mT * K
         root_s = np.sqrt(s)
         # Physical formula: pf = sqrt(kallen(s,m2**2,mT**2))/(2*root_s).
-        # kallen is exposed in utils.py. Keep this specialized factorization
-        # here: evaluating kallen(s,...) directly loses precision at threshold.
+        # Keep this specialized factorization here:
+        # evaluating kallen(s,...) directly loses precision at threshold.
         above = np.maximum(K - self._reaction_kinetic_threshold, 0.0)
         f1 = 2 * self.mT * above
         f2 = f1 + 4 * self.m2 * self.mT
@@ -392,7 +402,7 @@ class RelativisticKinematics(ScatteringKinematics):
         K = E - self.m1
         # Stable form of p = sqrt(E**2-m1**2).
         p = np.sqrt(K) * np.sqrt(E + self.m1)
-        return self._bounds(E, p, K, valid)
+        return self._bounds(E=E, p=p, K=K, valid=valid)
 
     def ER_bounds(self, v: ArrayLike) -> tuple[NDArray, NDArray]:
         """
@@ -414,8 +424,8 @@ class RelativisticKinematics(ScatteringKinematics):
         Speeds below the reaction threshold are not domain errors;
         they return NaN endpoints.
         """
-        E, p, K = self._incident_from_v(v)
-        return self._bounds(E, p, K, self.speed_mask(v))
+        E, p, K = self._incident_from_v(v=v)
+        return self._bounds(E, p, K, valid=self.speed_mask(v=v))
 
     def ER_min(self, v: ArrayLike) -> NDArray:
         """
@@ -424,7 +434,7 @@ class RelativisticKinematics(ScatteringKinematics):
         Returns NaN when the reaction channel is closed.
         Domain violations raise ValueError.
         """
-        return self.ER_bounds(v)[0]
+        return self.ER_bounds(v=v)[0]
 
     def ER_max(self, v: ArrayLike) -> NDArray:
         """
@@ -433,7 +443,7 @@ class RelativisticKinematics(ScatteringKinematics):
         Returns NaN when the reaction channel is closed.
         Domain violations raise ValueError.
         """
-        return self.ER_bounds(v)[1]
+        return self.ER_bounds(v=v)[1]
 
     def vmin_from_ER(self, ER: ArrayLike) -> NDArray:
         """Exact minimum speed, including exothermic backward recoils.
@@ -446,7 +456,7 @@ class RelativisticKinematics(ScatteringKinematics):
         for unequal masses (zero transfer cannot change the WIMP mass).
         Negative/nonfinite recoil energies are domain errors (ValueError).
         """
-        ER = self._validate_domain_ER(ER, require_grid=False)
+        ER = self._validate_domain_ER(ER=ER, require_grid=False)
         r = np.where(ER > 0, ER, np.nan)
         # Stable factorization of B = mT*ER+(m2**2-m1**2)/2.
         B = self.mT * r + self.delta * (self.m2 + self.m1) / 2
@@ -476,10 +486,10 @@ class RelativisticKinematics(ScatteringKinematics):
         so enforce the original equation and future outgoing energy.
         """
         v, theta = np.broadcast_arrays(
-            self._validate_domain_speed(v, require_grid=False),
-            self._validate_domain_theta(theta),
+            self._validate_domain_speed(v=v, require_grid=False),
+            self._validate_domain_theta(theta=theta),
         )
-        E, p, _ = self._incident_from_v(v)
+        E, p, _ = self._incident_from_v(v=v)
         A = E + self.mT
         b = p * np.cos(theta)
         D = -self.delta * (self.m2 + self.m1) / 2
@@ -492,7 +502,7 @@ class RelativisticKinematics(ScatteringKinematics):
         term2 = D * (2 * A * self.mT + D)
         disc = term1 + term2
         tolerance = _ROUNDING_RTOL * (np.abs(term1) + np.abs(term2))
-        valid = self.speed_mask(v) & (disc >= -tolerance)
+        valid = self.speed_mask(v=v) & (disc >= -tolerance)
         with np.errstate(invalid="ignore", divide="ignore"):
             radical = A * np.sqrt(np.maximum(disc, 0))
             # Stable quadratic roots: calculate the larger-magnitude root
@@ -514,9 +524,13 @@ class RelativisticKinematics(ScatteringKinematics):
    
     def speed_theta_mask(self, v: ArrayLike, theta: ArrayLike) -> NDArray:
         """
-        Whether at least one physical angular root exists, including q=0.
+        Boolean mask identifying angle-speed combinations
+        for which at least one physical momentum-transfer
+        solution exists.
+
+        Domain violations raise ValueError.
         """
-        lo, hi = self.q_from_v_theta(v, theta)
+        lo, hi = self.q_from_v_theta(v=v, theta=theta)
         return np.isfinite(lo) | np.isfinite(hi)
 
 
@@ -541,3 +555,27 @@ class RelativisticInelasticKinematics(RelativisticKinematics):
 
     def __init__(self, mX: float, mT: float, m2: float):
         super().__init__(mX=mX, mT=mT, m2=m2)
+
+
+def kallen(x: ArrayLike, y: ArrayLike, z: ArrayLike) -> NDArray:
+    """
+    Källén lambda function.
+
+    lambda(x,y,z) = x**2 + y**2 + z**2 - 2*x*y - 2*x*z - 2*y*z.
+
+    Notes
+    -----
+    In two-body phase space use x=s, y=m_a**2, z=m_b**2;
+    the output then has units of energy**4.
+
+    Negative values are retained, not clipped:
+    lambda alone does not determine whether a channel is physically open.
+
+    Near a two-body threshold, a model-specific factorization
+    in available kinetic energy
+    is more accurate than this general polynomial evaluation.
+    """
+    x, y, z = np.broadcast_arrays(np.asarray(x, dtype=float),
+                                  np.asarray(y, dtype=float),
+                                  np.asarray(z, dtype=float))
+    return np.asarray((x - y - z)**2 - 4 * y * z)

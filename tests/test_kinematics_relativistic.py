@@ -5,7 +5,8 @@ from src.kinematics.scattering_kinematics import (
 from src.kinematics.relativistic_kinematics import (
     RelativisticKinematics,
     RelativisticElasticKinematics,
-    RelativisticInelasticKinematics
+    RelativisticInelasticKinematics,
+    kallen
     )
 
 import numpy as np
@@ -70,7 +71,10 @@ SPEED_APIS = [
     'q_from_v_theta', 'speed_theta_mask',
 ]
 
-def call_speed_api(kin, name, v):
+def call_speed_api(
+    kin: RelativisticKinematics,
+    name: str,
+    v):
     return getattr(kin, name)(v, 0.) if 'theta' in name else getattr(kin, name)(v)
 
 
@@ -147,6 +151,11 @@ def test_kinematics_relativistic_endpoint_inverse_and_four_momentum(m2):
         assert np.all(E-r >= m2)
 
 def test_kinematics_relativistic_elastic_and_nonrelativistic_limit():
+    """
+    Verify agreement with exact elastic relativistic
+    kinematics and recovery of the standard
+    non-relativistic recoil expressions at small speeds.
+    """
     k = RelativisticElasticKinematics(mX=50e9, mT=120e9)
     v = np.array([0., 1e-8, 1e-5, 1e-3, .8])
     E = k.E1_from_v(v=v)
@@ -158,6 +167,11 @@ def test_kinematics_relativistic_elastic_and_nonrelativistic_limit():
     assert np.allclose(k.vmin_from_ER(ER=r), v[1:], rtol=2e-14, atol=1e-10)
 
 def test_kinematics_relativistic_inelastic_nonrelativistic_limit():
+    """
+    Verify that exact relativistic inelastic formulas
+    reduce to the standard non-relativistic expressions
+    for small mass splittings and small incident speeds.
+    """
     for delta in [-1e4, 1e4]:
         k = RelativisticInelasticKinematics(mX=50e9, mT=120e9, m2=50e9+delta)
         v = np.array([.001, .002])
@@ -251,6 +265,11 @@ def test_kinematics_relativistic_angular_nonrelativistic_and_forbidden_angles():
 
 
 def test_kinematics_relativistic_speed_validator_extends_base():
+    """
+    Verify that relativistic speed validation inherits
+    the base non-negative-domain checks and additionally
+    enforces v < 1.
+    """
     assert np.allclose(NuclearRecoilKinematics._validate_domain_speed(v=[0., 2.]),
                        [0., 2.])
     with pytest.raises(ValueError, match='v < 1'):
@@ -299,6 +318,11 @@ def test_kinematics_relativistic_scalar_broadcast_and_empty_array_support(kin):
         kin.q_from_v_theta(v=-1., theta=[])
 
 def test_kinematics_relativistic_zero_recoil_and_transfer_definitions(kin):
+    """
+    Verify the special ER=0 conventions and the
+    relationship between spatial momentum transfer q
+    and invariant transfer Q2.
+    """
     elastic = RelativisticElasticKinematics(mX=10., mT=30.)
     assert elastic.vmin_from_ER(ER=0.) == 0.
     assert np.isinf(kin.vmin_from_ER(ER=0.))
@@ -332,3 +356,21 @@ def test_kinematics_relativistic_random_physical_recoils():
         roots = kin.q_from_v_theta(v=v, theta=np.arccos(np.clip(costheta,-1,1)))
         assert np.any(np.isfinite(roots))
         assert np.nanmin(abs(np.asarray(roots)-q))/q < 1e-7
+
+def test_kinematics_relativistic_kallen():
+    """
+    Verify symmetry, broadcasting, threshold behavior,
+    and scalar-array consistency of the Källén function.
+    """
+    x = np.array([1,4,9])[:,None]
+    y = np.array([1,2])
+    z = 3
+    expected = x*x + y*y + z*z - 2*x*y - 2*x*z - 2*y*z
+    assert np.allclose(kallen(x,y,z), expected)
+    assert np.allclose(kallen(z,x,y), expected)
+    assert np.allclose(kallen(y,z,x), expected)
+    assert kallen(x,y,z).shape == (3,2)
+    assert kallen(1,2,3).shape == ()
+    assert kallen(1,1,1) == -3.
+    assert kallen(x=9, y=4, z=1) == 0.
+    assert kallen(x=10**10, y=0, z=0) == 1e20
