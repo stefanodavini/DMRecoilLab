@@ -70,13 +70,34 @@ and target mass
 * The angular quadratic has roots (C*b +/- radical)/a. Compute the
   larger-magnitude root without subtraction, then use q1*q2 = c/a.
 
+
+Validation philosophy
+---------------------
+
+Domain violations raise exceptions.
+
+Examples:
+* v < 0
+* v >= 1
+* ER < 0
+* E1 < m1
+* theta outside [0, pi]
+
+All inputs must be finite.
+A violation in any array entry rejects the entire call.
+
+Kinematically forbidden configurations are masked.
+
+Examples:
+* v below threshold_speed
+* E1 below threshold_energy
+* forbidden angular configurations
+
+Masked observables return NaN and
+masked predicates return False.
+
 Validity and legacy conventions
 -------------------------------
-Domain violations raise exceptions:
-masses must be finite positive scalars,
-0 <= v < 1, ER >= 0, E1 >= m1 and 0 <= theta <= pi;
-all inputs must be finite.
-A violation in any array entry rejects the entire call.
 
 Numerical methods invoke the base _validate_domain_speed and
 _validate_domain_ER APIs with require_grid=False,
@@ -204,7 +225,12 @@ class RelativisticKinematics(ScatteringKinematics):
     @property
     def threshold_speed(self) -> float:
         """
-        Incoming WIMP's threshold speed.
+        Minimum incident speed capable of producing chi2.
+
+        The value is computed from the exact relativistic
+        reaction threshold and adjusted upward by one ULP
+        when necessary to ensure that threshold_speed
+        always corresponds to an allowed channel.
         """
         k = self.threshold_kinetic_energy
         # Stable form of v_th = sqrt(1 - (m1/(m1+k))**2).
@@ -250,10 +276,20 @@ class RelativisticKinematics(ScatteringKinematics):
 
     def speed_mask(self, v: ArrayLike) -> NDArray:
         """
-        Allowed incident speeds; domain violations raise ValueError.
+        Allowed incident speeds
 
-        The threshold comparison is inclusive. A below-threshold speed
-        is a valid input with a False mask, not a domain violation.
+
+        Returns
+        -------
+        ndarray of bool
+
+            True identifies physically allowed scattering
+            configurations. False indicates a closed channel,
+            not an invalid input.
+
+        Raises
+        ------
+        ValueError in case of domain violations.
         """
         v = self._validate_domain_speed(v, require_grid=False)
         K = self._incident_from_v(v)[2]
@@ -317,7 +353,14 @@ class RelativisticKinematics(ScatteringKinematics):
         return np.asarray(2 * self.mT * ER)
 
     def _bounds(self, E, p, K, valid):
-        """Boost the two extremal final target CM momenta to the lab.
+        """
+        Compute laboratory recoil-energy endpoints.
+
+        Starting from a valid incident state, determine
+        the two extremal recoil configurations corresponding
+        to forward and backward scattering in the center-of-mass
+        frame, then convert the endpoint target momenta into
+        laboratory recoil energies.
         """
         s = (self.m1 + self.mT)**2 + 2 * self.mT * K
         root_s = np.sqrt(s)
@@ -352,13 +395,44 @@ class RelativisticKinematics(ScatteringKinematics):
         return self._bounds(E, p, K, valid)
 
     def ER_bounds(self, v: ArrayLike) -> tuple[NDArray, NDArray]:
+        """
+        Allowed recoil-energy interval for an incident speed v.
+
+        Parameters
+        ----------
+        v : ArrayLike
+            Incoming WIMP speed in units c=1.
+
+        Returns
+        -------
+        tuple[ndarray, ndarray]
+            (ER_min, ER_max) in eV.
+
+        Notes
+        -----
+        Inputs must satisfy 0 <= v < 1.
+        Speeds below the reaction threshold are not domain errors;
+        they return NaN endpoints.
+        """
         E, p, K = self._incident_from_v(v)
         return self._bounds(E, p, K, self.speed_mask(v))
 
     def ER_min(self, v: ArrayLike) -> NDArray:
+        """
+        Lower recoil-energy endpoint for an incident speed v.
+
+        Returns NaN when the reaction channel is closed.
+        Domain violations raise ValueError.
+        """
         return self.ER_bounds(v)[0]
 
     def ER_max(self, v: ArrayLike) -> NDArray:
+        """
+        Upper recoil-energy endpoint for an incident speed v.
+
+        Returns NaN when the reaction channel is closed.
+        Domain violations raise ValueError.
+        """
         return self.ER_bounds(v)[1]
 
     def vmin_from_ER(self, ER: ArrayLike) -> NDArray:
