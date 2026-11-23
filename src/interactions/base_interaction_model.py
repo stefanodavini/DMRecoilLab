@@ -234,8 +234,10 @@ class InteractionModel(ABC):
         return np.nan_to_num(masked, nan=0.0,
                              posinf=0.0,neginf=0.0)
 
-    def integrate_sigma(self, v: NDArray, ER_min=0.,
-                        ER_max=None, num=10000) -> NDArray:
+    def integrate_sigma(self, v: NDArray,
+                        ER_min: float = 0.,
+                        ER_max: float | None = None,
+                        num: int = 10000) -> NDArray:
         """
         Integrate the differential cross section
         over recoil energy.
@@ -282,6 +284,9 @@ class InteractionModel(ABC):
         """
         if ER_max is None:
             ER_max = np.nanmax(self.kin.ER_max(v=v))
+
+        if ER_min == ER_max:
+            return np.zeros_like(v, dtype=float)
 
         ERrange = np.linspace(ER_min, ER_max, num=num)
         dsigma = self.dsigma_dER(v=v, ER=ERrange)

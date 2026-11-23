@@ -191,7 +191,25 @@ def test_si_elastic_total_cross_section():
     sigma_num = si.integrate_sigma(v=v)[0]
     sigma_nucleus = si.sigma_nucleus
 
-    assert np.isclose(sigma_num, sigma_nucleus, rtol=1e-6)
+    ratio = sigma_num / sigma_nucleus
+
+    assert np.isclose(ratio, 1., atol=1e-6, rtol=1e-6)
+
+def test_si_elastic_integrate_zero_v_array():
+    """
+    Check the behaviour of integral of dsigma/dER
+    evaluated at v = [0.0].
+    The input produces a zero-width integral,
+    that should be evaluated as zero.
+    """
+    si = _initialize_si_elastic()
+    v = np.array([0.0])
+
+    sigma_num = si.integrate_sigma(v=v)
+    expected = np.zeros_like(v, dtype=float)
+
+    assert np.array_equiv(sigma_num, expected)
+
 
 def test_si_sigma_nucleus_A4():
     """
