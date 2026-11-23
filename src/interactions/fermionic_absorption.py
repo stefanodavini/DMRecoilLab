@@ -97,14 +97,12 @@ class FermionicAbsorptionInteraction(InteractionModel):
         nuclear_response: NuclearResponse | None = None,
         propagator: Propagator | None = None,
     ) -> None:
-        if (not isinstance(kinematics, AbsorptionKinematics)
-                or kinematics.supports_scattering_interactions):
-            raise TypeError(
-                "FermionicAbsorptionInteraction requires AbsorptionKinematics "
-                "that does not support scattering interactions."
-            )
-        if not np.isfinite(sigma_NC) or sigma_NC < 0:
-            raise ValueError("sigma_NC must be finite and non-negative.")
+        
+        if not isinstance(kinematics, AbsorptionKinematics):
+            raise TypeError("Fermionic Absorption requires AbsorptionKinematics.")
+
+        if not np.isfinite(kinematics.ER) or kinematics.ER <= 0:
+            raise ValueError("The absorption recoil energy must be finite and positive.")
 
         super().__init__(
             wimp=wimp,
@@ -113,44 +111,10 @@ class FermionicAbsorptionInteraction(InteractionModel):
             nuclear_response=nuclear_response,
             propagator=propagator,
         )
-        if not np.isfinite(self.kin.ER) or self.kin.ER <= 0:
-            raise ValueError("The absorption recoil energy must be finite and positive.")
+    
         self.sigma_NC = float(sigma_NC)
+        self._validate_sigma_reference()
 
-    @staticmethod
-    def _check_input_v_ER(v: NDArray, ER: NDArray) -> tuple[NDArray, NDArray]:
-        """
-        Convert and validate model-independent speed and recoil-energy grids.
-
-        Parameters
-        ----------
-        v : ndarray, shape (Nv,)
-            Non-empty, finite, non-negative speed grid in units beta=v/c.
-        ER : ndarray, shape (NER,)
-            Non-empty, finite, non-negative, strictly increasing energy grid.
-
-        Returns
-        -------
-        tuple of ndarray
-            Validated floating-point arrays (v, ER).
-
-        Raises
-        ------
-        ValueError
-            If either grid is empty, not one-dimensional or invalid.
-        """
-        v = np.asarray(v, dtype=float)
-        ER = np.asarray(ER, dtype=float)
-        if v.ndim != 1 or ER.ndim != 1 or v.size == 0 or ER.size == 0:
-            raise ValueError("v and ER must be non-empty one-dimensional arrays.")
-        if not np.all(np.isfinite(v)) or np.any(v < 0):
-            raise ValueError("v (beta=v/c) must be finite and non-negative.")
-        if not np.all(np.isfinite(ER)) or np.any(ER < 0):
-            raise ValueError("ER must be finite and non-negative.")
-        spacing = np.diff(ER)
-        if not np.all(np.isfinite(spacing)) or np.any(spacing <= 0):
-            raise ValueError("ER must be strictly increasing with finite spacing.")
-        return v, ER
 
     def dsigma_dER(self, v: NDArray, ER: NDArray) -> NDArray:
         """
@@ -187,7 +151,8 @@ class FermionicAbsorptionInteraction(InteractionModel):
         including for non-uniform grids. The line must lie inside the grid;
         include its true energy explicitly when applying sharp cuts.
         """
-        v, ER = self._check_input_v_ER(v, ER)
+        v, ER = self._convert_validate_v_ER(v=v, ER=ER)
+
         if ER.size < 2:
             raise ValueError("ER must contain at least two points.")
 

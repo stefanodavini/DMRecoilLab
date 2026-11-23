@@ -54,7 +54,7 @@ Examples
 from numpy.typing import NDArray
 import numpy as np
 
-from src.kinematics.scattering_kinematics import ScatteringKinematics
+from src.kinematics.scattering_kinematics import NonRelativisticKinematics
 from src.interactions.base_interaction_model import InteractionModel
 from src.interactions.propagators import Propagator
 from src.interactions.particles import WIMP
@@ -118,9 +118,9 @@ class SDInteraction(InteractionModel):
     nucleus : Nucleus
         Target nucleus.
 
-    kinematics : ScatteringKinematics
-        Elastic or inelastic scattering
-        kinematics.
+    kinematics : NonRelativisticKinematics
+        Elastic or inelastic non-relativistic
+        scattering kinematics.
 
     form_factor : optional
         Reserved for future SD form-factor
@@ -162,16 +162,16 @@ class SDInteraction(InteractionModel):
         *,
         wimp: WIMP,
         nucleus: Nucleus,
-        kinematics: ScatteringKinematics,
+        kinematics: NonRelativisticKinematics,
         form_factor= None,
         propagator: Propagator | None = None,
         sigma_reference: float = 1e-45,
         an_over_ap: float = 1.,
         ):
 
-        if not kinematics.supports_scattering_interactions:
+        if not isinstance(kinematics, NonRelativisticKinematics):
             raise TypeError("" \
-            "SDInteraction requires a kinematics that supports scattering")
+            "SDInteraction requires a non-relativistic scattering kinematics")
 
         if form_factor is not None:
             raise NotImplementedError("SD form factors not implemented yet")
@@ -183,10 +183,9 @@ class SDInteraction(InteractionModel):
             nuclear_response=form_factor,
             propagator=propagator)
 
-        if not np.isfinite(sigma_reference) or sigma_reference < 0:
-            raise ValueError("sigma_reference must be finite and non-negative.")
+        self.sigma_ref = float(sigma_reference)
+        self._validate_sigma_reference()
 
-        self.sigma_ref = sigma_reference
         self.an_over_ap = an_over_ap
 
     @property
@@ -292,6 +291,8 @@ class SDInteraction(InteractionModel):
         recoil-energy range reproduces the total
         WIMP-nucleus total cross section sigma_A.
         """
+
+        v, ER = self._convert_validate_v_ER(v=v, ER=ER)
 
         ER_grid, v_grid = self._broadcast_grids(ER=ER, v=v)
 

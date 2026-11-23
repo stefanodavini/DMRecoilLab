@@ -51,7 +51,7 @@ Examples
 from numpy.typing import NDArray
 import numpy as np
 
-from src.kinematics.scattering_kinematics import ScatteringKinematics
+from src.kinematics.scattering_kinematics import NonRelativisticKinematics
 from src.interactions.base_interaction_model import InteractionModel
 from src.interactions.propagators import Propagator
 from src.interactions.particles import WIMP
@@ -108,9 +108,9 @@ class SIInteraction(InteractionModel):
     nucleus : Nucleus
         Target nucleus.
 
-    kinematics : ScatteringKinematics
-        Elastic or inelastic scattering
-        kinematics.
+    kinematics : NonRelativisticKinematics
+        Elastic or inelastic non-relativistic
+        scattering kinematics.
 
     form_factor : FormFactor, optional
         Nuclear form factor.
@@ -139,15 +139,15 @@ class SIInteraction(InteractionModel):
         *,
         wimp: WIMP,
         nucleus: Nucleus,
-        kinematics: ScatteringKinematics,
+        kinematics: NonRelativisticKinematics,
         form_factor: FormFactor | None = None,
         propagator: Propagator | None = None,
         sigma_p: float = 1e-45,
         fn_over_fp: float = 1.):
 
-        if not kinematics.supports_scattering_interactions:
+        if not isinstance(kinematics, NonRelativisticKinematics):
             raise TypeError("" \
-            "SIInteraction requires a kinematics that supports scattering")
+            "SIInteraction requires a non-relativistic scattering kinematics")
 
         if form_factor is None:
             form_factor = PointLikeFormFactor()
@@ -162,10 +162,8 @@ class SIInteraction(InteractionModel):
             nuclear_response=form_factor,
             propagator=propagator)
 
-        if not np.isfinite(sigma_p) or sigma_p < 0:
-            raise ValueError("sigma_p must be finite and non-negative.")
-
-        self.sigma_p = sigma_p
+        self.sigma_p = float(sigma_p)
+        self._validate_sigma_reference()
 
         if not np.isfinite(fn_over_fp):
             raise ValueError("fn_over_fp must be finite.")
@@ -213,6 +211,8 @@ class SIInteraction(InteractionModel):
         recoil-energy range reproduces the total
         WIMP-nucleus total cross section sigma_A.
         """
+
+        v, ER = self._convert_validate_v_ER(v=v, ER=ER)
 
         ER_grid, v_grid = self._broadcast_grids(ER=ER, v=v)
 

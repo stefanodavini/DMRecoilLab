@@ -1,6 +1,4 @@
-from src.kinematics.base_kinematics import (
-    NuclearRecoilKinematics,
-)
+from src.kinematics.base_kinematics import NuclearRecoilKinematics
 from src.kinematics.scattering_kinematics import (
     ScatteringKinematics,
     NonRelativisticKinematics,
@@ -65,13 +63,6 @@ def test_mass_aliases():
     assert kin.mass_wimp == 7e6
     assert kin.mass_target == 122e9
 
-def test_scattering_classes_support_interactions():
-    mN = 122e9
-    mX = 1e10
-    assert ElasticKinematics(mX=mX, mT=mN).supports_scattering_interactions
-    assert InelasticKinematics(mX=mX, mT=mN,
-                               delta=1e3).supports_scattering_interactions
-
 def test_mu_limit():
     m_low = 1e3
     m_hig = 1e9
@@ -82,6 +73,26 @@ def test_mu_equal():
     m = 40e9
     kin = ElasticKinematics(mX=m, mT=m)
     assert np.isclose(kin.mu, m/2, rtol=1e-9)
+
+def test_kinematics_validate_domain_requires_grid_raise():
+    xx = [5, [], [[1],[2]]]
+    for x in xx:
+        with pytest.raises(ValueError,
+                           match="x must be a non-empty one-dimensional array"):
+            NuclearRecoilKinematics._validate_domain_nonnegative(
+                values=x, name="x", require_grid=True)
+
+def test_kinematics_validate_speed_raises_unphysical():
+    vv = [np.nan, np.inf, -np.inf, -0.5]
+    for v in vv:
+        with pytest.raises(ValueError, match="finite and non-negative"):
+            NuclearRecoilKinematics._validate_domain_speed(v=v)
+
+def test_kinematics_validate_ER_raises_unphysical():
+    ER = [np.nan, np.inf, -np.inf, -1e3]
+    for E in ER:
+        with pytest.raises(ValueError, match="finite and non-negative"):
+            NuclearRecoilKinematics._validate_domain_ER(ER=E)
 
 def test_elastic_q_from_ER():
     mT = 40e9
@@ -237,10 +248,3 @@ def test_inelastic_ER_bounds_nan_mask():
     assert np.isfinite(ERmin[1])
     assert np.isfinite(ERmax[1])
 
-def test_elastic_kinematics_supported_by_scattering_interactions():
-    kin = ElasticKinematics(mX=40e10, mT=40e9)
-    assert kin.supports_scattering_interactions
-
-def test_inelastic_kinematics_supported_by_scattering_interactions():
-    kin = InelasticKinematics(mX=40e10, mT=40e9, delta=1e5)
-    assert kin.supports_scattering_interactions

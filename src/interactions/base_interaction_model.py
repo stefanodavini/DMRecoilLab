@@ -46,7 +46,7 @@ from src.interactions.particles import WIMP
 from src.interactions.propagators import Propagator, PointLikePropagator
 from src.nuclei.nucleus import Nucleus
 from src.nuclei.base_nuclear_response import NuclearResponse, PointLikeNuclearResponse
-from src.kinematics.scattering_kinematics import ScatteringKinematics
+from src.kinematics.base_kinematics import NuclearRecoilKinematics
 from src.utils.constants import PROTON_MASS_MeV, NEUTRON_MASS_MeV
 
 class InteractionModel(ABC):
@@ -77,7 +77,7 @@ class InteractionModel(ABC):
         self,
         wimp: WIMP,
         nucleus: Nucleus,
-        kinematics: ScatteringKinematics,
+        kinematics: NuclearRecoilKinematics,
         nuclear_response: NuclearResponse | None = None,
         propagator: Propagator | None = None,
     ):
@@ -88,8 +88,8 @@ class InteractionModel(ABC):
             Incident dark matter particle.
         nucleus : Nucleus
             Target nucleus.
-        kinematics : ScatteringKinematics
-            Scattering kinematics model.
+        kinematics : NuclearRecoilKinematics
+            Kinematics model.
         nuclear_response : NuclearResponse, optional
             Momentum-transfer dependent nuclear
             response function.
@@ -112,9 +112,9 @@ class InteractionModel(ABC):
         self.kin = kinematics
 
         if kinematics.mass_wimp != wimp.mass:
-            raise ValueError("Masses in WIMP and ScatteringKinematics are not the same")
+            raise ValueError("Masses in WIMP and Kinematics are not the same")
         if kinematics.mass_target != nucleus.mass:
-            raise ValueError("Masses Nucleus and ScatteringKinematics are not the same")
+            raise ValueError("Masses in Nucleus and Kinematics are not the same")
 
         if nuclear_response is None:
             nuclear_response = PointLikeNuclearResponse()
@@ -234,8 +234,10 @@ class InteractionModel(ABC):
         return np.nan_to_num(masked, nan=0.0,
                              posinf=0.0,neginf=0.0)
 
-    def integrate_sigma(self, v: NDArray, ER_min=0.,
-                        ER_max=None, num=10000) -> NDArray:
+    def integrate_sigma(self, v: NDArray,
+                        ER_min: float = 0.,
+                        ER_max: float | None = None,
+                        num: int = 10000) -> NDArray:
         """
         Integrate the differential cross section
         over recoil energy.
@@ -283,6 +285,9 @@ class InteractionModel(ABC):
         if ER_max is None:
             ER_max = np.nanmax(self.kin.ER_max(v=v))
 
+        if ER_min == ER_max:
+            return np.zeros_like(v, dtype=float)
+
         ERrange = np.linspace(ER_min, ER_max, num=num)
         dsigma = self.dsigma_dER(v=v, ER=ERrange)
         return np.trapezoid(dsigma, ERrange, axis=1)
@@ -318,6 +323,59 @@ class InteractionModel(ABC):
             self.nuclear_response.response(q)
             * self.propagator.response(q)
         )
+
+    def _convert_validate_v_ER(self,
+                               v: NDArray,
+                               ER: NDArray,
+                               relativistic=False,
+                               ) -> tuple[NDArray, NDArray]:
+        """
+        Convert inputs to float NumPy arrays and validate
+        common interaction-model grids.
+
+        Parameters
+        ----------
+        v : ndarray, shape (Nv,)
+            Non-empty, finite, non-negative speed grid in units beta=v/c.
+            For grids containing more than one point,
+            values must be strictly increasing.
+        
+        ER : ndarray, shape (NER,)
+            Non-empty, finite, non-negative, energy recoil grid in eV.
+            For grids containing more than one point,
+            values must be strictly increasing.
+        
+        relativistic: bool, optional
+            Optionally check that v < 1.
+            Default false.
+
+        Returns
+        -------
+        tuple of ndarray
+            Validated floating-point arrays (v, ER).
+
+        Raises
+        ------
+        ValueError
+            If either grid is empty, not one-dimensional or invalid.
+        """
+        v = self.kinematics._validate_domain_speed(
+            v=v,
+            require_grid=True)
+        ER = self.kinematics._validate_domain_ER(
+            ER=ER,
+            require_grid=True)
+
+        if (len(v) > 1) and np.any(np.diff(v) <= 0.):
+            raise ValueError("v must be strictly increasing.")
+
+        if (len(ER) > 1) and np.any(np.diff(ER) <= 0.):
+            raise ValueError("ER must be strictly increasing.")
+
+        if relativistic and np.any(v >= 1.):
+            raise ValueError("v (beta=v/c) must be < 1.")
+        
+        return v, ER
 
     @property
     def _reduced_mass_nucleus(self) -> float:
@@ -357,9 +415,18 @@ class InteractionModel(ABC):
         return self.kin.mass_target
 
     @property
-    def scattering_kinematics(self) -> ScatteringKinematics:
+    def scattering_kinematics(self) -> NuclearRecoilKinematics:
         """
-        Returns the ScatteringKinematics instance
+        Returns the kinematics instance
+        """
+        # name is outdated, kept for legacy
+        # it should be removed in a refactoring
+        return self.kin
+
+    @property
+    def kinematics(self) -> NuclearRecoilKinematics:
+        """
+        Returns the kinematics instance
         """
         return self.kin
 
@@ -384,3 +451,15 @@ class InteractionModel(ABC):
         cross section normalization.
         """
         pass
+
+    def _validate_sigma_reference(self) -> None:
+        """
+        Validates the reference cross section.
+        """
+        sigma = float(self.sigma_reference)
+
+        if not np.isfinite(sigma):
+            raise ValueError("Reference cross section must be finite.")
+
+        if sigma < 0:
+            raise ValueError("Reference cross section must be non-negative.")
