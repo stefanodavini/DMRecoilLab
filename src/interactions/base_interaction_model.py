@@ -372,8 +372,8 @@ class InteractionModel(ABC):
         if (len(ER) > 1) and np.any(np.diff(ER) <= 0.):
             raise ValueError("ER must be strictly increasing.")
 
-        if relativistic and np.any(v > 1.):
-            raise ValueError("v (beta=v/c) must be <= 1.")
+        if relativistic and np.any(v >= 1.):
+            raise ValueError("v (beta=v/c) must be < 1.")
         
         return v, ER
 
