@@ -326,8 +326,7 @@ class InteractionModel(ABC):
 
     def _convert_validate_v_ER(self,
                                v: NDArray,
-                               ER: NDArray,
-                               relativistic=False,
+                               ER: NDArray
                                ) -> tuple[NDArray, NDArray]:
         """
         Convert inputs to float NumPy arrays and validate
@@ -344,10 +343,6 @@ class InteractionModel(ABC):
             Non-empty, finite, non-negative, energy recoil grid in eV.
             For grids containing more than one point,
             values must be strictly increasing.
-        
-        relativistic: bool, optional
-            Optionally check that v < 1.
-            Default false.
 
         Returns
         -------
@@ -358,6 +353,11 @@ class InteractionModel(ABC):
         ------
         ValueError
             If either grid is empty, not one-dimensional or invalid.
+
+        Notes
+        -----
+        RelativisticKinematics's speed domain validation
+        enforces v < c.
         """
         v = self.kinematics._validate_domain_speed(
             v=v,
@@ -371,9 +371,6 @@ class InteractionModel(ABC):
 
         if (len(ER) > 1) and np.any(np.diff(ER) <= 0.):
             raise ValueError("ER must be strictly increasing.")
-
-        if relativistic and np.any(v >= 1.):
-            raise ValueError("v (beta=v/c) must be < 1.")
         
         return v, ER
 
