@@ -162,13 +162,13 @@ class IsotropicSpeedDistribution(ABC):
         raise NotImplementedError
 
     @cached_property
-    def _eta_lookup_table(self, grid_size: int =10000):
+    def _eta_lookup_table(self):
         """
         Compute η(vmin) = ∫_vmin^∞ g(v)/v dv
         by integrating from vmax down to 0 on a reversed grid.
         """
 
-        v = np.linspace(0.0, self.maximum_speed, grid_size)
+        v = self.integration_grid(vmin=0, num=10000)
         mask = v > 0.0
 
         integrand = np.zeros_like(v)
@@ -181,6 +181,42 @@ class IsotropicSpeedDistribution(ABC):
         eta = eta_rev[::-1]
 
         return v, eta
+
+    def integration_grid(self,
+                         vmin: float = 1e-6,
+                         num: int = 1000,
+                         ) -> NDArray:
+        """
+        Return integration nodes appropriate for numerical velocity integrals.
+
+        Parameters
+        ----------
+        vmin: float optional
+            Minimum speed (in km/s) in the integration grid.
+            Defaults to 1e-6 km/s
+
+        num: int or None, optional
+            Number of points in the integration grid.
+            Defaults to 1000 points.
+
+        Notes
+        -----
+        Callers remain responsible for choosing a physical threshold speed.
+        Implementations may ignore num and
+        are not required to return uniformly spaced points.
+        """
+        vmin = float(vmin)
+        if not np.isfinite(vmin) or vmin < 0:
+            raise ValueError("vmin must be finite and non-negative")
+
+        num = int(num)
+        if num < 2:
+            raise ValueError("num must be at least two")
+
+        if vmin >= self.maximum_speed:
+            return np.empty(0, dtype=float)
+
+        return np.linspace(vmin, self.maximum_speed, num=num)
 
 
 class _BoostedDistribution(IsotropicSpeedDistribution):

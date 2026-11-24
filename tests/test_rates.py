@@ -1,5 +1,8 @@
 from src.halo.shm import StandardHaloModel
-from src.kinematics.scattering_kinematics import ElasticKinematics
+from src.halo.mono_speed_distribution import MonoSpeedDistribution
+from src.utils.factory import create_interaction_si
+from src.utils.conversions import convert_from_kmps_to_beta
+from src.utils.constants import KM_TO_M, CM_TO_M
 from src.interactions.si import SIInteraction
 from src.interactions.particles import WIMP
 from src.nuclei.nucleus import Nucleus
@@ -14,15 +17,12 @@ def _initialize_si_elastic(wimp: WIMP,
                            target: Nucleus,
                            sigma_p=1e-45) -> SIInteraction:
 
-    kin = ElasticKinematics(mX=wimp.mass, mT=target.mass)
-    si = SIInteraction(wimp=wimp, nucleus=target,
-                       kinematics=kin,
-                       sigma_p=sigma_p)
-    return si
+    return create_interaction_si(wimp=wimp,
+                                 nucleus=target,
+                                 sigma_p=sigma_p)
 
 def _initialize_halo_shm_boost():
-    shm = StandardHaloModel()
-    return shm.boost()
+    return StandardHaloModel().boost()
 
 def _initialize_default_si_elastic_rate(target: Nucleus,
                                         sigma_p=1e-45,
@@ -87,6 +87,33 @@ def test_rate_dRdE_Emax_suppression():
 
     assert dRdER[0] > 0
     assert dRdER[1] == 0
+
+def test_rate_dRdE_empty_speed_integration():
+    wimp = WIMP(mass=5e10)
+    nucleus = Ar40
+
+    si_endo = create_interaction_si(wimp=wimp,
+                                    nucleus=nucleus,
+                                    delta=250e3)
+
+    bth = si_endo.scattering_kinematics.threshold_speed
+    vth = bth * 3.e5
+
+    # Halo with escape speed < kinematics threshold
+    halo = StandardHaloModel(v0=vth/4, vesc=vth/2)
+    assert halo.maximum_speed < vth
+    
+    rc = RateCalculator(halo=halo,
+                        interaction=si_endo)
+
+    ER = np.linspace(1e4, 1e5, 10)
+    expected = np.zeros_like(ER)
+
+    with pytest.warns(RuntimeWarning, match="Empty speed"):
+        dsigma = rc.dRdER(ER)
+
+    assert np.array_equiv(dsigma, expected)
+
 
 def test_rate_Emax_physically_valid():
     """
@@ -439,3 +466,35 @@ def test_rate_sample_energies_zero_counts():
     with pytest.raises(ValueError, match="Cannot sample"):
         rc.sample_recoil_energies()
 
+#---------------------------------------------------
+# Test rates with MonoSpeedDistribition (delta-like)
+#---------------------------------------------------
+
+@pytest.mark.parametrize("vc", [300.0, 400.0, 500.0]) # km/s
+def test_rate_dRdE_mono_speed_reproduces_delta_limit(vc):
+    """
+    For a very narrow mono-speed population,
+    dR/dER approaches the analytic delta-function result.
+    """
+    interaction = create_interaction_si(wimp=WIMP(mass=100e9),
+                                        nucleus=Xe131)
+
+    halo = MonoSpeedDistribution(vc=vc, full_width=1e-3)
+
+    rate = RateCalculator(interaction=interaction, halo=halo)
+
+    ER = np.geomspace(1e3, 3e4, 30)
+    dRdE_numeric = rate.dRdER(ER)
+
+    beta_c = convert_from_kmps_to_beta(vc)
+
+    dsigma = interaction.dsigma_dER(v=np.array([beta_c]),
+                                    ER=ER)[0]
+
+    to_unit_s_eV = KM_TO_M / CM_TO_M
+
+    flux = rate.wimp_number_density * vc
+    dRdE_expected = flux * dsigma * to_unit_s_eV
+
+    ratio = dRdE_expected / dRdE_numeric
+    assert np.allclose(ratio, 1., rtol=1e-6, atol=1e-6)

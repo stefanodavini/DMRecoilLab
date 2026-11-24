@@ -153,3 +153,26 @@ def test_to_file_invalid_filename():
         halo.to_file(None)
     with pytest.raises(ValueError, match="filename"):
         halo.to_file(filename="")
+
+def test_shm_integration_grid():
+    shm = StandardHaloModel(v0=220, vesc=500)
+    v_grid = shm.integration_grid()
+
+    assert v_grid[0] == 1e-6
+    assert np.isclose(v_grid[-1], 500)
+
+def test_shm_integration_grid_raises():
+    shm = StandardHaloModel(v0=220, vesc=500)
+    with pytest.raises(ValueError, match="non-negative"):
+        shm.integration_grid(vmin=-0.1)
+    with pytest.raises(ValueError, match="finite"):
+        shm.integration_grid(vmin=np.nan)
+    with pytest.raises(ValueError, match="two"):
+        shm.integration_grid(vmin=0, num=1)
+
+def test_shm_integration_grid_empty():
+    shm = StandardHaloModel(v0=220, vesc=500)
+    vgrid = shm.integration_grid(vmin=500)
+
+    assert np.array_equiv(vgrid, [])
+

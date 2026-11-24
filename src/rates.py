@@ -70,7 +70,7 @@ from src.halo.base_halo_distribution import IsotropicSpeedDistribution
 from src.interactions.base_interaction_model import InteractionModel
 from src.kinematics.scattering_kinematics import ScatteringKinematics
 from src.utils.constants import CM_TO_M, KM_TO_M, LOCAL_DM_DENSITY_GeV_cm3
-from src.utils.conversions import convert_from_kmps_to_beta
+from src.utils.conversions import convert_from_kmps_to_beta, convert_from_beta_to_kmps
 
 rho_dm_eV_cm3 = 1e9 * LOCAL_DM_DENSITY_GeV_cm3
 
@@ -158,10 +158,15 @@ class RateCalculator:
         in the given mass * exposure.
         """
 
-        vmin = self.interaction.scattering_kinematics.threshold_speed
+        beta_min = self.interaction.scattering_kinematics.threshold_speed
+        vmin = convert_from_beta_to_kmps(beta=beta_min)
         vmin = max(1e-6, vmin)  # avoids possible division by zero
-        vmax = self.halo.maximum_speed
-        v = np.linspace(vmin, vmax, num=num)
+        v = self.halo.integration_grid(vmin=vmin, num=num)
+
+        if len(v) == 0:
+            warnings.warn("Empty speed integration grid.",
+                          RuntimeWarning)
+            return np.zeros_like(ER, dtype=float)
 
         gv = self.halo.speed_pdf(v)
 
@@ -250,7 +255,7 @@ class RateCalculator:
         rate = self.dRdER(ER=ER, num=num)
 
         integral = cumulative_trapezoid(rate[::-1], -ER[::-1],
-                                        initial=0,)[::-1]
+                                        initial=0.)[::-1]
 
         return integral
 
