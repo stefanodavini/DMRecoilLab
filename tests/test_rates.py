@@ -1,5 +1,8 @@
 from src.halo.shm import StandardHaloModel
+from src.halo.mono_speed_distribution import MonoSpeedDistribution
 from src.utils.factory import create_interaction_si
+from src.utils.conversions import convert_from_kmps_to_beta
+from src.utils.constants import KM_TO_M, CM_TO_M
 from src.interactions.si import SIInteraction
 from src.interactions.particles import WIMP
 from src.nuclei.nucleus import Nucleus
@@ -463,3 +466,35 @@ def test_rate_sample_energies_zero_counts():
     with pytest.raises(ValueError, match="Cannot sample"):
         rc.sample_recoil_energies()
 
+#---------------------------------------------------
+# Test rates with MonoSpeedDistribition (delta-like)
+#---------------------------------------------------
+
+@pytest.mark.parametrize("vc", [300.0, 400.0, 500.0]) # km/s
+def test_rate_dRdE_mono_speed_reproduces_delta_limit(vc):
+    """
+    For a very narrow mono-speed population,
+    dR/dER approaches the analytic delta-function result.
+    """
+    interaction = create_interaction_si(wimp=WIMP(mass=100e9),
+                                        nucleus=Xe131)
+
+    halo = MonoSpeedDistribution(vc=vc, full_width=1e-3)
+
+    rate = RateCalculator(interaction=interaction, halo=halo)
+
+    ER = np.geomspace(1e3, 3e4, 30)
+    dRdE_numeric = rate.dRdER(ER)
+
+    beta_c = convert_from_kmps_to_beta(vc)
+
+    dsigma = interaction.dsigma_dER(v=np.array([beta_c]),
+                                    ER=ER)[0]
+
+    to_unit_s_eV = KM_TO_M / CM_TO_M
+
+    flux = rate.wimp_number_density * vc
+    dRdE_expected = flux * dsigma * to_unit_s_eV
+
+    ratio = dRdE_expected / dRdE_numeric
+    assert np.allclose(ratio, 1., rtol=1e-6, atol=1e-6)
