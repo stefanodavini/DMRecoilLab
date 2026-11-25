@@ -13,6 +13,7 @@ with:
     energy    : eV
     momentum  : eV
     velocity  : dimensionless
+    angles    : radians
 
 ScatteringKinematics extends NuclearRecoilKinematics
 with quantities specific to two-body scattering
@@ -249,11 +250,12 @@ class ElasticKinematics(NonRelativisticKinematics):
 
         Parameters
         ----------
-        v
-            Incoming WIMP speed.
-
-        theta
-            Scattering angle in the laboratory frame.
+        v : ArrayLike
+            Incoming WIMP speed (c=1).
+        theta : ArrayLike
+            Target-recoil scattering angle in radians,
+            in the laboratory frame,
+            measured with respect to the incoming WIMP direction.
 
         Returns
         -------
@@ -264,6 +266,7 @@ class ElasticKinematics(NonRelativisticKinematics):
         -----
         For elastic scattering the non trivial solution is:
         q = 2 mu v cos(theta)
+        Here theta is the recoil angle in the laboratory frame.
         """
         v = np.asarray(v)
         theta = np.asarray(theta)
@@ -364,7 +367,9 @@ class InelasticKinematics(NonRelativisticKinematics):
         v : ArrayLike
             Incoming WIMP speed (c=1).
         theta : ArrayLike
-            Scattering angle in radians.
+            Target-recoil scattering angle in radians,
+            in the laboratory frame,
+            measured with respect to the incoming WIMP direction.
 
         Returns
         -------
@@ -470,9 +475,11 @@ class InelasticKinematics(NonRelativisticKinematics):
         Parameters
         ----------
         v : ArrayLike
-            Incoming WIMP speed.
+            Incoming WIMP speed (c=1).
         theta : ArrayLike
-            Scattering angle.
+            Target-recoil scattering angle in radians,
+            in the laboratory frame,
+            measured with respect to the incoming WIMP direction.
 
         Returns
         -------

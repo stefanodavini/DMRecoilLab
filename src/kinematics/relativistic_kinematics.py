@@ -14,7 +14,7 @@ with:
     energy    : eV
     momentum  : eV
     velocity  : dimensionless
-
+    angles    : radians
 
 Symbols
 --------
@@ -27,6 +27,7 @@ q: magnitude of the spatial momentum transfer in the laboratory frame.
 Q2 = -t: invariant of 4-momentum transfer, not |q|^2.
 s: Mandelstam invariant, invariant of total reaction's 4-momentum.
 t: Mandelstam invariant, invariant of 4-momentum transfer.
+theta: target scattering angle in the laboratory frame.
 
 Physical formulas and their numerically stable implementations
 ------------------------------------------------------------
@@ -51,6 +52,7 @@ Recoil kinetic energy as function of momentum transfer
 and target mass
 * ER = sqrt(mT**2+q**2)-mT = q*(q/(hypot(mT,q)+mT)).
 
+Final-state center-of-mass momentum
 * p_f_star = sqrt(kallen(s,m2**2,mT**2))/(2*sqrt(s)).
   Near threshold,
   evaluate sqrt(f1)*sqrt(f2)/(2*sqrt(s)), where
@@ -269,7 +271,16 @@ class RelativisticKinematics(ScatteringKinematics):
 
     @staticmethod
     def _validate_domain_theta(theta: ArrayLike) -> NDArray:
-        """Validate lab target-recoil angles in radians."""
+        """
+        Validate lab target-recoil angles.
+
+        Parameters
+        ----------
+        theta : ArrayLike
+            Target-recoil scattering angle in radians,
+            in the laboratory frame,
+            measured with respect to the incoming WIMP direction.
+        """
         theta = np.asarray(theta, dtype=float)
         if np.any(~np.isfinite(theta) | (theta < 0) | (theta > np.pi)):
             raise ValueError("Recoil angle theta must be finite and in [0, pi]")
@@ -446,7 +457,8 @@ class RelativisticKinematics(ScatteringKinematics):
         return self.ER_bounds(v=v)[1]
 
     def vmin_from_ER(self, ER: ArrayLike) -> NDArray:
-        """Exact minimum speed, including exothermic backward recoils.
+        """
+        Exact minimum speed, including exothermic backward recoils.
 
         Conservation gives p q cos(theta) = E1 ER + B, where
         B = mT ER + (m2**2 - m1**2)/2. Solving |cos(theta)| <= 1
@@ -474,10 +486,33 @@ class RelativisticKinematics(ScatteringKinematics):
         """
         Nonnegative spatial-transfer roots, ordered before masking.
 
-        Inputs broadcast. Each unphysical root is independently NaN;
-        exothermic scattering generally has only one physical root.
-        Invalid speeds/angles raise ValueError; allowed-domain but forbidden
-        speeds/angles produce NaN roots.
+        Parameters
+        ----------
+        v : ArrayLike
+            Incoming WIMP speed (c=1).
+        theta : ArrayLike
+            Target-recoil scattering angle in radians,
+            in the laboratory frame,
+            measured with respect to the incoming WIMP direction.
+
+        Returns
+        -------
+        tuple[ndarray, ndarray]
+            Lower and upper momentum-transfer solutions
+            obtained from energy-momentum conservation.
+
+        Notes
+        -----
+        For fixed incident speed and laboratory recoil angle,
+        energy-momentum conservation leads to a quadratic equation in q.
+        Consequently, up to two physical momentum-transfer solutions
+        can exist for the same (v, theta).
+        Each root is validated independently;
+        nonphysical roots are returned as NaN.
+        Exothermic scattering generally has only one physical root.
+
+        Invalid speeds/angles raise ValueError;
+        allowed-domain but forbidden speeds/angles produce NaN roots.
         Zero-transfer elastic roots are retained for every valid angle:
         their recoil direction is undefined, but the solution is valid.
 
@@ -527,6 +562,21 @@ class RelativisticKinematics(ScatteringKinematics):
         Boolean mask identifying angle-speed combinations
         for which at least one physical momentum-transfer
         solution exists.
+
+        Parameters
+        ----------
+        v : ArrayLike
+            Incoming WIMP speed (c=1).
+        theta : ArrayLike
+            Target-recoil scattering angle in radians,
+            in the laboratory frame,
+            measured with respect to the incoming WIMP direction.
+
+        Returns
+        -------
+        ndarray of bool
+            True when at least one physical momentum-transfer
+            solution exists.
 
         Domain violations raise ValueError.
         """
